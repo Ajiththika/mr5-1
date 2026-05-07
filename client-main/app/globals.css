@@ -1,0 +1,139 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Premium Antigravity Palette - Minimalist Base */
+    --bg-app: 98% 0.005 260;
+    --bg-surface: 100% 0 0;
+    --bg-surface-highlight: 95% 0.005 260;
+
+    --foreground: 15% 0.01 260;
+    --card: 100% 0 0;
+    --card-foreground: 15% 0.01 260;
+    --popover: 100% 0 0;
+    --popover-foreground: 15% 0.01 260;
+    --primary: 60% 0.18 260;
+    --primary-foreground: 98% 0 0;
+    --secondary: 92% 0.01 260;
+    --secondary-foreground: 15% 0.01 260;
+    --muted: 92% 0.01 260;
+    --muted-foreground: 45% 0.01 260;
+    --accent: 92% 0.01 260;
+    --accent-foreground: 15% 0.01 260;
+    --destructive: 55% 0.16 20;
+    --destructive-foreground: 98% 0 0;
+    --border: 88% 0.01 260;
+    --input: 88% 0.01 260;
+    --ring: 60% 0.18 260;
+    --radius: 1rem;
+
+    --primary-channel: 88, 80, 236;
+    --border-channel: 255, 255, 255;
+  }
+
+  .dark {
+    /* Antigravity Deep Space Theme */
+    /* Base: Very deep cool gray-black */
+    --bg-app: 12% 0.015 260;
+
+    /* Precision Surface Elevations */
+    --bg-surface: 15% 0.018 260;
+    --bg-surface-highlight: 18% 0.02 260;
+
+    --foreground: 98% 0.005 260;
+
+    --card: 15% 0.018 260;
+    --card-foreground: 98% 0.005 260;
+
+    --popover: 14% 0.018 260;
+    --popover-foreground: 98% 0.005 260;
+
+    /* Vibrant Electric Indigo */
+    --primary: 68% 0.22 285;
+    --primary-foreground: 100% 0 0;
+
+    --secondary: 18% 0.02 260;
+    --secondary-foreground: 98% 0 0;
+
+    --muted: 18% 0.02 260;
+    --muted-foreground: 65% 0.015 260;
+
+    --accent: 20% 0.025 260;
+    --accent-foreground: 98% 0 0;
+
+    --destructive: 45% 0.18 25;
+    --destructive-foreground: 98% 0 0;
+
+    --border: 20% 0.02 260;
+    --input: 20% 0.02 260;
+    --ring: 68% 0.22 285;
+
+    --primary-channel: 139, 92, 246;
+    --border-channel: 255, 255, 255;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground tracking-tight;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    /* Prevent "Black Smear" on OLEDs by using our Deep Space gray */
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-black/40 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0, 0, 0, 0.37)];
+    position: relative;
+    overflow: hidden;
+  }
+
+  .glass::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.02));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Premium Noise/Grain Texture */
+  .noise-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 50;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    mix-blend-mode: soft-light;
+  }
+
+  /* Antigravity Text Glow - Premium Gradient */
+  .text-glow {
+    @apply bg-clip-text text-transparent bg-gradient-to-br from-white via-white/90 to-white/40;
+    filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.3));
+    letter-spacing: -0.02em;
+  }
+
+  .spotlight-card {
+    @apply relative border border-white/5 bg-surface/50 backdrop-blur-sm transition-all duration-500 hover:border-primary/30;
+  }
+
+  .spotlight-card:hover {
+    box-shadow: 0 0 30px rgba(139, 92, 246, 0.1);
+  }
+}

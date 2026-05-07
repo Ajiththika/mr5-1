@@ -1,0 +1,70 @@
+{
+  "name": "my-project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/app.js",
+  "type": "module",
+  "scripts": {
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
+    "dev": "node --watch src/app.js",
+    "start": "node src/app.js",
+    "prod": "pm2 start src/app.js --name lms-api",
+    "prod:stop": "pm2 stop lms-api",
+    "prod:restart": "pm2 restart lms-api",
+    "prod:logs": "pm2 logs lms-api",
+    "prod:monit": "pm2 monit lms-api",
+    "seed": "node seedData.js",
+    "seed:admin": "node seedAdmin.js",
+    "seed:data": "node seedAll.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test:mongo": "node test-mongo-connection.js"
+  },
+  "keywords": [],
+  "author": "Ushantha",
+  "license": "ISC",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "axios": "^1.13.6",
+    "basic-ftp": "^5.2.0",
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.8.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.19.2",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "livekit-server-sdk": "^2.1.2",
+    "microsoft-cognitiveservices-speech-sdk": "^1.36.0",
+    "mongodb": "^6.3.0",
+    "mongoose": "^8.2.0",
+    "multer": "^2.0.2",
+    "multer-storage-cloudinary": "^4.0.0",
+    "nodemailer": "^7.0.11",
+    "ollama": "^0.6.3",
+    "openai": "^4.28.0",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "stripe": "^14.19.0",
+    "systeminformation": "^5.31.1",
+    "winston": "^3.9.0",
+    "xss": "^1.0.15",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0",
+    "eslint": "^8.57.0",
+    "jest": "^30.2.0",
+    "nodemon": "^3.1.0",
+    "pm2": "^6.0.14",
+    "supertest": "^7.1.4"
+  },
+  "overrides": {
+    "multer-storage-cloudinary": {
+      "cloudinary": "^2.8.0"
+    }
+  }
+}

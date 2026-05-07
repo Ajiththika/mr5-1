@@ -1,0 +1,904 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "MR5 LMS Database Schema",
+    "description": "MongoDB/Mongoose schema definitions for the AI-Powered LMS",
+    "version": "2.0.0",
+    "models": {
+        "User": {
+            "collection": "users",
+            "description": "User accounts (students, teachers, admins)",
+            "properties": {
+                "_id": {
+                    "type": "ObjectId",
+                    "description": "MongoDB document ID"
+                },
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "minLength": 2,
+                    "maxLength": 100,
+                    "description": "User's full name"
+                },
+                "email": {
+                    "type": "string",
+                    "required": true,
+                    "unique": true,
+                    "format": "email",
+                    "description": "User's email address"
+                },
+                "password": {
+                    "type": "string",
+                    "required": true,
+                    "description": "Bcrypt hashed password"
+                },
+                "role": {
+                    "type": "string",
+                    "enum": [
+                        "admin",
+                        "teacher",
+                        "student"
+                    ],
+                    "default": "student",
+                    "description": "User role for RBAC"
+                },
+                "avatar": {
+                    "type": "string",
+                    "description": "URL to avatar image"
+                },
+                "isActive": {
+                    "type": "boolean",
+                    "default": true
+                },
+                "lastLogin": {
+                    "type": "date"
+                },
+                "preferences": {
+                    "type": "object",
+                    "properties": {
+                        "theme": {
+                            "type": "string",
+                            "enum": [
+                                "light",
+                                "dark",
+                                "system"
+                            ]
+                        },
+                        "language": {
+                            "type": "string",
+                            "default": "en"
+                        },
+                        "notifications": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                },
+                "createdAt": {
+                    "type": "date"
+                },
+                "updatedAt": {
+                    "type": "date"
+                }
+            },
+            "indexes": [
+                {
+                    "fields": {
+                        "email": 1
+                    },
+                    "options": {
+                        "unique": true
+                    }
+                },
+                {
+                    "fields": {
+                        "role": 1
+                    }
+                }
+            ]
+        },
+        "Course": {
+            "collection": "courses",
+            "description": "Course catalog",
+            "properties": {
+                "_id": {
+                    "type": "ObjectId"
+                },
+                "title": {
+                    "type": "string",
+                    "required": true,
+                    "minLength": 5,
+                    "maxLength": 200
+                },
+                "description": {
+                    "type": "string",
+                    "required": true
+                },
+                "category": {
+                    "type": "string",
+                    "enum": [
+                        "programming",
+                        "design",
+                        "business",
+                        "science",
+                        "languages",
+                        "other"
+                    ]
+                },
+                "subcategory": {
+                    "type": "string"
+                },
+                "level": {
+                    "type": "string",
+                    "enum": [
+                        "beginner",
+                        "intermediate",
+                        "advanced"
+                    ],
+                    "default": "beginner"
+                },
+                "instructor": {
+                    "type": "ObjectId",
+                    "ref": "User",
+                    "required": true
+                },
+                "price": {
+                    "type": "number",
+                    "min": 0,
+                    "default": 0
+                },
+                "currency": {
+                    "type": "string",
+                    "default": "USD"
+                },
+                "thumbnail": {
+                    "type": "string"
+                },
+                "previewVideo": {
+                    "type": "string"
+                },
+                "language": {
+                    "type": "string",
+                    "default": "en"
+                },
+                "duration": {
+                    "type": "number",
+                    "description": "Total duration in minutes"
+                },
+                "enrollmentCount": {
+                    "type": "number",
+                    "default": 0
+                },
+                "rating": {
+                    "type": "number",
+                    "min": 0,
+                    "max": 5,
+                    "default": 0
+                },
+                "ratingCount": {
+                    "type": "number",
+                    "default": 0
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "isPublished": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "isFeatured": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "createdAt": {
+                    "type": "date"
+                },
+                "updatedAt": {
+                    "type": "date"
+                }
+            },
+            "indexes": [
+                {
+                    "fields": {
+                        "title": "text",
+                        "description": "text"
+                    }
+                },
+                {
+                    "fields": {
+                        "category": 1,
+                        "level": 1
+                    }
+                },
+                {
+                    "fields": {
+                        "instructor": 1
+                    }
+                },
+                {
+                    "fields": {
+                        "isPublished": 1
+                    }
+                }
+            ]
+        },
+        "Lesson": {
+            "collection": "lessons",
+            "description": "Course lessons/content",
+            "properties": {
+                "_id": {
+                    "type": "ObjectId"
+                },
+                "course": {
+                    "type": "ObjectId",
+                    "ref": "Course",
+                    "required": true
+                },
+                "title": {
+                    "type": "string",
+                    "required": true
+                },
+                "content": {
+                    "type": "string",
+                    "description": "Rich text content (Markdown/HTML)"
+                },
+                "videoUrl": {
+                    "type": "string"
+                },
+                "attachments": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "url": {
+                                "type": "string"
+                            },
+                            "type": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "duration": {
+                    "type": "number",
+                    "description": "Duration in minutes"
+                },
+                "order": {
+                    "type": "number",
+                    "required": true
+                },
+                "isPreview": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "createdAt": {
+                    "type": "date"
+                },
+                "updatedAt": {
+                    "type": "date"
+                }
+            },
+            "indexes": [
+                {
+                    "fields": {
+                        "course": 1,
+                        "order": 1
+                    }
+                }
+            ]
+        },
+        "Enrollment": {
+            "collection": "enrollments",
+            "description": "Student course enrollments",
+            "properties": {
+                "_id": {
+                    "type": "ObjectId"
+                },
+                "user": {
+                    "type": "ObjectId",
+                    "ref": "User",
+                    "required": true
+                },
+                "course": {
+                    "type": "ObjectId",
+                    "ref": "Course",
+                    "required": true
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "completed",
+                        "dropped"
+                    ],
+                    "default": "active"
+                },
+                "progress": {
+                    "type": "number",
+                    "min": 0,
+                    "max": 100,
+                    "default": 0
+                },
+                "completedLessons": {
+                    "type": "array",
+                    "items": {
+                        "type": "ObjectId"
+                    },
+                    "description": "Array of completed lesson IDs"
+                },
+                "lastAccessedAt": {
+                    "type": "date"
+                },
+                "enrolledAt": {
+                    "type": "date"
+                },
+                "completedAt": {
+                    "type": "date"
+                }
+            },
+            "indexes": [
+                {
+                    "fields": {
+                        "user": 1,
+                        "course": 1
+                    },
+                    "options": {
+                        "unique": true
+                    }
+                },
+                {
+                    "fields": {
+                        "user": 1,
+                        "status": 1
+                    }
+                }
+            ]
+        },
+        "Payment": {
+            "collection": "payments",
+            "description": "Payment transactions",
+            "properties": {
+                "_id": {
+                    "type": "ObjectId"
+                },
+                "user": {
+                    "type": "ObjectId",
+                    "ref": "User",
+                    "required": true
+                },
+                "course": {
+                    "type": "ObjectId",
+                    "ref": "Course",
+                    "required": true
+                },
+                "amount": {
+                    "type": "number",
+                    "required": true
+                },
+                "currency": {
+                    "type": "string",
+                    "default": "USD"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "pending",
+                        "completed",
+                        "failed",
+                        "refunded"
+                    ],
+                    "default": "pending"
+                },
+                "paymentMethod": {
+                    "type": "string",
+                    "enum": [
+                        "stripe",
+                        "payhere",
+                        "free"
+                    ]
+                },
+                "stripeSessionId": {
+                    "type": "string"
+                },
+                "stripePaymentIntentId": {
+                    "type": "string"
+                },
+                "metadata": {
+                    "type": "object",
+                    "description": "Additional payment metadata"
+                },
+                "createdAt": {
+                    "type": "date"
+                },
+                "updatedAt": {
+                    "type": "date"
+                }
+            },
+            "indexes": [
+                {
+                    "fields": {
+                        "user": 1
+                    }
+                },
+                {
+                    "fields": {
+                        "stripeSessionId": 1
+                    }
+                },
+                {
+                    "fields": {
+                        "status": 1,
+                        "createdAt": -1
+                    }
+                }
+            ]
+        },
+        "Assignment": {
+            "collection": "assignments",
+            "description": "Course assignments",
+            "properties": {
+                "_id": {
+                    "type": "ObjectId"
+                },
+                "course": {
+                    "type": "ObjectId",
+                    "ref": "Course",
+                    "required": true
+                },
+                "lesson": {
+                    "type": "ObjectId",
+                    "ref": "Lesson"
+                },
+                "title": {
+                    "type": "string",
+                    "required": true
+                },
+                "description": {
+                    "type": "string"
+                },
+                "dueDate": {
+                    "type": "date"
+                },
+                "maxScore": {
+                    "type": "number",
+                    "default": 100
+                },
+                "attachments": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "createdAt": {
+                    "type": "date"
+                },
+                "updatedAt": {
+                    "type": "date"
+                }
+            }
+        },
+        "Submission": {
+            "collection": "submissions",
+            "description": "Student assignment submissions",
+            "properties": {
+                "_id": {
+                    "type": "ObjectId"
+                },
+                "assignment": {
+                    "type": "ObjectId",
+                    "ref": "Assignment",
+                    "required": true
+                },
+                "student": {
+                    "type": "ObjectId",
+                    "ref": "User",
+                    "required": true
+                },
+                "content": {
+                    "type": "string"
+                },
+                "attachments": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "score": {
+                    "type": "number"
+                },
+                "feedback": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "submitted",
+                        "graded",
+                        "returned"
+                    ],
+                    "default": "submitted"
+                },
+                "submittedAt": {
+                    "type": "date"
+                },
+                "gradedAt": {
+                    "type": "date"
+                }
+            },
+            "indexes": [
+                {
+                    "fields": {
+                        "assignment": 1,
+                        "student": 1
+                    },
+                    "options": {
+                        "unique": true
+                    }
+                }
+            ]
+        },
+        "AI_Assistant_Interaction": {
+            "collection": "ai_interactions",
+            "description": "AI chat history and interactions",
+            "properties": {
+                "_id": {
+                    "type": "ObjectId"
+                },
+                "user": {
+                    "type": "ObjectId",
+                    "ref": "User",
+                    "required": true
+                },
+                "course": {
+                    "type": "ObjectId",
+                    "ref": "Course"
+                },
+                "sessionId": {
+                    "type": "string",
+                    "required": true
+                },
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "role": {
+                                "type": "string",
+                                "enum": [
+                                    "user",
+                                    "assistant",
+                                    "system"
+                                ]
+                            },
+                            "content": {
+                                "type": "string"
+                            },
+                            "timestamp": {
+                                "type": "date"
+                            }
+                        }
+                    }
+                },
+                "tokenUsage": {
+                    "type": "object",
+                    "properties": {
+                        "promptTokens": {
+                            "type": "number"
+                        },
+                        "completionTokens": {
+                            "type": "number"
+                        },
+                        "totalTokens": {
+                            "type": "number"
+                        }
+                    }
+                },
+                "createdAt": {
+                    "type": "date"
+                },
+                "updatedAt": {
+                    "type": "date"
+                }
+            },
+            "indexes": [
+                {
+                    "fields": {
+                        "user": 1,
+                        "sessionId": 1
+                    }
+                },
+                {
+                    "fields": {
+                        "createdAt": -1
+                    }
+                }
+            ]
+        },
+        "VirtualClassroom": {
+            "collection": "virtual_classrooms",
+            "description": "Virtual classroom sessions for WebRTC",
+            "properties": {
+                "_id": {
+                    "type": "ObjectId"
+                },
+                "course": {
+                    "type": "ObjectId",
+                    "ref": "Course",
+                    "required": true
+                },
+                "lesson": {
+                    "type": "ObjectId",
+                    "ref": "Lesson"
+                },
+                "host": {
+                    "type": "ObjectId",
+                    "ref": "User",
+                    "required": true
+                },
+                "roomName": {
+                    "type": "string",
+                    "required": true,
+                    "unique": true
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "scheduled",
+                        "live",
+                        "ended"
+                    ],
+                    "default": "scheduled"
+                },
+                "scheduledAt": {
+                    "type": "date"
+                },
+                "startedAt": {
+                    "type": "date"
+                },
+                "endedAt": {
+                    "type": "date"
+                },
+                "participants": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "user": {
+                                "type": "ObjectId",
+                                "ref": "User"
+                            },
+                            "joinedAt": {
+                                "type": "date"
+                            },
+                            "leftAt": {
+                                "type": "date"
+                            }
+                        }
+                    }
+                },
+                "settings": {
+                    "type": "object",
+                    "properties": {
+                        "maxParticipants": {
+                            "type": "number",
+                            "default": 50
+                        },
+                        "allowChat": {
+                            "type": "boolean",
+                            "default": true
+                        },
+                        "allowVideo": {
+                            "type": "boolean",
+                            "default": true
+                        },
+                        "allowScreenShare": {
+                            "type": "boolean",
+                            "default": true
+                        },
+                        "recordSession": {
+                            "type": "boolean",
+                            "default": false
+                        }
+                    }
+                },
+                "recording": {
+                    "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string"
+                        },
+                        "duration": {
+                            "type": "number"
+                        }
+                    }
+                },
+                "createdAt": {
+                    "type": "date"
+                }
+            },
+            "indexes": [
+                {
+                    "fields": {
+                        "roomName": 1
+                    },
+                    "options": {
+                        "unique": true
+                    }
+                },
+                {
+                    "fields": {
+                        "course": 1,
+                        "status": 1
+                    }
+                },
+                {
+                    "fields": {
+                        "scheduledAt": 1
+                    }
+                }
+            ]
+        },
+        "Attendance": {
+            "collection": "attendances",
+            "description": "Virtual classroom attendance records",
+            "properties": {
+                "_id": {
+                    "type": "ObjectId"
+                },
+                "classroom": {
+                    "type": "ObjectId",
+                    "ref": "VirtualClassroom",
+                    "required": true
+                },
+                "student": {
+                    "type": "ObjectId",
+                    "ref": "User",
+                    "required": true
+                },
+                "joinedAt": {
+                    "type": "date",
+                    "required": true
+                },
+                "leftAt": {
+                    "type": "date"
+                },
+                "duration": {
+                    "type": "number",
+                    "description": "Total attendance in minutes"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "present",
+                        "late",
+                        "absent",
+                        "excused"
+                    ],
+                    "default": "present"
+                },
+                "breaks": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "type": {
+                                "type": "string",
+                                "enum": [
+                                    "break",
+                                    "toilet"
+                                ]
+                            },
+                            "startedAt": {
+                                "type": "date"
+                            },
+                            "endedAt": {
+                                "type": "date"
+                            }
+                        }
+                    }
+                }
+            },
+            "indexes": [
+                {
+                    "fields": {
+                        "classroom": 1,
+                        "student": 1
+                    },
+                    "options": {
+                        "unique": true
+                    }
+                }
+            ]
+        },
+        "ChatMessage": {
+            "collection": "chat_messages",
+            "description": "Real-time chat messages",
+            "properties": {
+                "_id": {
+                    "type": "ObjectId"
+                },
+                "room": {
+                    "type": "string",
+                    "required": true,
+                    "description": "Room identifier (course_id, classroom_id, or DM)"
+                },
+                "sender": {
+                    "type": "ObjectId",
+                    "ref": "User",
+                    "required": true
+                },
+                "content": {
+                    "type": "string",
+                    "required": true
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "text",
+                        "file",
+                        "system"
+                    ],
+                    "default": "text"
+                },
+                "attachments": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "url": {
+                                "type": "string"
+                            },
+                            "type": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "readBy": {
+                    "type": "array",
+                    "items": {
+                        "type": "ObjectId"
+                    }
+                },
+                "createdAt": {
+                    "type": "date"
+                }
+            },
+            "indexes": [
+                {
+                    "fields": {
+                        "room": 1,
+                        "createdAt": -1
+                    }
+                },
+                {
+                    "fields": {
+                        "sender": 1
+                    }
+                }
+            ]
+        }
+    },
+    "relationships": {
+        "User -> Course": "One-to-Many (instructor)",
+        "User -> Enrollment": "One-to-Many",
+        "Course -> Lesson": "One-to-Many",
+        "Course -> Enrollment": "One-to-Many",
+        "Course -> Assignment": "One-to-Many",
+        "Assignment -> Submission": "One-to-Many",
+        "User -> Submission": "One-to-Many",
+        "User -> Payment": "One-to-Many",
+        "Course -> VirtualClassroom": "One-to-Many",
+        "VirtualClassroom -> Attendance": "One-to-Many",
+        "User -> AI_Assistant_Interaction": "One-to-Many",
+        "User -> ChatMessage": "One-to-Many"
+    }
+}

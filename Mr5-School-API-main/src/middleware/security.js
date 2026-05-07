@@ -1,0 +1,68 @@
+import rateLimit from "express-rate-limit";
+import helmet from "helmet";
+import mongoSanitize from "express-mongo-sanitize";
+import xss from "xss";
+
+// Security headers middleware
+export const securityHeaders = helmet({
+	contentSecurityPolicy: {
+		directives: {
+			defaultSrc: ["'self'"],
+			styleSrc: ["'self'", "'unsafe-inline'"],
+			scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://prod.spline.design", "https://cdn.jsdelivr.net"],
+			imgSrc: ["'self'", "data:", "https:", "blob:"],
+			connectSrc: ["'self'", "https://prod.spline.design", "https://build.spline.design", "https://nominatim.openstreetmap.org", "https://api.openweathermap.org", "https://cdn.jsdelivr.net"],
+			frameSrc: ["'self'", "https://prod.spline.design"],
+		},
+	},
+	crossOriginEmbedderPolicy: false,
+	crossOriginResourcePolicy: { policy: "cross-origin" },
+});
+
+// Rate limiting for general API
+export const apiLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000, // 15 minutes
+	max: process.env.NODE_ENV === 'development' ? 10000 : 100, // Limit each IP to 100 requests per windowMs
+	message: {
+		success: false,
+		error: "Too many requests from this IP, please try again later.",
+	},
+	standardHeaders: true,
+	legacyHeaders: false,
+});
+
+// Stricter rate limiting for auth endpoints
+export const authLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000, // 15 minutes
+	max: process.env.NODE_ENV === 'development' ? 10000 : 100, // Limit each IP to 100 requests per 15min (relaxed to prevent shared IP lockout on Vercel)
+	message: {
+		success: false,
+		error: "Too many authentication attempts, please try again later.",
+	},
+	standardHeaders: true,
+	legacyHeaders: false,
+	skipSuccessfulRequests: true,
+});
+
+// MongoDB injection prevention
+export const sanitizeMongo = mongoSanitize({
+	replaceWith: "_",
+	onSanitize: ({ req, key }) => {
+		console.warn(`MongoDB injection attempt detected: ${key}`);
+	},
+});
+
+// XSS protection helper
+export const sanitizeInput = (input) => {
+	if (typeof input === "string") {
+		return xss(input);
+	}
+	if (typeof input === "object" && input !== null) {
+		const sanitized = {};
+		for (const key in input) {
+			sanitized[key] = sanitizeInput(input[key]);
+		}
+		return sanitized;
+	}
+	return input;
+};

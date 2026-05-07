@@ -1,0 +1,833 @@
+openapi: 3.0.3
+info:
+  title: MR5 AI-Powered LMS API
+  description: |
+    RESTful API for the AI-Powered Learning Management System with Virtual Classroom capabilities.
+    
+    ## Authentication
+    All protected endpoints require a JWT token in the Authorization header:
+    `Authorization: Bearer <token>`
+    
+    ## Rate Limiting
+    - Standard: 100 requests/minute
+    - AI endpoints: 20 requests/minute
+  version: 2.0.0
+  contact:
+    name: MR5 Support
+    email: support@mr5.edu
+
+servers:
+  - url: http://localhost:5000/api
+    description: Development server
+  - url: https://api.mr5.edu
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User authentication and session management
+  - name: Users
+    description: User profile management
+  - name: Courses
+    description: Course CRUD operations
+  - name: Enrollments
+    description: Course enrollment management
+  - name: Payments
+    description: Stripe payment processing
+  - name: AI
+    description: AI teaching assistant and TTS services
+  - name: LiveKit
+    description: Video conferencing tokens
+
+paths:
+  # ============ AUTHENTICATION ============
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      description: Create a new user account with email and password
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Email already exists
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate user with email and password, returns JWT token
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: User logout
+      description: Invalidate current session
+      operationId: logoutUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Get current user
+      description: Returns the currently authenticated user's profile
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ============ USERS ============
+  /users:
+    get:
+      tags:
+        - Users
+      summary: List all users (Admin)
+      description: Get paginated list of all users, admin only
+      operationId: listUsers
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [admin, teacher, student]
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /users/{id}:
+    get:
+      tags:
+        - Users
+      summary: Get user by ID
+      operationId: getUserById
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+
+    put:
+      tags:
+        - Users
+      summary: Update user
+      operationId: updateUser
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  # ============ COURSES ============
+  /courses:
+    get:
+      tags:
+        - Courses
+      summary: List all courses
+      description: Get paginated list of courses with optional filtering
+      operationId: listCourses
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: level
+          in: query
+          schema:
+            type: string
+            enum: [beginner, intermediate, advanced]
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search in title and description
+      responses:
+        '200':
+          description: List of courses
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseList'
+
+    post:
+      tags:
+        - Courses
+      summary: Create a new course
+      description: Create a course (teacher/admin only)
+      operationId: createCourse
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseCreate'
+      responses:
+        '201':
+          description: Course created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Course'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /courses/{id}:
+    get:
+      tags:
+        - Courses
+      summary: Get course by ID
+      operationId: getCourseById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Course details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Course'
+        '404':
+          description: Course not found
+
+    put:
+      tags:
+        - Courses
+      summary: Update course
+      operationId: updateCourse
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseUpdate'
+      responses:
+        '200':
+          description: Course updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Course'
+
+    delete:
+      tags:
+        - Courses
+      summary: Delete course
+      operationId: deleteCourse
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Course deleted
+        '404':
+          description: Course not found
+
+  # ============ ENROLLMENTS ============
+  /enrollments:
+    get:
+      tags:
+        - Enrollments
+      summary: Get user enrollments
+      operationId: getUserEnrollments
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, completed, dropped]
+      responses:
+        '200':
+          description: List of enrollments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentList'
+
+    post:
+      tags:
+        - Enrollments
+      summary: Enroll in a course
+      operationId: createEnrollment
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                courseId:
+                  type: string
+              required:
+                - courseId
+      responses:
+        '201':
+          description: Enrollment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Enrollment'
+        '409':
+          description: Already enrolled
+
+  # ============ PAYMENTS ============
+  /payments/create-checkout:
+    post:
+      tags:
+        - Payments
+      summary: Create Stripe checkout session
+      operationId: createCheckoutSession
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                courseId:
+                  type: string
+                successUrl:
+                  type: string
+                cancelUrl:
+                  type: string
+              required:
+                - courseId
+      responses:
+        '200':
+          description: Checkout session created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessionId:
+                    type: string
+                  url:
+                    type: string
+
+  /payments/webhook:
+    post:
+      tags:
+        - Payments
+      summary: Stripe webhook handler
+      operationId: handleStripeWebhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Webhook processed
+
+  # ============ AI SERVICES ============
+  /ai/chat:
+    post:
+      tags:
+        - AI
+      summary: AI teaching assistant chat
+      operationId: aiChat
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                courseId:
+                  type: string
+                conversationHistory:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      role:
+                        type: string
+                        enum: [user, assistant]
+                      content:
+                        type: string
+              required:
+                - message
+      responses:
+        '200':
+          description: AI response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  response:
+                    type: string
+                  usage:
+                    type: object
+                    properties:
+                      promptTokens:
+                        type: integer
+                      completionTokens:
+                        type: integer
+
+  /ai/tts:
+    post:
+      tags:
+        - AI
+      summary: Text-to-speech conversion
+      operationId: textToSpeech
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                voice:
+                  type: string
+                  enum: [alloy, echo, fable, onyx, nova, shimmer]
+                  default: alloy
+              required:
+                - text
+      responses:
+        '200':
+          description: Audio file
+          content:
+            audio/mpeg:
+              schema:
+                type: string
+                format: binary
+
+  # ============ LIVEKIT ============
+  /livekit/token:
+    post:
+      tags:
+        - LiveKit
+      summary: Generate LiveKit access token
+      operationId: getLiveKitToken
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                roomName:
+                  type: string
+                participantName:
+                  type: string
+              required:
+                - roomName
+      responses:
+        '200':
+          description: LiveKit token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  serverUrl:
+                    type: string
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+    LimitParam:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        default: 10
+        minimum: 1
+        maximum: 100
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        statusCode:
+          type: integer
+
+    RegisterRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        role:
+          type: string
+          enum: [student, teacher]
+          default: student
+      required:
+        - name
+        - email
+        - password
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required:
+        - email
+        - password
+
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        token:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [admin, teacher, student]
+        avatar:
+          type: string
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    UserUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        avatar:
+          type: string
+        password:
+          type: string
+
+    UserList:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        total:
+          type: integer
+        page:
+          type: integer
+        pages:
+          type: integer
+
+    Course:
+      type: object
+      properties:
+        _id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        level:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        price:
+          type: number
+        currency:
+          type: string
+          default: USD
+        thumbnail:
+          type: string
+        instructor:
+          $ref: '#/components/schemas/User'
+        lessons:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lesson'
+        enrollmentCount:
+          type: integer
+        rating:
+          type: number
+        isPublished:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    CourseCreate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 5
+          maxLength: 200
+        description:
+          type: string
+        category:
+          type: string
+        level:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        price:
+          type: number
+          minimum: 0
+        thumbnail:
+          type: string
+      required:
+        - title
+        - description
+
+    CourseUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        level:
+          type: string
+        price:
+          type: number
+        thumbnail:
+          type: string
+        isPublished:
+          type: boolean
+
+    CourseList:
+      type: object
+      properties:
+        courses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Course'
+        total:
+          type: integer
+        page:
+          type: integer
+        pages:
+          type: integer
+
+    Lesson:
+      type: object
+      properties:
+        _id:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        videoUrl:
+          type: string
+        duration:
+          type: integer
+          description: Duration in minutes
+        order:
+          type: integer
+
+    Enrollment:
+      type: object
+      properties:
+        _id:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+        course:
+          $ref: '#/components/schemas/Course'
+        status:
+          type: string
+          enum: [active, completed, dropped]
+        progress:
+          type: number
+          minimum: 0
+          maximum: 100
+        enrolledAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+
+    EnrollmentList:
+      type: object
+      properties:
+        enrollments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Enrollment'
+        total:
+          type: integer

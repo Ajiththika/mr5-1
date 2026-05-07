@@ -1,0 +1,67 @@
+"use client";
+
+// Force dynamic rendering to avoid prerender issues with auth hooks
+export const dynamic = 'force-dynamic';
+
+import { useEffect, useState } from "react";
+import { Navbar } from "@/components/layout/navbar";
+import { Card } from "@/components/ui/card";
+import { teacherService } from "@/services/teacher.service";
+import { Teacher } from "@/types/teacher";
+import { handleApiError } from "@/lib/errorHandler";
+
+export default function AvatarListPage() {
+	const [teachers, setTeachers] = useState<Teacher[]>([]);
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+
+	useEffect(() => {
+		loadTeachers();
+	}, []);
+
+	const loadTeachers = async () => {
+		setLoading(true);
+		setError(null);
+		try {
+			const response = await teacherService.getAllTeachers();
+			if (response.success) {
+				setTeachers(response.data || []);
+			}
+		} catch (err: unknown) {
+			setError(handleApiError(err, "Fetch Teachers"));
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	return (
+		<div className="min-h-screen flex flex-col">
+			<Navbar />
+			<main className="flex-1 container mx-auto px-4 py-12">
+				<h1 className="text-3xl font-bold mb-6">Avatar AI Teachers</h1>
+
+				{loading && <p>Loading...</p>}
+				{error && <div className="text-destructive">{error}</div>}
+
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+					{teachers.map((t) => (
+						<Card key={t._id} className="p-4">
+							<h3 className="text-xl font-semibold">
+								{t.user?.name || "Avatar AI"}
+							</h3>
+							<p className="text-sm text-muted-foreground">{t.user?.email}</p>
+							<p className="mt-2">{t.specialization}</p>
+							<p className="mt-2 text-sm text-muted-foreground">{t.bio}</p>
+						</Card>
+					))}
+
+					{!loading && teachers.length === 0 && !error && (
+						<div className="text-muted-foreground">
+							No Avatar AI Teachers found.
+						</div>
+					)}
+				</div>
+			</main>
+		</div>
+	);
+}
