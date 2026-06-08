@@ -44,7 +44,7 @@ export function Navbar() {
 							/>
 						</div>
 						<div className="flex flex-col relative">
-							<span className="text-xl font-bold bg-gradient-to-r from-primary via-white to-primary/80 bg-clip-text text-transparent tracking-tight">
+							<span className="text-xl font-bold text-white tracking-tight">
 								MR5 School
 							</span>
 							<span className="text-[10px] text-muted-foreground/80 tracking-widest font-mono uppercase">
