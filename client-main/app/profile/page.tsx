@@ -17,6 +17,8 @@ import { authService } from "@/services/auth.service";
 import { Button } from "@/components/ui/button";
 import { uploadToCloudinary } from "@/services/cloudinary.service";
 import Image from "next/image";
+import { AVATAR_PRESETS } from "@/lib/avatar-presets";
+import { AvatarPresetBadge } from "@/components/avatar/AvatarPresetBadge";
 
 interface UserStats {
   streak: number;
@@ -37,6 +39,7 @@ interface EditingUser {
   language: string;
   timezone: string;
   avatarUrl?: string;
+  avatarPreset?: string;
 }
 
 export default function ProfilePage() {
@@ -65,7 +68,8 @@ export default function ProfilePage() {
     email: "",
     language: "",
     timezone: "",
-    avatarUrl: undefined
+    avatarUrl: undefined,
+    avatarPreset: undefined,
   });
 
   // Avatar upload state
@@ -115,7 +119,8 @@ export default function ProfilePage() {
       email: user.email || "",
       language: user.language || "",
       timezone: user.timezone || "",
-      avatarUrl: user.avatarUrl || undefined
+      avatarUrl: user.avatarUrl || undefined,
+      avatarPreset: user.avatarPreset || undefined,
     });
   }, [user]);
 
@@ -132,7 +137,8 @@ export default function ProfilePage() {
         email: user.email || "",
         language: user.language || "",
         timezone: user.timezone || "",
-        avatarUrl: user.avatarUrl || undefined
+        avatarUrl: user.avatarUrl || undefined,
+      avatarPreset: user.avatarPreset || undefined,
       });
       // Set initial avatar preview
       setAvatarPreview(user.avatarUrl || null);
@@ -198,7 +204,8 @@ export default function ProfilePage() {
       // Update profile with all data including avatar URL
       const updateData = {
         ...editingUser,
-        avatarUrl
+        avatarUrl,
+        avatarPreset: editingUser.avatarPreset,
       };
 
       await authService.updateProfile(updateData);
@@ -367,6 +374,26 @@ export default function ProfilePage() {
               </div>
 
               <div>
+                <label className="block text-sm text-white/80 mb-2">3D Avatar Preset</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {AVATAR_PRESETS.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => setEditingUser({ ...editingUser, avatarPreset: preset.id })}
+                      className={`p-2 rounded-lg border text-center text-lg ${
+                        editingUser.avatarPreset === preset.id
+                          ? "border-cyan-400 bg-cyan-400/10"
+                          : "border-white/10 hover:border-white/30"
+                      }`}
+                    >
+                      {preset.emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
                 <label className="block text-sm text-white/80 mb-1">Name</label>
                 <input
                   type="text"
@@ -461,6 +488,10 @@ export default function ProfilePage() {
                     target.style.display = "none";
                   }}
                 />
+              ) : user.avatarPreset ? (
+                <div className="scale-[2]">
+                  <AvatarPresetBadge presetId={user.avatarPreset} size="lg" />
+                </div>
               ) : (
                 <div className="text-4xl md:text-6xl text-white/20 font-bold">
                   {user.name.charAt(0)}

@@ -36,6 +36,10 @@ interface Message {
 interface TeachingAIModalProps {
     isOpen: boolean;
     onClose: () => void;
+    courseId?: string;
+    lessonId?: string;
+    courseTitle?: string;
+    lessonTitle?: string;
     voiceInteraction?: {
         transcript: string;
         listening: boolean;
@@ -48,7 +52,7 @@ interface TeachingAIModalProps {
     };
 }
 
-export function TeachingAIModal({ isOpen, onClose, voiceInteraction }: TeachingAIModalProps) {
+export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTitle, lessonTitle, voiceInteraction }: TeachingAIModalProps) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputMessage, setInputMessage] = useState('');
     const [isMuted, setIsMuted] = useState(false);
@@ -148,10 +152,19 @@ export function TeachingAIModal({ isOpen, onClose, voiceInteraction }: TeachingA
             }
 
             // Prepare messages array for the API
+            const contextParts = [
+                "You are an expert AI tutor specializing in personalized education.",
+                courseTitle ? `Course: ${courseTitle}.` : "",
+                lessonTitle ? `Current lesson: ${lessonTitle}.` : "",
+                courseId ? `Course ID: ${courseId}.` : "",
+                lessonId ? `Lesson ID: ${lessonId}.` : "",
+                "Provide detailed, accurate, and engaging explanations tailored to the student's level.",
+            ].filter(Boolean).join(" ");
+
             const apiMessages = [
                 {
                     role: "system",
-                    content: "You are an expert AI tutor specializing in personalized education. Provide detailed, accurate, and engaging explanations tailored to the student's level. Adapt your teaching style based on emotional cues and learning progress. Always be encouraging and supportive."
+                    content: contextParts,
                 },
                 ...messages.map(msg => ({
                     role: msg.role === 'user' ? 'user' : 'assistant',

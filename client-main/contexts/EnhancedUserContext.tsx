@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { useRouter } from "next/navigation";
 import { User } from "@/types/user";
 import { authService } from "@/services/auth.service";
+import { enrollmentService } from "@/services/enrollment.service";
 import { useAdvancedCache } from "@/hooks/useAdvancedCache";
 
 interface EnhancedUserContextType {
@@ -114,7 +115,23 @@ export function EnhancedUserProvider({ children }: { children: React.ReactNode }
     const savedPreferences = localStorage.getItem("userPreferences");
     if (savedPreferences) {
       try {
-        setUserPreferences(JSON.parse(savedPreferences));
+        const parsed = JSON.parse(savedPreferences) as Partial<UserPreferences>;
+        setUserPreferences({
+          ...defaultUserContext.userPreferences,
+          ...parsed,
+          notifications: {
+            ...defaultUserContext.userPreferences.notifications,
+            ...parsed.notifications,
+          },
+          privacy: {
+            ...defaultUserContext.userPreferences.privacy,
+            ...parsed.privacy,
+          },
+          accessibility: {
+            ...defaultUserContext.userPreferences.accessibility,
+            ...parsed.accessibility,
+          },
+        });
       } catch (e) {
         console.error("Failed to parse user preferences", e);
       }
@@ -196,7 +213,7 @@ export function EnhancedUserProvider({ children }: { children: React.ReactNode }
           router.push("/dashboard");
           break;
         case "student":
-          router.push("/student/portal");
+          router.push(userData.onboardingCompleted ? "/student/portal" : "/onboarding");
           break;
         default:
           router.push("/");
@@ -277,18 +294,37 @@ export function EnhancedUserProvider({ children }: { children: React.ReactNode }
    * Refresh user stats
    */
   const refreshUserStats = useCallback(async () => {
-    // In a real app, this would fetch from an API
-    // For now, we'll simulate with mock data
-    const mockStats: UserStats = {
-      totalCourses: Math.floor(Math.random() * 20) + 5,
-      completedLessons: Math.floor(Math.random() * 100) + 20,
-      streakDays: Math.floor(Math.random() * 30) + 1,
-      achievements: ["First Course", "Quick Learner", "Streak Master"],
-      lastActive: new Date()
-    };
+    if (!user) return;
 
-    setUserStats(mockStats);
-  }, []);
+    try {
+      const response = await enrollmentService.getMyEnrollments({ limit: 100 });
+      const enrollments = response.data || [];
+      const completedCourses = enrollments.filter((e) => e.status === "completed").length;
+      const avgProgress =
+        enrollments.length > 0
+          ? Math.round(
+              enrollments.reduce((sum, e) => sum + e.progress, 0) / enrollments.length
+            )
+          : 0;
+
+      setUserStats({
+        totalCourses: enrollments.length,
+        completedLessons: completedCourses,
+        streakDays: 0,
+        achievements: completedCourses > 0 ? ["Course Completed"] : [],
+        lastActive: new Date(),
+        avgProgress,
+      } as UserStats & { avgProgress?: number });
+    } catch {
+      setUserStats({
+        totalCourses: 0,
+        completedLessons: 0,
+        streakDays: 0,
+        achievements: [],
+        lastActive: new Date(),
+      });
+    }
+  }, [user]);
 
   /**
    * Check if user has a specific permission

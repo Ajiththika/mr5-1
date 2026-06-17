@@ -53,7 +53,7 @@ export function WelcomeAvatar({
 }: WelcomeAvatarProps) {
   const { user } = useEnhancedUser();
   const [greeting, setGreeting] = useState<TamilGreeting | null>(null);
-  const [gestureState, setGestureState] = useState<AvatarGestureState>("idle");
+  const [, setGestureState] = useState<AvatarGestureState>("idle");
   const [isMuted, setIsMuted] = useState(false);
   const [hasGreeted, setHasGreeted] = useState(false);
   const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
@@ -267,12 +267,6 @@ export function WelcomeAvatar({
         </div>
       )}
 
-      {/* Gesture state indicator (for debugging - can be removed in production) */}
-      {process.env.NODE_ENV === "development" && (
-        <div className="absolute top-4 left-4 text-xs bg-black/50 text-white px-2 py-1 rounded">
-          {gestureState}
-        </div>
-      )}
     </div>
   );
 }

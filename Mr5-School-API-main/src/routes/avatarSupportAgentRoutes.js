@@ -9,9 +9,8 @@ const router = express.Router();
 // @access  Private
 router.post("/action", verifyToken, handleAvatarAction);
 
-// @desc    Test endpoint for avatar support agent
-// @route   POST /api/avatar-support-agent/test
-// @access  Public (for testing)
-router.post("/test", testAvatarAction);
+if (process.env.NODE_ENV === "development") {
+	router.post("/test", testAvatarAction);
+}
 
 export default router;

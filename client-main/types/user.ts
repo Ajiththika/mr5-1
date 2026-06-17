@@ -5,6 +5,8 @@ export interface User {
     role: "student" | "AI-TEACHER" | "admin";
     status: string;
     avatarUrl?: string;
+    avatarPreset?: string;
+    onboardingCompleted?: boolean;
     language?: string;
     timezone?: string;
     gradingSystem?: string;

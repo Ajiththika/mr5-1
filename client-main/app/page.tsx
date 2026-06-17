@@ -55,11 +55,6 @@ export default function HomePage() {
   useEffect(() => {
     setMounted(true);
 
-    // If user is already logged in, redirect to dashboard
-    if (user && mounted) {
-      router.replace("/dashboard");
-    }
-
     const hasSeenIntro = localStorage.getItem("hasSeenIntro_v1");
     if (!hasSeenIntro) {
       setShowIntro(true);
@@ -168,17 +163,17 @@ export default function HomePage() {
                     asChild
                     className="bg-primary hover:bg-primary/90 text-white rounded-lg shadow-[0_0_20px_rgba(120,110,255,0.3)] border border-white/10"
                   >
-                    <Link href="/register" onClick={() => trackNavigation("Homepage", "/register")}>
+                    <Link href={user ? "/dashboard" : "/register"} onClick={() => trackNavigation("Homepage", user ? "/dashboard" : "/register") }>
                       <Sparkles className="mr-2 h-4 w-4" />
-                      Get Started
+                      {user ? "Go to Dashboard" : "Get Started"}
                     </Link>
                   </Button>
                   <Button variant="outline" className="border-white/10 bg-white/5 hover:bg-white/10" asChild>
                     <Link
-                      href="/login"
-                      onClick={() => trackNavigation("Homepage", "/login")}
+                      href={user ? "/courses" : "/login"}
+                      onClick={() => trackNavigation("Homepage", user ? "/courses" : "/login")}
                     >
-                      Sign In
+                      {user ? "Browse Courses" : "Sign In"}
                     </Link>
                   </Button>
                 </div>

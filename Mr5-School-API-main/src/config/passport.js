@@ -4,13 +4,17 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+export const isGoogleOAuthEnabled = Boolean(
+    process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+);
+
 export default function (passport) {
     // Only register Google OAuth strategy if credentials are configured
-    if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    if (isGoogleOAuthEnabled) {
         passport.use(new GoogleStrategy({
             clientID: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-            callbackURL: process.env.GOOGLE_CALLBACK_URL || "http://localhost:5000/api/auth/google/callback"
+            callbackURL: process.env.GOOGLE_CALLBACK_URL || "http://localhost:5001/api/auth/google/callback"
         },
             async (accessToken, refreshToken, profile, done) => {
                 try {

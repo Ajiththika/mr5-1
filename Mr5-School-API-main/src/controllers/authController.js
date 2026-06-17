@@ -270,6 +270,8 @@ export const updateDetails = asyncHandler(async (req, res) => {
 		language: req.body.language,
 		profileImage: req.body.profileImage,
 		avatarUrl: req.body.avatarUrl,
+		avatarPreset: req.body.avatarPreset,
+		onboardingCompleted: req.body.onboardingCompleted,
 		timezone: req.body.timezone,
 		gradingSystem: req.body.gradingSystem,
 		regionalPreferences: req.body.regionalPreferences,

@@ -9,11 +9,9 @@ import { verifyToken, authorize } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Public route for platform stats
-router.get("/stats", getPlatformStats);
-
-// Protect admin-only routes
 router.use(verifyToken);
+
+router.get("/stats", authorize("admin"), getPlatformStats);
 router.use(authorize("admin"));
 
 router.get("/registrations/pending", getPendingRegistrations);

@@ -35,7 +35,11 @@ export default function DashboardPage() {
                 router.replace("/admin");
                 break;
             case "student":
-                router.replace("/student/portal");
+                if (!user.onboardingCompleted) {
+                    router.replace("/onboarding");
+                } else {
+                    router.replace("/student/portal");
+                }
                 break;
             default:
                 router.replace("/courses");

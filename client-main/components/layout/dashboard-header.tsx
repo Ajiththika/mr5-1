@@ -17,7 +17,6 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DashboardSidebar } from "./dashboard-sidebar";
 import { ThemeCustomizer } from "@/components/theme-customizer";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { NavigationItem } from "@/data/navigation";
 
 interface DashboardHeaderProps {
@@ -72,9 +71,9 @@ export function DashboardHeader({ title, navigation }: DashboardHeaderProps) {
                 {user?.role === "student" && (
                     <div className="hidden md:flex items-center gap-2">
                         <Button variant="ghost" size="sm" asChild>
-                            <Link href="/courses">
+                            <Link href="/shop">
                                 <ShoppingCart className="h-4 w-4 mr-2" />
-                                Browse Courses
+                                Avatar Shop
                             </Link>
                         </Button>
                         <Button variant="ghost" size="sm" asChild>
@@ -83,11 +82,8 @@ export function DashboardHeader({ title, navigation }: DashboardHeaderProps) {
                                 My Courses
                             </Link>
                         </Button>
-                        <Button variant="ghost" size="icon" className="relative">
+                        <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
                             <Bell className="h-4 w-4" />
-                            <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
-                                3
-                            </Badge>
                         </Button>
                     </div>
                 )}

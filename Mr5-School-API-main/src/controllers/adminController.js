@@ -2,6 +2,7 @@ import User from "../models/User.js";
 import RegistrationRequest from "../models/RegistrationRequest.js";
 import Course from "../models/Course.js";
 import Enrollment from "../models/Enrollment.js";
+import Payment from "../models/Payment.js";
 import { asyncHandler } from "../middleware/errorHandler.js";
 
 // @desc    Get pending registrations
@@ -133,19 +134,38 @@ export const rejectRegistration = asyncHandler(async (req, res) => {
 // @route   GET /api/admin/stats
 // @access  Public
 export const getPlatformStats = asyncHandler(async (req, res) => {
+	const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
 	const [
 		totalStudents,
 		totalCourses,
 		totalEnrollments,
-		recentEnrollments
+		recentEnrollments,
+		totalUsers,
+		completedPayments,
+		recentRevenue,
 	] = await Promise.all([
 		User.countDocuments({ role: "student", status: "approved" }),
 		Course.countDocuments({ isApproved: true }),
 		Enrollment.countDocuments(),
-		Enrollment.countDocuments({
-			enrolledAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } // Last 30 days
-		})
+		Enrollment.countDocuments({ enrolledAt: { $gte: thirtyDaysAgo } }),
+		User.countDocuments({ status: "approved" }),
+		Payment.aggregate([
+			{ $match: { status: "completed" } },
+			{ $group: { _id: null, total: { $sum: "$amount" } } },
+		]),
+		Payment.aggregate([
+			{ $match: { status: "completed", paymentDate: { $gte: thirtyDaysAgo } } },
+			{ $group: { _id: null, total: { $sum: "$amount" } } },
+		]),
 	]);
+
+	const totalRevenue = completedPayments[0]?.total ?? 0;
+	const monthlyRevenue = recentRevenue[0]?.total ?? 0;
+	const engagementRate =
+		totalStudents > 0
+			? Math.round((recentEnrollments / totalStudents) * 100)
+			: 0;
 
 	res.status(200).json({
 		success: true,
@@ -154,7 +174,10 @@ export const getPlatformStats = asyncHandler(async (req, res) => {
 			totalCourses,
 			totalEnrollments,
 			recentEnrollments,
-			isTopRated: true // Static value as per current UI
-		}
+			totalUsers,
+			totalRevenue,
+			monthlyRevenue,
+			engagementRate,
+		},
 	});
 });

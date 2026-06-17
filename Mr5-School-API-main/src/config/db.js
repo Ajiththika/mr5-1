@@ -39,6 +39,9 @@ const seedDevelopmentData = async () => {
 
 	const User = (await import("../models/User.js")).default;
 	const Course = (await import("../models/Course.js")).default;
+	const Lesson = (await import("../models/Lesson.js")).default;
+	const Enrollment = (await import("../models/Enrollment.js")).default;
+	const ShopItem = (await import("../models/ShopItem.js")).default;
 
 	const users = [
 		{
@@ -50,12 +53,23 @@ const seedDevelopmentData = async () => {
 			isActive: true,
 		},
 		{
-			name: "Test Student",
+			name: "Alex Rivera",
 			email: "student@mr5school.com",
 			password: "Student@123456",
 			role: "student",
 			status: "approved",
 			isActive: true,
+			avatarPreset: "cadet-blue",
+			onboardingCompleted: true,
+		},
+		{
+			name: "New Student",
+			email: "onboard@mr5school.com",
+			password: "Onboard@123456",
+			role: "student",
+			status: "approved",
+			isActive: true,
+			onboardingCompleted: false,
 		},
 	];
 
@@ -67,6 +81,10 @@ const seedDevelopmentData = async () => {
 			existing.role = userData.role;
 			existing.status = userData.status;
 			existing.isActive = userData.isActive;
+			if (userData.avatarPreset) existing.avatarPreset = userData.avatarPreset;
+			if (typeof userData.onboardingCompleted === "boolean") {
+				existing.onboardingCompleted = userData.onboardingCompleted;
+			}
 			await existing.save();
 			console.log(`Updated development user: ${userData.email}`);
 		} else {
@@ -76,22 +94,74 @@ const seedDevelopmentData = async () => {
 	}
 
 	const admin = await User.findOne({ email: "admin@mr5school.com" }).exec();
+	const student = await User.findOne({ email: "student@mr5school.com" }).exec();
+
 	if (admin) {
-		const existingCourse = await Course.findOne({ title: "Course X" }).exec();
-		if (!existingCourse) {
-			await Course.create({
-				title: "Course X",
-				description: "Test Course for E2E flows.",
-				category: "Testing",
+		let course = await Course.findOne({ title: "Introduction to the 3D Campus" }).exec();
+		if (!course) {
+			course = await Course.create({
+				title: "Introduction to the 3D Campus",
+				description: "Explore the virtual Mr5 School — meet your AI teacher, navigate classrooms, and complete your first interactive lesson.",
+				category: "Campus",
 				teacher: admin._id,
-				price: 10,
+				price: 0,
 				isApproved: true,
 				language: "English",
+				level: "Beginner",
+				thumbnail: "/assets/dashboard/course-icon-1.png",
 			});
-			console.log("Created development course: Course X");
-		} else {
-			console.log("Development course already exists: Course X");
+			console.log("Created development course: Introduction to the 3D Campus");
 		}
+
+		const lessonCount = await Lesson.countDocuments({ course: course._id });
+		if (lessonCount === 0) {
+			const lessons = [
+				{
+					title: "Welcome to Mr5 School",
+					content: "Meet your virtual campus, learn how navigation works, and discover how lessons connect to 3D rooms.",
+					duration: 8,
+					order: 1,
+					videoUrl: "",
+				},
+				{
+					title: "Your First Classroom Visit",
+					content: "Walk into the 3D classroom, interact with hotspots, and open lesson materials from the environment.",
+					duration: 12,
+					order: 2,
+					videoUrl: "",
+				},
+				{
+					title: "Meet Your AI Teacher",
+					content: "Learn how the AI teaching assistant guides you through concepts and tracks your progress.",
+					duration: 10,
+					order: 3,
+					videoUrl: "",
+				},
+			];
+			for (const lesson of lessons) {
+				await Lesson.create({ ...lesson, course: course._id });
+			}
+			console.log(`Seeded ${lessons.length} lessons for demo course`);
+		}
+
+		if (student) {
+			const enrolled = await Enrollment.findOne({ student: student._id, course: course._id }).exec();
+			if (!enrolled) {
+				await Enrollment.create({ student: student._id, course: course._id, progress: 15 });
+				console.log("Enrolled demo student in 3D Campus course");
+			}
+		}
+	}
+
+	const shopCount = await ShopItem.countDocuments();
+	if (shopCount === 0) {
+		await ShopItem.insertMany([
+			{ name: "Classic Cap", description: "Campus starter hat", type: "hat", priceCents: 299 },
+			{ name: "School Hoodie", description: "Mr5 branded hoodie", type: "shirt", priceCents: 499 },
+			{ name: "Cool Shades", description: "Stylish sunglasses", type: "accessory", priceCents: 199 },
+			{ name: "Textbook Bundle", description: "Virtual study books", type: "book", priceCents: 149 },
+		]);
+		console.log("Seeded shop items for development");
 	}
 };
 

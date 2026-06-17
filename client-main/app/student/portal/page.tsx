@@ -23,7 +23,6 @@ import {
   Menu,
   X,
   ChevronRight,
-  Star,
   Award,
   Zap,
   Users,
@@ -122,6 +121,7 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon, change, changeT
 };
 
 const CourseProgressCard: React.FC<CourseProgress> = ({
+  id,
   title,
   progress,
   thumbnail,
@@ -176,7 +176,7 @@ const CourseProgressCard: React.FC<CourseProgress> = ({
         </div>
       )}
       <Button className="w-full mt-3" size="sm" asChild>
-        <Link href={`/course/${title.toLowerCase().replace(/\s+/g, '-')}`}>Continue Learning</Link>
+        <Link href={`/course/${id}/lesson/start`}>Continue Learning</Link>
       </Button>
     </div>
   </motion.div>
@@ -270,69 +270,9 @@ export default function StudentPortal() {
     { title: "Current Streak", value: "0 days", icon: <Zap className="w-5 h-5" />, change: "", changeType: "positive" as const },
   ]);
 
-  const [courses, setCourses] = useState<CourseProgress[]>([
-    {
-      id: "1",
-      title: "Introduction to Web Development",
-      progress: 25,
-      thumbnail: "/images/course-web.jpg",
-      instructor: "Alex Johnson",
-      nextLesson: "HTML Basics",
-      category: "Beginner"
-    },
-    {
-      id: "2",
-      title: "Advanced React Patterns",
-      progress: 65,
-      thumbnail: "/images/course-react.jpg",
-      instructor: "Sarah Chen",
-      nextLesson: "Higher Order Components",
-      category: "Intermediate"
-    }
-  ]);
-
-  const [events] = useState<UpcomingEvent[]>([
-    {
-      id: "1",
-      title: "Live Session: Advanced Hooks",
-      time: "10:00 AM",
-      date: "Tomorrow",
-      type: "class",
-      course: "Advanced React Patterns"
-    },
-    {
-      id: "2",
-      title: "Assignment Due: Redux Patterns",
-      time: "11:59 PM",
-      date: "Dec 22",
-      type: "assignment",
-      course: "Advanced React Patterns"
-    }
-  ]);
-
-  const [achievements] = useState<Achievement[]>([
-    {
-      id: "1",
-      title: "Quick Learner",
-      description: "Complete 5 lessons in one day",
-      icon: <Zap className="w-4 h-4" />,
-      earned: true
-    },
-    {
-      id: "2",
-      title: "Perfect Score",
-      description: "Score 100% on an assignment",
-      icon: <Star className="w-4 h-4" />,
-      earned: true
-    },
-    {
-      id: "3",
-      title: "Early Bird",
-      description: "Join a class before it starts",
-      icon: <Clock className="w-4 h-4" />,
-      earned: false
-    }
-  ]);
+  const [courses, setCourses] = useState<CourseProgress[]>([]);
+  const [events] = useState<UpcomingEvent[]>([]);
+  const [achievements] = useState<Achievement[]>([]);
 
 
 
@@ -355,6 +295,44 @@ export default function StudentPortal() {
 
         if (mappedCourses.length > 0) {
           setCourses(mappedCourses);
+          const avgProgress =
+            mappedCourses.reduce((sum, c) => sum + c.progress, 0) / mappedCourses.length;
+          setStats([
+            {
+              title: "Active Courses",
+              value: String(mappedCourses.length),
+              icon: <BookOpen className="w-5 h-5" />,
+              change: "",
+              changeType: "positive" as const,
+            },
+            {
+              title: "Avg. Progress",
+              value: `${Math.round(avgProgress)}%`,
+              icon: <Trophy className="w-5 h-5" />,
+              change: "",
+              changeType: "positive" as const,
+            },
+            {
+              title: "Completed",
+              value: String(
+                fetchedEnrollments.filter((e) => e.status === "completed").length
+              ),
+              icon: <CheckCircle className="w-5 h-5" />,
+              change: "",
+              changeType: "positive" as const,
+            },
+            {
+              title: "In Progress",
+              value: String(
+                fetchedEnrollments.filter((e) => e.status === "active").length
+              ),
+              icon: <Zap className="w-5 h-5" />,
+              change: "",
+              changeType: "positive" as const,
+            },
+          ]);
+        } else {
+          setCourses([]);
         }
       } catch (error) {
         console.error("Failed to fetch enrollments", error);
@@ -363,22 +341,8 @@ export default function StudentPortal() {
       }
     };
 
-    // Simulate fetching stats
-    const fetchStats = async () => {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      setStats([
-        { title: "Active Courses", value: "4", icon: <BookOpen className="w-5 h-5" />, change: "+1 this month", changeType: "positive" as const },
-        { title: "Learning Hours", value: "28.5h", icon: <Clock className="w-5 h-5" />, change: "+15%", changeType: "positive" as const },
-        { title: "Completion Rate", value: "82%", icon: <Trophy className="w-5 h-5" />, change: "+4%", changeType: "positive" as const },
-        { title: "Current Streak", value: "9 days", icon: <Zap className="w-5 h-5" />, change: "Keep it up!", changeType: "positive" as const },
-      ]);
-    };
-
     if (user) {
       fetchEnrollments();
-      fetchStats();
     }
   }, [user]);
 

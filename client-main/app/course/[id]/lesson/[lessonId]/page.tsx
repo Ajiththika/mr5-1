@@ -16,12 +16,15 @@ import {
     Bot,
     Video,
     BookOpen,
-    Clock
+    Clock,
+    CheckCircle
 } from "lucide-react";
 import { TeachingAIModal } from "@/components/ai/TeachingAIModal";
 import { useVoiceInteraction } from "@/hooks/useVoiceInteraction";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { progressService } from "@/services/progress.service";
+import { toast } from "sonner";
 
 export default function LessonPage() {
     const params = useParams();
@@ -34,6 +37,8 @@ export default function LessonPage() {
     const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
     const [loading, setLoading] = useState(true);
     const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [completedLessonIds, setCompletedLessonIds] = useState<string[]>([]);
+    const [markingComplete, setMarkingComplete] = useState(false);
 
     // AI Tutor State
     const [aiModalOpen, setAiModalOpen] = useState(false);
@@ -63,8 +68,14 @@ export default function LessonPage() {
                     const lessonRes = await lessonService.getLessonById(lessonId);
                     setCurrentLesson(lessonRes.data);
                 } else if (sortedLessons.length > 0) {
-                    // Fallback if somehow we got here without a valid ID (though route param is required)
                     router.replace(`/course/${courseId}/lesson/${sortedLessons[0]._id}`);
+                }
+
+                try {
+                    const progressRes = await progressService.getCourseProgress(courseId);
+                    setCompletedLessonIds(progressRes.data.completedLessonIds || []);
+                } catch {
+                    // User may not be enrolled yet
                 }
 
             } catch (error) {
@@ -82,6 +93,27 @@ export default function LessonPage() {
     const handleLessonChange = (newLessonId: string) => {
         router.push(`/course/${courseId}/lesson/${newLessonId}`);
     };
+
+    const handleMarkComplete = async () => {
+        if (!currentLesson) return;
+        setMarkingComplete(true);
+        try {
+            const res = await progressService.completeLesson(currentLesson._id);
+            setCompletedLessonIds((prev) =>
+                prev.includes(currentLesson._id) ? prev : [...prev, currentLesson._id]
+            );
+            toast.success(`Lesson complete! Course progress: ${res.data.enrollmentProgress}%`);
+        } catch (error) {
+            console.error("Failed to mark lesson complete", error);
+            toast.error("Could not save progress. Make sure you are enrolled in this course.");
+        } finally {
+            setMarkingComplete(false);
+        }
+    };
+
+    const isCurrentLessonComplete = currentLesson
+        ? completedLessonIds.includes(currentLesson._id)
+        : false;
 
     const currentLessonIndex = lessons.findIndex(l => l._id === lessonId);
     const prevLesson = currentLessonIndex > 0 ? lessons[currentLessonIndex - 1] : null;
@@ -165,12 +197,15 @@ export default function LessonPage() {
                                     title={currentLesson.title}
                                 />
                             ) : (
-                                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-900 to-black">
-                                    <div className="text-center">
-                                        <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/30 transition-colors cursor-pointer">
+                                <div
+                                    className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-950 to-black"
+                                    style={course?.thumbnail ? { backgroundImage: `linear-gradient(rgba(15,23,42,0.85), rgba(15,23,42,0.92)), url(${course.thumbnail})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+                                >
+                                    <div className="text-center px-6">
+                                        <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
                                             <PlayCircle className="w-8 h-8 text-primary" />
                                         </div>
-                                        <p className="text-sm text-muted-foreground">Video content placeholder</p>
+                                        <p className="text-sm text-slate-300">Interactive lesson — read the content below to continue</p>
                                     </div>
                                 </div>
                             )}
@@ -191,6 +226,15 @@ export default function LessonPage() {
                             </div>
 
                             <div className="flex gap-2 shrink-0">
+                                <Button
+                                    variant={isCurrentLessonComplete ? "outline" : "default"}
+                                    className={isCurrentLessonComplete ? "" : "bg-green-600 hover:bg-green-700 text-white"}
+                                    disabled={markingComplete || isCurrentLessonComplete}
+                                    onClick={handleMarkComplete}
+                                >
+                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                    {isCurrentLessonComplete ? "Completed" : markingComplete ? "Saving..." : "Mark Complete"}
+                                </Button>
                                 <Button
                                     variant="outline"
                                     disabled={!prevLesson}
@@ -262,6 +306,7 @@ export default function LessonPage() {
                                 <div className="p-4 space-y-2">
                                     {lessons.map((lesson, index) => {
                                         const isActive = lesson._id === currentLesson._id;
+                                        const isComplete = completedLessonIds.includes(lesson._id);
                                         return (
                                             <div
                                                 key={lesson._id}
@@ -276,11 +321,13 @@ export default function LessonPage() {
                                                 <div className="flex items-start gap-3">
                                                     <div className={cn(
                                                         "mt-1 w-5 h-5 rounded-full border flex items-center justify-center shrink-0 text-[10px]",
-                                                        isActive
+                                                        isComplete
+                                                            ? "bg-green-600 border-green-600 text-white"
+                                                            : isActive
                                                             ? "bg-primary border-primary text-white"
                                                             : "border-white/20 text-muted-foreground"
                                                     )}>
-                                                        {index + 1}
+                                                        {isComplete ? <CheckCircle className="w-3 h-3" /> : index + 1}
                                                     </div>
                                                     <div>
                                                         <h4 className={cn(
@@ -311,6 +358,10 @@ export default function LessonPage() {
             <TeachingAIModal
                 isOpen={aiModalOpen}
                 onClose={() => setAiModalOpen(false)}
+                courseId={courseId}
+                lessonId={lessonId}
+                courseTitle={course?.title}
+                lessonTitle={currentLesson?.title}
                 voiceInteraction={voiceInteraction}
             />
         </div>

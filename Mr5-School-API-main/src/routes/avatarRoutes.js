@@ -16,9 +16,13 @@ router.post("/auto-register", async (req, res) => {
 		const { name, email, password, phone, specialization, bio, avatarToken } =
 			req.body;
 
-		// Validate Avatar AI token (special authentication for AI AI-TEACHERs)
-		const AVATHOR_SECRET_TOKEN =
-			process.env.AVATHOR_SECRET_TOKEN || "avatar-ai-secret-2025";
+		const AVATHOR_SECRET_TOKEN = process.env.AVATHOR_SECRET_TOKEN;
+		if (!AVATHOR_SECRET_TOKEN) {
+			return res.status(503).json({
+				success: false,
+				message: "Avatar auto-registration is not configured",
+			});
+		}
 		if (avatarToken !== AVATHOR_SECRET_TOKEN) {
 			return res.status(403).json({
 				success: false,

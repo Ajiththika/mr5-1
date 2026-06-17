@@ -44,6 +44,14 @@ const userSchema = new mongoose.Schema(
 			type: String,
 			default: "",
 		},
+		avatarPreset: {
+			type: String,
+			default: "",
+		},
+		onboardingCompleted: {
+			type: Boolean,
+			default: false,
+		},
 		// References to profile tables
 		studentProfile: {
 			type: mongoose.Schema.Types.ObjectId,

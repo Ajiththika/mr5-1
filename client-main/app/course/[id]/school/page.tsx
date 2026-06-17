@@ -31,7 +31,7 @@ export default function SchoolPage() {
         // 3. Verify Payment/Enrollment
         const verifyAccess = async () => {
             try {
-                const response = await apiClient.get(`/enrollments/check/${courseId}`);
+                const response = await apiClient.get(`/api/enrollments/check/${courseId}`);
                 if (response.data.access) {
                     setAccessGranted(true);
                     // Dynamically import the 3D component only when access is granted

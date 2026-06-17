@@ -136,4 +136,23 @@
   .spotlight-card:hover {
     box-shadow: 0 0 30px rgba(139, 92, 246, 0.1);
   }
+
+  html.reduce-motion *,
+  html.reduce-motion *::before,
+  html.reduce-motion *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  html.high-contrast {
+    --foreground: 0% 0 0;
+    --background: 100% 0 0;
+  }
+
+  html.high-contrast.dark {
+    --foreground: 100% 0 0;
+    --background: 0% 0 0;
+  }
 }

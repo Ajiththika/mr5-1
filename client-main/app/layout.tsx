@@ -12,6 +12,7 @@ import { generateMetadata as genMeta, generateStructuredData } from "@/lib/seo";
 import { StructuredData } from "@/components/seo/StructuredData";
 import { PerformanceMonitor } from "@/components/PerformanceMonitor";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { AccessibilityPreferencesSync } from "@/components/accessibility/AccessibilityPreferencesSync";
 import type { ReactNode } from "react";
 
 export const metadata: Metadata = genMeta({
@@ -112,6 +113,7 @@ export default function RootLayout({
 							<RegionalSettingsProvider>
 								<ErrorBoundary>
 									<EnhancedUserProvider>
+										<AccessibilityPreferencesSync />
 										<DashboardContextProvider>
 											{children}
 											<Toaster />

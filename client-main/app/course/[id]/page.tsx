@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ComponentType } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useEnhancedUser } from "@/contexts/EnhancedUserContext";
 import apiClient from "@/lib/apiClient";
-import { SchoolScene } from "@/components/3d/school-scene";
 import { Button } from "@/components/ui/button";
 import {
     Loader2,
@@ -24,6 +23,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Navbar } from "@/components/layout/navbar";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 export default function CoursePage() {
     const { user, loading: authLoading } = useEnhancedUser();
@@ -34,6 +34,14 @@ export default function CoursePage() {
     const [hasAccess, setHasAccess] = useState(false);
     const [verifying, setVerifying] = useState(true);
     const [courseData, setCourseData] = useState<any>(null);
+    const [courseError, setCourseError] = useState(false);
+    const [SchoolScene, setSchoolScene] = useState<ComponentType | null>(null);
+
+    useEffect(() => {
+        import("@/components/3d/school-scene").then((mod) => {
+            setSchoolScene(() => mod.SchoolScene);
+        });
+    }, []);
 
     // Fetch Course Data & Verify Access
     useEffect(() => {
@@ -43,18 +51,12 @@ export default function CoursePage() {
             try {
                 // 1. Fetch Course Info (Public)
                 try {
-                    const cRes = await apiClient.get(`/courses/${courseId}`);
+                    const cRes = await apiClient.get(`/api/courses/${courseId}`);
                     setCourseData(cRes.data.data);
+                    setCourseError(false);
                 } catch (error) {
                     console.error('Course loading error:', error);
-                    setCourseData({
-                        title: "Neural Network Mastery",
-                        price: 199.99,
-                        description: "Master the architecture of modern AI. From transformers to diffusion models, build the future today.",
-                        level: "Advanced",
-                        category: "Artificial Intelligence",
-                        duration: "12 Weeks"
-                    });
+                    setCourseError(true);
                 }
 
                 // 2. If User is Logged In, Check Access
@@ -63,7 +65,7 @@ export default function CoursePage() {
                         setHasAccess(true);
                     } else {
                         try {
-                            const accessRes = await apiClient.get(`/enrollments/check/${courseId}`);
+                            const accessRes = await apiClient.get(`/api/enrollments/check/${courseId}`);
                             if (accessRes.data.access) {
                                 setHasAccess(true);
                             }
@@ -88,14 +90,13 @@ export default function CoursePage() {
         // In a real scenario, this would trigger the actual payment flow
         // For the demo, we show the intent or redirect to the payment system
         try {
-            const res = await apiClient.post('/payments/create-checkout-session', { courseId });
+            const res = await apiClient.post('/api/payments/create-checkout-session', { courseId });
             if (res.data.url) {
                 window.location.href = res.data.url;
             }
         } catch (error) {
             console.error("Enrollment failed", error);
-            // Mock success for demo if API fails
-            setHasAccess(true);
+            toast.error("Payment could not be started. Please try again.");
         }
     };
 
@@ -106,6 +107,21 @@ export default function CoursePage() {
                     <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full animate-pulse" />
                     <Loader2 className="h-12 w-12 text-primary animate-spin relative z-10" />
                 </div>
+        </div>
+    );
+    }
+
+    if (courseError || !courseData) {
+        return (
+            <div className="min-h-screen bg-[#020617] text-white flex flex-col">
+                <Navbar />
+                <main className="flex-1 flex flex-col items-center justify-center px-4 text-center space-y-4">
+                    <h1 className="text-2xl font-bold">Course not found</h1>
+                    <p className="text-slate-400">This course could not be loaded. It may have been removed or the link is invalid.</p>
+                    <Button asChild>
+                        <Link href="/courses">Browse courses</Link>
+                    </Button>
+                </main>
             </div>
         );
     }
@@ -211,7 +227,11 @@ export default function CoursePage() {
                                         </div>
                                     ) : null}
                                     <div className="absolute inset-0 z-10">
-                                        <SchoolScene />
+                                        {SchoolScene ? <SchoolScene /> : (
+                                            <div className="w-full h-full flex items-center justify-center bg-black/80">
+                                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* HUD Elements */}

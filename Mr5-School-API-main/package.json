@@ -5,8 +5,8 @@
   "main": "src/app.js",
   "type": "module",
   "scripts": {
-    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
-    "dev": "node --watch src/app.js",
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --forceExit",
+    "dev": "cross-env PORT=5001 NODE_ENV=development node --watch src/app.js",
     "start": "node src/app.js",
     "prod": "pm2 start src/app.js --name lms-api",
     "prod:stop": "pm2 stop lms-api",
@@ -15,7 +15,7 @@
     "prod:monit": "pm2 monit lms-api",
     "seed": "node seedData.js",
     "seed:admin": "node seedAdmin.js",
-    "seed:data": "node seedAll.js",
+    "seed:shop": "node scripts/seedShopItems.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test:mongo": "node test-mongo-connection.js"

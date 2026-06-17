@@ -13,6 +13,7 @@ import {
   DollarSign,
   Globe,
   Trophy,
+  ShoppingBag,
 } from "lucide-react";
 
 // Define the navigation item type
@@ -45,7 +46,7 @@ export const adminNavigation: NavigationItem[] = [
       },
       {
         title: "AI-TEACHERs",
-        href: "/admin/ai-teachers",
+        href: "/admin/AI-TEACHERs",
         icon: GraduationCap,
       },
       {
@@ -122,6 +123,11 @@ export const studentNavigation: NavigationItem[] = [
     title: "Grades",
     href: "/student/grades",
     icon: Trophy,
+  },
+  {
+    title: "Avatar Shop",
+    href: "/shop",
+    icon: ShoppingBag,
   },
   {
     title: "Schedule",

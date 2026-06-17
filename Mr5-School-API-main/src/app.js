@@ -11,11 +11,6 @@ const __dirname = dirname(__filename);
 // Load environment variables from .env file in the Server directory
 dotenv.config({ path: join(__dirname, "../.env") });
 
-// Debug environment variables
-console.log("Debug: Checking GEMINI_API_KEY after dotenv load");
-console.log("GEMINI_API_KEY:", process.env.GEMINI_API_KEY);
-console.log("Length:", process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.length : "undefined");
-
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -41,6 +36,9 @@ import registrationRequestRoutes from "./routes/registrationRequestRoutes.js";
 import contextRoutes from "./routes/contextRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import pricingRoutes from "./routes/pricingRoutes.js";
+import progressRoutes from "./routes/progressRoutes.js";
+import shopRoutes from "./routes/shopRoutes.js";
+import { handleStripeWebhook } from "./controllers/paymentController.js";
 import { validateEnv } from "./config/env.js";
 import aiService from "./services/ai.service.js"; // Import aiService instance
 import passport from "passport";
@@ -73,22 +71,36 @@ const allowedOrigins = [
     "https://mr5-school-api.vercel.app", // Vercel backend deployment
 ];
 
+const localOriginPatterns = [
+    /^http:\/\/localhost(?::\d+)?$/,
+    /^http:\/\/127\.0\.0\.1(?::\d+)?$/,
+    /^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/,
+    /^http:\/\/10\.\d+\.\d+\.\d+(:\d+)?$/,
+    /^http:\/\/172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+(:\d+)?$/,
+];
+
+const isAllowedOrigin = (origin) => {
+    if (!origin) return true;
+
+    if (localOriginPatterns.some((pattern) => pattern.test(origin))) {
+        return true;
+    }
+
+    return allowedOrigins.some((allowedOrigin) => {
+        if (allowedOrigin === "http://localhost:*") {
+            return origin.startsWith("http://localhost:");
+        }
+        return origin === allowedOrigin;
+    });
+};
+
 // Dynamic CORS configuration
 app.use(cors({
     origin: function (origin, callback) {
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
 
-        // Check if origin matches any allowed origins (supporting wildcards for localhost)
-        const isAllowed = allowedOrigins.some(allowedOrigin => {
-            if (allowedOrigin === "http://localhost:*") {
-                // Allow any localhost port
-                return origin && origin.startsWith("http://localhost:");
-            }
-            return origin === allowedOrigin;
-        });
-
-        if (isAllowed) {
+        if (isAllowedOrigin(origin)) {
             callback(null, true);
         } else {
             callback(new Error('Not allowed by CORS'));
@@ -107,6 +119,13 @@ app.use("/api/", apiLimiter);
 
 // Serve static 3D assets
 app.use("/api/3d", express.static(path.join(__dirname, "../public/3d")));
+
+// Stripe webhook must receive raw body — mount before express.json()
+app.post(
+	"/api/payments/webhook",
+	express.raw({ type: "application/json" }),
+	handleStripeWebhook,
+);
 
 // Middleware
 app.use(express.json({ limit: "10mb" }));
@@ -146,6 +165,8 @@ app.use("/api/requests", registrationRequestRoutes);
 app.use("/api/context", contextRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/pricing", pricingRoutes);
+app.use("/api/progress", progressRoutes);
+app.use("/api/shop", shopRoutes);
 
 // Health check endpoint
 app.get("/health", (req, res) => {

@@ -13,7 +13,8 @@ export function middleware(request: NextRequest) {
         "/about",
         "/contact",
         "/courses",
-        "/course"
+        "/course",
+        "/shop"
     ];
 
     const isPublicPath = publicPaths.some((path) => {
@@ -48,6 +49,14 @@ export function middleware(request: NextRequest) {
     if (token && (request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/register")) {
         // Redirect to dashboard if already logged in
         return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+
+    const isDevOnlyPath =
+        request.nextUrl.pathname.startsWith("/nebula") ||
+        request.nextUrl.pathname.startsWith("/demo");
+
+    if (isDevOnlyPath && process.env.NODE_ENV === "production") {
+        return NextResponse.redirect(new URL("/", request.url));
     }
 
     return NextResponse.next();

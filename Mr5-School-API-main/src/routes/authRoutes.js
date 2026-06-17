@@ -16,8 +16,16 @@ import {
 import { verifyToken } from "../middleware/authMiddleware.js";
 import { authLimiter } from "../middleware/security.js";
 import passport from "passport";
+import { isGoogleOAuthEnabled } from "../config/passport.js";
 
 const router = express.Router();
+
+const googleNotConfigured = (_req, res) => {
+	res.status(503).json({
+		success: false,
+		error: "Google sign-in is not configured for this environment.",
+	});
+};
 
 // Public routes
 router.post("/register", authLimiter, register);
@@ -26,12 +34,18 @@ router.post("/refresh", refreshToken);
 router.post("/forgotpassword", forgotPassword);
 router.put("/resetpassword/:resettoken", resetPassword);
 
-// Google Auth Routes
-router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
-router.get("/google/callback",
-	passport.authenticate("google", { session: false, failureRedirect: "/login" }),
-	googleCallback
-);
+// Google Auth Routes (only when OAuth credentials are set)
+if (isGoogleOAuthEnabled) {
+	router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+	router.get(
+		"/google/callback",
+		passport.authenticate("google", { session: false, failureRedirect: "/login" }),
+		googleCallback
+	);
+} else {
+	router.get("/google", googleNotConfigured);
+	router.get("/google/callback", googleNotConfigured);
+}
 
 // Protected routes
 router.post("/logout", logout);

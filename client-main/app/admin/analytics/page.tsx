@@ -17,14 +17,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  LineChart,
-  PieChart,
   TrendingUp,
   Users,
   BookOpen,
   DollarSign,
 } from "lucide-react";
 import { toast } from "sonner";
+import apiClient from "@/lib/apiClient";
 
 // Define types for our data
 interface UserGrowthData {
@@ -48,6 +47,17 @@ interface PopularCourseData {
   rating: number;
 }
 
+interface PlatformStats {
+  totalStudents: number;
+  totalCourses: number;
+  totalEnrollments: number;
+  recentEnrollments: number;
+  totalUsers: number;
+  totalRevenue: number;
+  monthlyRevenue: number;
+  engagementRate: number;
+}
+
 interface AnalyticsData {
   userGrowth: UserGrowthData[];
   courseEnrollments: CourseEnrollmentData[];
@@ -58,6 +68,7 @@ interface AnalyticsData {
 export default function AnalyticsDashboard() {
   const { user } = useEnhancedUser();
   const router = useRouter();
+  const [stats, setStats] = useState<PlatformStats | null>(null);
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData>({
     userGrowth: [],
     courseEnrollments: [],
@@ -75,41 +86,27 @@ export default function AnalyticsDashboard() {
 
   const fetchAnalyticsData = async () => {
     try {
-      // In a real implementation, you would fetch actual analytics data
-      // For now, we'll use mock data to demonstrate the UI
+      const statsRes = await apiClient.get("/api/admin/stats");
+      const data = statsRes.data.data as PlatformStats;
+      setStats(data);
+
       setAnalyticsData({
         userGrowth: [
-          { month: "Jan", users: 45 },
-          { month: "Feb", users: 52 },
-          { month: "Mar", users: 48 },
-          { month: "Apr", users: 61 },
-          { month: "May", users: 72 },
-          { month: "Jun", users: 85 },
+          { month: "Total Users", users: data.totalUsers || 0 },
+          { month: "Students", users: data.totalStudents || 0 },
+          { month: "New Enrollments (30d)", users: data.recentEnrollments || 0 },
         ],
         courseEnrollments: [
-          { course: "Mathematics", enrollments: 120 },
-          { course: "Physics", enrollments: 95 },
-          { course: "Chemistry", enrollments: 87 },
-          { course: "Biology", enrollments: 78 },
-          { course: "Computer Science", enrollments: 110 },
+          { course: "Published Courses", enrollments: data.totalCourses || 0 },
+          { course: "Total Enrollments", enrollments: data.totalEnrollments || 0 },
         ],
         revenueTrends: [
-          { month: "Jan", revenue: 12500 },
-          { month: "Feb", revenue: 14200 },
-          { month: "Mar", revenue: 13800 },
-          { month: "Apr", revenue: 15600 },
-          { month: "May", revenue: 16800 },
-          { month: "Jun", revenue: 18200 },
+          { month: "All Time", revenue: data.totalRevenue || 0 },
+          { month: "Last 30 Days", revenue: data.monthlyRevenue || 0 },
         ],
-        popularCourses: [
-          { title: "Advanced Mathematics", students: 120, rating: 4.8 },
-          { title: "Quantum Physics", students: 95, rating: 4.7 },
-          { title: "Organic Chemistry", students: 87, rating: 4.6 },
-          { title: "Genetics", students: 78, rating: 4.5 },
-          { title: "Machine Learning", students: 110, rating: 4.9 },
-        ],
+        popularCourses: [],
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching analytics data:", error);
       toast.error("Failed to load analytics data");
     }
@@ -150,12 +147,12 @@ export default function AnalyticsDashboard() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold tracking-tight">1,248</div>
-                <div className="flex items-center text-sm mt-1">
-                  <TrendingUp className="h-4 w-4 text-green-600 mr-1" />
-                  <span className="text-green-600 font-medium">+12.5%</span>
-                  <span className="text-muted-foreground ml-1">from last month</span>
+                <div className="text-3xl font-bold tracking-tight">
+                  {stats?.totalUsers ?? "—"}
                 </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {stats?.totalStudents ?? 0} approved students
+                </p>
               </CardContent>
             </Card>
 
@@ -169,31 +166,31 @@ export default function AnalyticsDashboard() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold tracking-tight">42</div>
-                <div className="flex items-center text-sm mt-1">
-                  <TrendingUp className="h-4 w-4 text-green-600 mr-1" />
-                  <span className="text-green-600 font-medium">+8.1%</span>
-                  <span className="text-muted-foreground ml-1">from last month</span>
+                <div className="text-3xl font-bold tracking-tight">
+                  {stats?.totalCourses ?? "—"}
                 </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {stats?.totalEnrollments ?? 0} total enrollments
+                </p>
               </CardContent>
             </Card>
 
             <Card className="border-border/50 shadow-sm hover:shadow-md transition-all hover:bg-accent/5">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Monthly Revenue
+                  Total Revenue
                 </CardTitle>
                 <div className="p-2.5 rounded-xl bg-orange-500/10">
                   <DollarSign className="h-5 w-5 text-orange-600" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold tracking-tight">$24,560</div>
-                <div className="flex items-center text-sm mt-1">
-                  <TrendingUp className="h-4 w-4 text-green-600 mr-1" />
-                  <span className="text-green-600 font-medium">+23.5%</span>
-                  <span className="text-muted-foreground ml-1">from last month</span>
+                <div className="text-3xl font-bold tracking-tight">
+                  ${(stats?.totalRevenue ?? 0).toLocaleString()}
                 </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  ${(stats?.monthlyRevenue ?? 0).toLocaleString()} last 30 days
+                </p>
               </CardContent>
             </Card>
 
@@ -207,12 +204,12 @@ export default function AnalyticsDashboard() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold tracking-tight">78.2%</div>
-                <div className="flex items-center text-sm mt-1">
-                  <TrendingUp className="h-4 w-4 text-green-600 mr-1" />
-                  <span className="text-green-600 font-medium">+4.2%</span>
-                  <span className="text-muted-foreground ml-1">from last month</span>
+                <div className="text-3xl font-bold tracking-tight">
+                  {stats?.engagementRate ?? 0}%
                 </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {stats?.recentEnrollments ?? 0} enrollments in last 30 days
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -227,11 +224,13 @@ export default function AnalyticsDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-[300px] flex items-center justify-center text-muted-foreground bg-accent/5 rounded-lg border border-border/20 border-dashed">
-                  <div className="text-center">
-                    <LineChart className="h-10 w-10 mx-auto mb-2 opacity-20" />
-                    <span className="text-sm">User growth chart</span>
-                  </div>
+                <div className="space-y-3">
+                  {analyticsData.userGrowth.map((row) => (
+                    <div key={row.month} className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">{row.month}</span>
+                      <span className="font-semibold">{row.users}</span>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
@@ -244,11 +243,13 @@ export default function AnalyticsDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-[300px] flex items-center justify-center text-muted-foreground bg-accent/5 rounded-lg border border-border/20 border-dashed">
-                  <div className="text-center">
-                    <LineChart className="h-10 w-10 mx-auto mb-2 opacity-20" />
-                    <span className="text-sm">Revenue trends chart</span>
-                  </div>
+                <div className="space-y-3">
+                  {analyticsData.revenueTrends.map((row) => (
+                    <div key={row.month} className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">{row.month}</span>
+                      <span className="font-semibold">${row.revenue.toLocaleString()}</span>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
@@ -261,11 +262,13 @@ export default function AnalyticsDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-[300px] flex items-center justify-center text-muted-foreground bg-accent/5 rounded-lg border border-border/20 border-dashed">
-                  <div className="text-center">
-                    <PieChart className="h-10 w-10 mx-auto mb-2 opacity-20" />
-                    <span className="text-sm">Course enrollment chart</span>
-                  </div>
+                <div className="space-y-3">
+                  {analyticsData.courseEnrollments.map((row) => (
+                    <div key={row.course} className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">{row.course}</span>
+                      <span className="font-semibold">{row.enrollments}</span>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
@@ -279,7 +282,12 @@ export default function AnalyticsDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {analyticsData.popularCourses.map((course, index) => (
+                  {analyticsData.popularCourses.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-8">
+                      Course ratings will appear here once reviews are collected.
+                    </p>
+                  ) : (
+                    analyticsData.popularCourses.map((course, index) => (
                     <div key={index} className="flex items-center justify-between">
                       <div>
                         <p className="font-medium">{course.title}</p>
@@ -301,7 +309,8 @@ export default function AnalyticsDashboard() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                  ))
+                  )}
                 </div>
               </CardContent>
             </Card>
