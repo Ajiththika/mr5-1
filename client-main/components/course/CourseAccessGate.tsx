@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useEnhancedUser } from "@/contexts/EnhancedUserContext";
 import apiClient from "@/lib/apiClient";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ interface CourseAccessGateProps {
 export function CourseAccessGate({ courseId, children }: CourseAccessGateProps) {
   const { user, loading: authLoading } = useEnhancedUser();
   const router = useRouter();
+  const pathname = usePathname();
   const [accessGranted, setAccessGranted] = useState(false);
   const [checkingAccess, setCheckingAccess] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +24,8 @@ export function CourseAccessGate({ courseId, children }: CourseAccessGateProps) 
     if (authLoading) return;
 
     if (!user) {
-      router.replace(`/login?redirect=/course/${courseId}`);
+      setCheckingAccess(false);
+      router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
       return;
     }
 
@@ -54,7 +56,16 @@ export function CourseAccessGate({ courseId, children }: CourseAccessGateProps) 
     };
 
     verifyAccess();
-  }, [user, authLoading, courseId, router]);
+  }, [user, authLoading, courseId, router, pathname]);
+
+  if (!authLoading && !user) {
+    return (
+      <div className="min-h-screen bg-[#0b1226] flex flex-col items-center justify-center text-white space-y-4">
+        <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
+        <p className="text-blue-200">Redirecting to sign in…</p>
+      </div>
+    );
+  }
 
   if (authLoading || checkingAccess) {
     return (

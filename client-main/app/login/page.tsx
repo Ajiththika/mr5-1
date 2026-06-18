@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { ZodError } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,8 @@ import { motion } from "framer-motion";
 
 function LoginForm() {
     const { login } = useEnhancedUser();
+    const searchParams = useSearchParams();
+    const redirectTo = searchParams.get("redirect");
 
 
     const [formData, setFormData] = useState({
@@ -34,9 +37,7 @@ function LoginForm() {
 
         try {
             loginSchema.parse(formData);
-            await login(formData.email, formData.password);
-            // Redirection is handled by the context or page if needed.
-            // But EnhancedUserContext already redirects to /dashboard based on role.
+            await login(formData.email, formData.password, redirectTo ?? undefined);
         } catch (err: any) {
             console.error("Login Page Error:", err);
             if (err instanceof ZodError) {

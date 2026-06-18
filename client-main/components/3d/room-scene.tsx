@@ -153,4 +153,4 @@ export function RoomScene({
   );
 }
 
-useGLTF.preload("/assets/3d/rooms/classroom.glb");
+useGLTF.preload("/assets/3d/rooms/principal.glb", true);

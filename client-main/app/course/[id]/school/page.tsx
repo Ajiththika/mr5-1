@@ -1,103 +1,46 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ComponentType } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useEnhancedUser } from "@/contexts/EnhancedUserContext";
-import apiClient from "@/lib/apiClient";
+import { CourseAccessGate } from "@/components/course/CourseAccessGate";
 import { Button } from "@/components/ui/button";
-import { Loader2, Lock } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import type { SchoolCampusSceneProps } from "@/components/3d/school-campus-scene";
 
 export default function SchoolPage() {
-    const { user, loading: authLoading } = useEnhancedUser();
-    const router = useRouter();
-    const params = useParams();
-    const courseId = params.id as string;
+  const router = useRouter();
+  const params = useParams();
+  const courseId = params.id as string;
+  const [SchoolCampusScene, setSchoolCampusScene] =
+    useState<ComponentType<SchoolCampusSceneProps> | null>(null);
 
-    const [accessGranted, setAccessGranted] = useState(false);
-    const [checkingAccess, setCheckingAccess] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [SchoolScene, setSchoolScene] = useState<any>(null);
+  useEffect(() => {
+    import("@/components/3d/school-campus-scene").then((mod) => {
+      setSchoolCampusScene(() => mod.SchoolCampusScene);
+    });
+  }, []);
 
-    useEffect(() => {
-        // 1. Wait for Auth to initialize
-        if (authLoading) return;
+  const backToCourse = () => router.push(`/course/${courseId}`);
 
-        // 2. Check if logged in
-        if (!user) {
-            router.replace(`/login?redirect=/course/${courseId}/school`);
-            return;
-        }
-
-        // 3. Verify Payment/Enrollment
-        const verifyAccess = async () => {
-            try {
-                const response = await apiClient.get(`/api/enrollments/check/${courseId}`);
-                if (response.data.access) {
-                    setAccessGranted(true);
-                    // Dynamically import the 3D component only when access is granted
-                    const { SchoolScene } = await import("@/components/3d/school-scene");
-                    setSchoolScene(() => SchoolScene);
-                } else {
-                    setError("Enrollment required");
-                }
-            } catch (err: any) {
-                console.error("Access check failed", err);
-                if (err.response?.status === 401) {
-                    router.replace("/login");
-                } else if (err.response?.status === 403) {
-                    setError("You do not have access to this course. Please enroll first.");
-                } else {
-                    setError("Unable to verify access. Please try again.");
-                }
-            } finally {
-                setCheckingAccess(false);
-            }
-        };
-
-        verifyAccess();
-    }, [user, authLoading, courseId, router]);
-
-    // Loading State
-    if (authLoading || checkingAccess) {
-        return (
-            <div className="min-h-screen bg-[#0b1226] flex flex-col items-center justify-center text-white space-y-4">
-                <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
-                <p className="animate-pulse text-blue-200">Verifying security credentials...</p>
-            </div>
-        );
-    }
-
-    // Error / Access Denied State
-    if (error || !accessGranted) {
-        return (
-            <div className="min-h-screen bg-[#0b1226] flex items-center justify-center p-4">
-                <div className="max-w-md w-full bg-white/10 backdrop-blur-xl border border-red-500/30 rounded-2xl p-8 text-center shadow-2xl">
-                    <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <Lock className="h-8 w-8 text-red-500" />
-                    </div>
-                    <h1 className="text-2xl font-bold text-white mb-2">Restricted Area</h1>
-                    <p className="text-slate-300 mb-8">{error || "Access denied."}</p>
-
-                    <div className="flex flex-col gap-3">
-                        <Button
-                            className="w-full bg-blue-600 hover:bg-blue-700"
-                            onClick={() => router.push(`/course/${courseId}`)}
-                        >
-                            View Course Details
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            className="w-full text-slate-400 hover:text-white"
-                            onClick={() => router.push("/dashboard")}
-                        >
-                            Return to Dashboard
-                        </Button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    // Success State - Render 3D Scene
-    return SchoolScene ? <SchoolScene /> : <div>Loading 3D environment...</div>;
+  return (
+    <CourseAccessGate courseId={courseId}>
+      <div className="min-h-screen bg-[#020617]">
+        {SchoolCampusScene ? (
+          <SchoolCampusScene
+            courseId={courseId}
+            variant="immersive"
+            className="rounded-none border-0"
+            onBack={backToCourse}
+          />
+        ) : (
+          <div className="min-h-screen flex flex-col items-center justify-center text-white gap-4">
+            <p className="text-sm text-sky-200 animate-pulse">Preparing virtual campus…</p>
+            <Button variant="outline" onClick={backToCourse} className="border-white/20">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Course
+            </Button>
+          </div>
+        )}
+      </div>
+    </CourseAccessGate>
+  );
 }

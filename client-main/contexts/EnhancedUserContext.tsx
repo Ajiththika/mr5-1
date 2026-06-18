@@ -11,7 +11,7 @@ interface EnhancedUserContextType {
   user: User | null;
   loading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, redirectTo?: string) => Promise<void>;
   register: (name: string, email: string, password: string, role?: "student" | "AI-TEACHER") => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
@@ -194,7 +194,7 @@ export function EnhancedUserProvider({ children }: { children: React.ReactNode }
   /**
    * Login with email and password
    */
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string, redirectTo?: string) => {
     const response = await authService.login({ email, password });
     if (response.success && response.data) {
       const { user: userData } = response.data;
@@ -203,6 +203,16 @@ export function EnhancedUserProvider({ children }: { children: React.ReactNode }
       setUser(userData);
       // Update cache
       userCache.set("currentUser", userData);
+
+      const safeRedirect =
+        redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//")
+          ? redirectTo
+          : null;
+
+      if (safeRedirect) {
+        router.push(safeRedirect);
+        return;
+      }
 
       // Redirect based on role using router.push for SPA navigation
       switch (userData.role) {

@@ -24,6 +24,7 @@ import { motion } from "framer-motion";
 import { Navbar } from "@/components/layout/navbar";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import type { SchoolCampusSceneProps } from "@/components/3d/school-campus-scene";
 
 export default function CoursePage() {
     const { user, loading: authLoading } = useEnhancedUser();
@@ -35,11 +36,11 @@ export default function CoursePage() {
     const [verifying, setVerifying] = useState(true);
     const [courseData, setCourseData] = useState<any>(null);
     const [courseError, setCourseError] = useState(false);
-    const [SchoolScene, setSchoolScene] = useState<ComponentType | null>(null);
+    const [SchoolScene, setSchoolScene] = useState<ComponentType<SchoolCampusSceneProps> | null>(null);
 
     useEffect(() => {
-        import("@/components/3d/school-scene").then((mod) => {
-            setSchoolScene(() => mod.SchoolScene);
+        import("@/components/3d/school-campus-scene").then((mod) => {
+            setSchoolScene(() => mod.SchoolCampusScene);
         });
     }, []);
 
@@ -227,7 +228,9 @@ export default function CoursePage() {
                                         </div>
                                     ) : null}
                                     <div className="absolute inset-0 z-10">
-                                        {SchoolScene ? <SchoolScene /> : (
+                                        {SchoolScene ? (
+                                            <SchoolScene courseId={courseId} variant="preview" />
+                                        ) : (
                                             <div className="w-full h-full flex items-center justify-center bg-black/80">
                                                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                                             </div>
