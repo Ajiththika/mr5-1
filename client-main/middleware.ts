@@ -14,7 +14,13 @@ export function middleware(request: NextRequest) {
         "/contact",
         "/courses",
         "/course",
-        "/shop"
+        "/shop",
+        "/pricing",
+        "/accessibility",
+        "/ai-assistant",
+        "/offline",
+        "/sitemap.xml",
+        "/robots.txt",
     ];
 
     const isPublicPath = publicPaths.some((path) => {
@@ -33,7 +39,9 @@ export function middleware(request: NextRequest) {
         request.nextUrl.pathname.endsWith(".jpg") ||
         request.nextUrl.pathname.endsWith(".svg") ||
         request.nextUrl.pathname.endsWith(".ico") ||
-        request.nextUrl.pathname.includes("manifest")) {
+        request.nextUrl.pathname.includes("manifest") ||
+        request.nextUrl.pathname === "/sitemap.xml" ||
+        request.nextUrl.pathname === "/robots.txt") {
         return NextResponse.next();
     }
 

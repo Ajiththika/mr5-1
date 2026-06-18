@@ -5,13 +5,14 @@ import Course from '../models/Course.js'; // Assuming Course model exists
 import Lesson from '../models/Lesson.js';
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { getOllamaHost } from '../utils/ollamaEnv.js';
 
 class AITeacherService {
     constructor() {
         this.openai = new OpenAI({
             apiKey: process.env.OPENAI_API_KEY || 'dummy-key-for-init',
         });
-        this.ollama = new Ollama({ host: process.env.OLLAMA_HOST || 'http://127.0.0.1:11434' });
+        this.ollama = new Ollama({ host: getOllamaHost() });
 
         // Gemini initialization
         if (process.env.GEMINI_API_KEY) {

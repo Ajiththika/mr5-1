@@ -1,0 +1,44 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - img [ref=e6]
+        - text: Student Access
+      - heading "Welcome Back" [level=1] [ref=e9]
+      - paragraph [ref=e10]: Enter your credentials to continue learning
+    - generic [ref=e11]:
+      - generic [ref=e12]:
+        - generic [ref=e13]:
+          - text: Email
+          - generic [ref=e14]:
+            - img [ref=e15]
+            - textbox "Email" [ref=e18]:
+              - /placeholder: student@mr5school.com
+        - generic [ref=e19]:
+          - generic [ref=e20]:
+            - text: Password
+            - link "Forgot?" [ref=e21] [cursor=pointer]:
+              - /url: /forgot-password
+          - generic [ref=e22]:
+            - img [ref=e23]
+            - textbox "Password" [ref=e26]:
+              - /placeholder: ••••••••
+            - button [ref=e27]:
+              - img [ref=e28]
+      - button "Sign In" [ref=e31]:
+        - generic [ref=e32]:
+          - text: Sign In
+          - img [ref=e33]
+      - generic [ref=e37]: Or continue with
+      - button "Google" [ref=e38]:
+        - img [ref=e39]
+        - text: Google
+    - generic [ref=e44]:
+      - text: New to our galaxy?
+      - link "Register" [ref=e45] [cursor=pointer]:
+        - /url: /register
+  - region "Notifications alt+T"
+```

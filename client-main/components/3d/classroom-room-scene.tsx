@@ -29,6 +29,12 @@ import {
   UserRound,
 } from "lucide-react";
 import * as THREE from "three";
+import { TeacherPlaytimePanel } from "@/components/classroom/teacher-playtime-panel";
+import { ClassroomStatusPanel } from "@/components/classroom/ClassroomStatusPanel";
+import { EnvironmentDevPanel } from "@/components/classroom/EnvironmentDevPanel";
+import { ClassroomEnvironmentProvider, useClassroomEnvironment } from "@/contexts/ClassroomEnvironmentContext";
+import { ClassroomAtmosphere } from "@/components/3d/classroom/ClassroomAtmosphere";
+import type { EnvironmentLighting } from "@/lib/classroom-environment";
 
 const CLASSROOM_GLB = "/assets/3d/rooms/classroom.glb";
 const LOGO_URL = "/images/mr5-logo.png";
@@ -429,7 +435,9 @@ function ClassroomCameraRig({
     applyPresetBase(preset);
     camera.near = 0.1;
     camera.far = 42;
-    camera.fov = preset.fov;
+    if (camera instanceof THREE.PerspectiveCamera) {
+      camera.fov = preset.fov;
+    }
     camera.updateProjectionMatrix();
   }, [applyPresetBase, camera, mode, preset]);
 
@@ -464,7 +472,9 @@ function ClassroomCameraRig({
 
     camera.position.copy(currentPos.current);
     camera.lookAt(currentLook.current);
-    camera.fov = THREE.MathUtils.lerp(camera.fov, preset.fov, 1 - Math.exp(-6 * delta));
+    if (camera instanceof THREE.PerspectiveCamera) {
+      camera.fov = THREE.MathUtils.lerp(camera.fov, preset.fov, 1 - Math.exp(-6 * delta));
+    }
     camera.updateProjectionMatrix();
   });
 
@@ -587,6 +597,7 @@ function WallBranding({
           opacity={0.35}
         />
       </mesh>
+      {/* eslint-disable-next-line jsx-a11y/alt-text -- drei Image is a 3D texture billboard, not an HTML img */}
       <Image
         url={LOGO_URL}
         position={[-0.56, 0.01, 0.03]}
@@ -727,7 +738,13 @@ function TeacherCharacter({
   );
 }
 
-function ClassroomLighting({ viewState }: { viewState: ClassroomViewState }) {
+function ClassroomLighting({
+  viewState,
+  lighting,
+}: {
+  viewState: ClassroomViewState;
+  lighting: EnvironmentLighting;
+}) {
   const windowDir = useMemo(() => {
     const side = new THREE.Vector3()
       .crossVectors(new THREE.Vector3(0, 1, 0), viewState.classDirection)
@@ -737,19 +754,15 @@ function ClassroomLighting({ viewState }: { viewState: ClassroomViewState }) {
 
   return (
     <>
-      <ambientLight intensity={0.42} color="#eef2ff" />
+      <ambientLight intensity={lighting.ambientIntensity} color={lighting.ambientColor} />
       <hemisphereLight
-        args={["#dbeafe", "#1e293b", 0.48]}
+        args={["#dbeafe", "#1e293b", lighting.fillIntensity]}
         position={[0, 6, 0]}
       />
       <directionalLight
-        position={[
-          windowDir.x * 7,
-          5.5,
-          windowDir.z * 7,
-        ]}
-        intensity={1.15}
-        color="#fff7ed"
+        position={[windowDir.x * 7, 5.5, windowDir.z * 7]}
+        intensity={lighting.sunIntensity}
+        color={lighting.sunColor}
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-camera-near={0.5}
@@ -766,8 +779,8 @@ function ClassroomLighting({ viewState }: { viewState: ClassroomViewState }) {
           3.5,
           viewState.classDirection.z * -3,
         ]}
-        intensity={0.32}
-        color="#c7d2fe"
+        intensity={lighting.fillIntensity}
+        color={lighting.fillColor}
       />
       <pointLight
         position={[
@@ -775,7 +788,7 @@ function ClassroomLighting({ viewState }: { viewState: ClassroomViewState }) {
           viewState.board.y + 0.8,
           viewState.board.z,
         ]}
-        intensity={0.28}
+        intensity={lighting.boardIntensity}
         color="#fef3c7"
         distance={10}
       />
@@ -787,10 +800,67 @@ function ClassroomLighting({ viewState }: { viewState: ClassroomViewState }) {
         ]}
         angle={0.55}
         penumbra={0.65}
-        intensity={0.22}
+        intensity={lighting.effects.thunder ? 0.35 : 0.22}
         color="#f8fafc"
         castShadow={false}
       />
+    </>
+  );
+}
+
+function PracticalLabBench({ viewState }: { viewState: ClassroomViewState }) {
+  const position = useMemo(() => {
+    const side = new THREE.Vector3()
+      .crossVectors(new THREE.Vector3(0, 1, 0), viewState.classDirection)
+      .normalize();
+    const bench = viewState.board
+      .clone()
+      .add(side.multiplyScalar(-2.1))
+      .add(viewState.classDirection.clone().multiplyScalar(1.4));
+    bench.y = viewState.floorY;
+    return bench;
+  }, [viewState]);
+
+  const rotationY = useMemo(() => {
+    return Math.atan2(viewState.classDirection.x, viewState.classDirection.z);
+  }, [viewState.classDirection]);
+
+  return (
+    <group position={[position.x, position.y, position.z]} rotation={[0, rotationY, 0]}>
+      <mesh castShadow receiveShadow position={[0, 0.42, 0]}>
+        <boxGeometry args={[1.85, 0.07, 0.95]} />
+        <meshStandardMaterial color="#475569" roughness={0.52} metalness={0.14} />
+      </mesh>
+      <mesh castShadow position={[-0.78, 0.21, -0.32]}>
+        <boxGeometry args={[0.07, 0.42, 0.07]} />
+        <meshStandardMaterial color="#334155" roughness={0.7} metalness={0.08} />
+      </mesh>
+      <mesh castShadow position={[0.78, 0.21, -0.32]}>
+        <boxGeometry args={[0.07, 0.42, 0.07]} />
+        <meshStandardMaterial color="#334155" roughness={0.7} metalness={0.08} />
+      </mesh>
+      <mesh castShadow position={[-0.78, 0.21, 0.32]}>
+        <boxGeometry args={[0.07, 0.42, 0.07]} />
+        <meshStandardMaterial color="#334155" roughness={0.7} metalness={0.08} />
+      </mesh>
+      <mesh castShadow position={[0.78, 0.21, 0.32]}>
+        <boxGeometry args={[0.07, 0.42, 0.07]} />
+        <meshStandardMaterial color="#334155" roughness={0.7} metalness={0.08} />
+      </mesh>
+      <mesh position={[0.2, 0.48, 0.1]} rotation={[0.08, 0, 0]}>
+        <boxGeometry args={[0.35, 0.02, 0.25]} />
+        <meshStandardMaterial color="#1e293b" roughness={0.35} metalness={0.2} />
+      </mesh>
+    </group>
+  );
+}
+
+function ClassroomSceneEnvironment({ lighting }: { lighting: EnvironmentLighting }) {
+  return (
+    <>
+      <color attach="background" args={[lighting.background]} />
+      <fog attach="fog" args={[lighting.fogColor, lighting.fogNear, lighting.fogFar]} />
+      <Environment preset="apartment" environmentIntensity={lighting.environmentIntensity} />
     </>
   );
 }
@@ -804,16 +874,36 @@ function ClassroomContent({
   cameraMode: CameraMode;
   onViewStateReady: (state: ClassroomViewState) => void;
 }) {
+  const { environment } = useClassroomEnvironment();
+  const { lighting } = environment;
+
+  const windowVectors = useMemo(() => {
+    if (!viewState) return null;
+    const windowNormal = new THREE.Vector3()
+      .crossVectors(new THREE.Vector3(0, 1, 0), viewState.classDirection)
+      .normalize()
+      .multiplyScalar(-1);
+    const windowCenter = viewState.board
+      .clone()
+      .add(windowNormal.clone().multiplyScalar(2.8));
+    windowCenter.y = viewState.floorY + 2.35;
+    return { windowNormal, windowCenter };
+  }, [viewState]);
+
   return (
     <>
       <SceneRendererSetup />
-      <color attach="background" args={["#141c2b"]} />
-      <fog attach="fog" args={["#141c2b", 20, 36]} />
-      <Environment preset="apartment" environmentIntensity={0.52} />
+      <ClassroomSceneEnvironment lighting={lighting} />
       <ClassroomModel onViewStateReady={onViewStateReady} />
-      {viewState && (
+      {viewState && windowVectors && (
         <>
-          <ClassroomLighting viewState={viewState} />
+          <ClassroomLighting viewState={viewState} lighting={lighting} />
+          <ClassroomAtmosphere
+            lighting={lighting}
+            windowNormal={windowVectors.windowNormal}
+            windowCenter={windowVectors.windowCenter}
+          />
+          <PracticalLabBench viewState={viewState} />
           <WallBranding
             position={viewState.logoPosition}
             lookAt={viewState.logoLookAt}
@@ -824,7 +914,7 @@ function ClassroomContent({
           />
           <ContactShadows
             position={[0, viewState.floorY + 0.01, 0]}
-            opacity={0.35}
+            opacity={lighting.effects.rain ? 0.48 : 0.35}
             scale={14}
             blur={2.8}
             far={5.5}
@@ -879,6 +969,14 @@ export interface ClassroomRoomSceneProps {
 }
 
 export function ClassroomRoomScene({ courseId, onExit }: ClassroomRoomSceneProps) {
+  return (
+    <ClassroomEnvironmentProvider>
+      <ClassroomRoomSceneInner courseId={courseId} onExit={onExit} />
+    </ClassroomEnvironmentProvider>
+  );
+}
+
+function ClassroomRoomSceneInner({ courseId, onExit }: ClassroomRoomSceneProps) {
   const [viewState, setViewState] = useState<ClassroomViewState | null>(null);
   const [cameraMode, setCameraMode] = useState<CameraMode>("student");
 
@@ -962,7 +1060,19 @@ export function ClassroomRoomScene({ courseId, onExit }: ClassroomRoomSceneProps
           </Suspense>
         </Canvas>
 
-        <div className="pointer-events-none absolute inset-0 z-10 flex flex-col justify-end p-3 sm:p-4">
+        <div className="pointer-events-none absolute inset-0 z-10 flex flex-col justify-between p-3 sm:p-4">
+          <div className="pointer-events-none flex items-start justify-between gap-3">
+            <ClassroomStatusPanel />
+            <EnvironmentDevPanel />
+          </div>
+
+          {cameraMode === "teacher" && (
+            <div className="pointer-events-none flex justify-end">
+              <TeacherPlaytimePanel />
+            </div>
+          )}
+
+          <div className="flex flex-col justify-end">
           <div className="pointer-events-none mb-3 flex justify-center">
             <div className="h-6 w-6 rounded-full border border-white/25 bg-white/5" />
           </div>
@@ -1010,6 +1120,7 @@ export function ClassroomRoomScene({ courseId, onExit }: ClassroomRoomSceneProps
                 onClick={() => handleAction("exit")}
               />
             </div>
+          </div>
           </div>
         </div>
       </div>

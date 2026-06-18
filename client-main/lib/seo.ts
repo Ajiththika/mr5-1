@@ -43,10 +43,17 @@ export function generateMetadata(config: SEOConfig): Metadata {
 			template: `%s | ${siteName}`,
 		},
 		description,
-		keywords: keywords.length > 0 ? keywords.join(", ") : undefined,
-		authors: author ? [{ name: author }] : undefined,
+		keywords: keywords.length > 0 ? keywords : undefined,
+		applicationName: siteName,
+		category: "education",
+		authors: author ? [{ name: author }] : [{ name: siteName }],
 		creator: siteName,
 		publisher: siteName,
+		formatDetection: {
+			email: false,
+			address: false,
+			telephone: false,
+		},
 		metadataBase: new URL(siteUrl),
 		alternates: {
 			canonical: canonicalUrl,
@@ -119,7 +126,7 @@ export function generateCourseStructuredData(course: any) {
     return courseData;
 }
 
-export function generateStructuredData(type: "Organization" | "WebSite" | "Course" | "BreadcrumbList", data?: any) {
+export function generateStructuredData(type: "Organization" | "WebSite" | "Course" | "BreadcrumbList" | "EducationalOrganization", data?: any) {
 	const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mr5school.com";
 
 	switch (type) {
@@ -149,6 +156,9 @@ export function generateStructuredData(type: "Organization" | "WebSite" | "Cours
 				"@type": "WebSite",
 				name: "MR5 School",
 				url: baseUrl,
+				description:
+					"Immersive 3D virtual classroom with AI teachers, personalized lessons, and interactive online learning.",
+				inLanguage: "en",
 				potentialAction: {
 					"@type": "SearchAction",
 					target: {
@@ -156,6 +166,46 @@ export function generateStructuredData(type: "Organization" | "WebSite" | "Cours
 						urlTemplate: `${baseUrl}/courses?search={search_term_string}`,
 					},
 					"query-input": "required name=search_term_string",
+				},
+			};
+
+		case "EducationalOrganization":
+			return {
+				"@context": "https://schema.org",
+				"@type": "EducationalOrganization",
+				name: "MR5 School",
+				url: baseUrl,
+				logo: `${baseUrl}/images/mr5-logo.png`,
+				description:
+					"MR5 School is an AI-powered online learning platform with a live 3D classroom, voice-enabled AI teachers, and personalized student memory for every lesson.",
+				sameAs: [
+					"https://www.facebook.com/mr5school",
+					"https://www.twitter.com/mr5school",
+					"https://www.linkedin.com/company/mr5school",
+				],
+				areaServed: "Worldwide",
+				audience: {
+					"@type": "EducationalAudience",
+					educationalRole: "student",
+				},
+				hasOfferCatalog: {
+					"@type": "OfferCatalog",
+					name: "MR5 School Courses",
+					itemListElement: [
+						{
+							"@type": "Offer",
+							itemOffered: {
+								"@type": "Course",
+								name: "Introduction to the 3D Campus",
+								description:
+									"Explore the virtual MR5 School campus with AI teachers and interactive 3D classrooms.",
+								provider: {
+									"@type": "Organization",
+									name: "MR5 School",
+								},
+							},
+						},
+					],
 				},
 			};
 

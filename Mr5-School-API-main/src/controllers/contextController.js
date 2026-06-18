@@ -40,7 +40,7 @@ export const syncContext = asyncHandler(async (req, res) => {
         }
     }
 
-    const hour = new Date().getHours();
+    const hour = WeatherService.getHourForTimezone(req.body.timezone);
     const uiProps = WeatherService.deriveUIProps(weatherData, hour);
 
     if (!context) {

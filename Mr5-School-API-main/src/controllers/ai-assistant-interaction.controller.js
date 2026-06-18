@@ -1,4 +1,6 @@
 import AiAssistantInteraction from "../models/ai-assistant-interaction.model.js";
+import ChatMemory from "../models/ChatMemory.js";
+import User from "../models/User.js";
 import { asyncHandler } from "../middleware/errorHandler.js";
 import { paginate } from "../utils/pagination.js";
 import aiService from "../services/ai.service.js";
@@ -84,18 +86,50 @@ const createAiAssistantInteraction = asyncHandler(async (req, res) => {
 	}
 
 	try {
-		const systemPrompt = `You are an expert AI Teacher for MR5 School. 
-        Your goal is to help students learn effectively, answer their questions clearly, 
-        and provide examples where necessary. Be encouraging, patient, and precise. 
-        If the student asks about a specific course context, tailor your answer to that subject.`;
+		const student = userId
+			? await User.findById(userId).select(
+					"name age educationLevel language welcomeChatCompleted",
+				)
+			: null;
 
-		// Using the centralized AI Service (Gemini backed)
+		const recentMemory = userId
+			? await ChatMemory.find({ user: userId })
+					.sort({ createdAt: -1 })
+					.limit(12)
+					.lean()
+			: [];
+
+		const memoryLines = recentMemory
+			.reverse()
+			.map((entry) => `${entry.role}: ${entry.content}`)
+			.join("\n");
+
+		const profileLines = student
+			? [
+					`Student name: ${student.name}`,
+					student.age ? `Age: ${student.age}` : null,
+					student.educationLevel
+						? `Education level: ${student.educationLevel}`
+						: null,
+					student.language ? `Preferred language: ${student.language}` : null,
+				]
+					.filter(Boolean)
+					.join("\n")
+			: "";
+
+		const systemPrompt = `You are an expert AI Teacher for MR5 School.
+Your goal is to help students learn effectively with a warm, encouraging tone.
+Always adapt explanations to the student's education level and age when known.
+Remember prior chat context and refer back naturally when helpful.
+
+${profileLines ? `STUDENT PROFILE:\n${profileLines}` : ""}
+${memoryLines ? `\nRECENT CHAT MEMORY:\n${memoryLines}` : ""}`;
+
 		const aiResult = await aiService.chatCompletion({
 			messages: [
 				{ role: "system", content: systemPrompt },
-				{ role: "user", content: question }
+				{ role: "user", content: question },
 			],
-			// Model is handled by default in service, or can be overridden e.g. model: "gemini-1.5-flash"
 		});
 
 		const aiResponse = aiResult.choices[0].message.content;
@@ -105,10 +139,31 @@ const createAiAssistantInteraction = asyncHandler(async (req, res) => {
 			question,
 			response: aiResponse,
 			course,
-			mode: mode || 'text'
+			mode: mode || "text",
 		});
 
 		const savedInteraction = await newInteraction.save();
+
+		if (userId) {
+			await ChatMemory.insertMany([
+				{
+					user: userId,
+					role: "user",
+					content: question,
+					source: "teaching",
+					mode: mode || "text",
+					course,
+				},
+				{
+					user: userId,
+					role: "assistant",
+					content: aiResponse,
+					source: "teaching",
+					mode: mode || "text",
+					course,
+				},
+			]);
+		}
 
 		const populatedInteraction = await AiAssistantInteraction.findById(
 			savedInteraction._id,

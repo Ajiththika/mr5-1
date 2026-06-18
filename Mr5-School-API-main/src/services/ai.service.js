@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import OpenAI from "openai";
 import { Ollama } from 'ollama';
+import { getOllamaHost } from "../utils/ollamaEnv.js";
 
 class AIService {
     constructor() {
@@ -32,7 +33,7 @@ class AIService {
     getOllamaClient() {
         if (!this.ollama) {
             // Ollama usually runs locally on default port 11434, but host can be configured
-            this.ollama = new Ollama({ host: process.env.OLLAMA_HOST || 'http://127.0.0.1:11434' });
+            this.ollama = new Ollama({ host: getOllamaHost() });
         }
         return this.ollama;
     }

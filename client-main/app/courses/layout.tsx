@@ -3,18 +3,19 @@ import { Metadata } from "next";
 import type { ReactNode } from "react";
 
 export const metadata: Metadata = generateMetadata({
-	title: "Online Courses - Programming, Web Development, Data Science",
+	title: "Online Courses - 3D Classroom & AI Tutoring",
 	description:
-		"Browse our comprehensive catalog of online courses in programming, web development, data science, machine learning, and more. Learn from expert instructors with interactive AI-powered learning.",
+		"Browse MR5 School courses with immersive 3D classrooms, AI teachers, and personalized learning paths. Food science, programming, web development, and more.",
 	keywords: [
 		"online courses",
+		"3D virtual classroom courses",
+		"AI tutor courses",
+		"food science education",
+		"nutrition courses",
 		"programming courses",
-		"web development courses",
-		"data science courses",
-		"machine learning courses",
-		"coding bootcamp",
-		"learn programming",
-		"online education",
+		"web development",
+		"immersive learning",
+		"LMS courses",
 	],
 	url: "/courses",
 	type: "website",

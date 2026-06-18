@@ -7,6 +7,9 @@ export interface User {
     avatarUrl?: string;
     avatarPreset?: string;
     onboardingCompleted?: boolean;
+    welcomeChatCompleted?: boolean;
+    age?: number;
+    educationLevel?: string;
     language?: string;
     timezone?: string;
     gradingSystem?: string;

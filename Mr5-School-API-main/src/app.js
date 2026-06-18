@@ -26,6 +26,7 @@ import enrollmentRoutes from "./routes/enrollmentRoutes.js";
 import courseRoutes from "./routes/courseRoutes.js";
 import assignmentRoutes from "./routes/assignmentRoutes.js";
 import aiAssistantInteractionRoutes from "./routes/ai-assistant-interaction.routes.js";
+import studentLearningRoutes from "./routes/studentLearningRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import avatarRoutes from "./routes/avatarRoutes.js";
 import livekitRoutes from "./routes/livekitRoutes.js";
@@ -62,6 +63,10 @@ const app = express();
 // CORS configuration - MUST be before any security middleware
 const allowedOrigins = [
     process.env.CORS_ORIGIN || "http://localhost:3000",
+    ...(process.env.CORS_EXTRA_ORIGINS || "")
+        .split(",")
+        .map((o) => o.trim())
+        .filter(Boolean),
     "http://localhost:3001",
     "http://localhost:*", // Allow any localhost port for development
     "https://mr5school.com",
@@ -155,6 +160,7 @@ app.use("/api/enrollments", enrollmentRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/assignments", assignmentRoutes);
 app.use("/api/ai-assistant-interactions", aiAssistantInteractionRoutes);
+app.use("/api/students/me", studentLearningRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/avatar", avatarRoutes);
 app.use("/api/livekit", livekitRoutes);

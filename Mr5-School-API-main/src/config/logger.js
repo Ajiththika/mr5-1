@@ -26,42 +26,45 @@ const consoleFormat = winston.format.combine(
 	),
 );
 
-// Create logger instance
+// Create logger instance — console-only in AWS ECS (stdout → CloudWatch Logs)
+const useFileLogs =
+	process.env.LOG_TO_FILE === "true" &&
+	!process.env.AWS_EXECUTION_ENV &&
+	process.env.NODE_ENV !== "test";
+
+const transports = [
+	new winston.transports.Console({
+		format: process.env.NODE_ENV === "production" ? logFormat : consoleFormat,
+	}),
+];
+
+if (useFileLogs) {
+	transports.push(
+		new winston.transports.File({
+			filename: path.join(__dirname, "../logs/error.log"),
+			level: "error",
+			maxsize: 5242880,
+			maxFiles: 5,
+		}),
+		new winston.transports.File({
+			filename: path.join(__dirname, "../logs/combined.log"),
+			maxsize: 5242880,
+			maxFiles: 5,
+		}),
+	);
+}
+
 const logger = winston.createLogger({
 	level: process.env.LOG_LEVEL || "info",
 	format: logFormat,
 	defaultMeta: { service: "lms-api" },
-	transports: [
-		// Write all logs to console
-		new winston.transports.Console({
-			format: process.env.NODE_ENV === "production" ? logFormat : consoleFormat,
-		}),
-		// Write all logs with level 'error' and below to error.log
-		new winston.transports.File({
-			filename: path.join(__dirname, "../logs/error.log"),
-			level: "error",
-			maxsize: 5242880, // 5MB
-			maxFiles: 5,
-		}),
-		// Write all logs to combined.log
-		new winston.transports.File({
-			filename: path.join(__dirname, "../logs/combined.log"),
-			maxsize: 5242880, // 5MB
-			maxFiles: 5,
-		}),
-	],
-	// Handle exceptions
-	exceptionHandlers: [
-		new winston.transports.File({
-			filename: path.join(__dirname, "../logs/exceptions.log"),
-		}),
-	],
-	// Handle promise rejections
-	rejectionHandlers: [
-		new winston.transports.File({
-			filename: path.join(__dirname, "../logs/rejections.log"),
-		}),
-	],
+	transports,
+	exceptionHandlers: useFileLogs
+		? [new winston.transports.File({ filename: path.join(__dirname, "../logs/exceptions.log") })]
+		: [new winston.transports.Console({ format: logFormat })],
+	rejectionHandlers: useFileLogs
+		? [new winston.transports.File({ filename: path.join(__dirname, "../logs/rejections.log") })]
+		: [new winston.transports.Console({ format: logFormat })],
 });
 
 export default logger;

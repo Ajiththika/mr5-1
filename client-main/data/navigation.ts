@@ -126,7 +126,7 @@ export const studentNavigation: NavigationItem[] = [
   },
   {
     title: "Avatar Shop",
-    href: "/shop",
+    href: "/student/shop",
     icon: ShoppingBag,
   },
   {

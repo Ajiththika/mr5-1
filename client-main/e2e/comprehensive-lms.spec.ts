@@ -6,6 +6,10 @@ test.describe.configure({ mode: 'serial' });
 const STUDENT = { email: 'student@mr5school.com', password: 'Student@123456' };
 const ADMIN = { email: 'admin@mr5school.com', password: 'Admin@123456' };
 const BASE_URL = 'http://localhost:3000';
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
+  process.env.API_URL ||
+  "http://127.0.0.1:5001";
 
 test.describe('LMS E2E System Test', () => {
 
@@ -49,12 +53,12 @@ test.describe('LMS E2E System Test', () => {
         await test.step('S-02: Course Enrollment', async () => {
             // 1. Get Admin Token and Data
             console.log("Fetching Admin Token...");
-            const adminLoginInfo = await request.post('http://127.0.0.1:5000/api/auth/login', { data: ADMIN });
+            const adminLoginInfo = await request.post(`${API_BASE}/api/auth/login`, { data: ADMIN });
             expect(adminLoginInfo.ok()).toBeTruthy();
             const adminToken = (await adminLoginInfo.json()).data.accessToken;
             // 2. Get Course ID
             console.log("Fetching Course ID...");
-            const coursesRes = await request.get('http://127.0.0.1:5000/api/courses', { headers: { Authorization: `Bearer ${adminToken}` } });
+            const coursesRes = await request.get(`${API_BASE}/api/courses`, { headers: { Authorization: `Bearer ${adminToken}` } });
             const coursesData = await coursesRes.json();
             course = coursesData.data.find((c: any) => c.title.includes('Huly') || c.title.includes('Intro')) || coursesData.data[0];
             const courseId = course._id;
@@ -64,7 +68,7 @@ test.describe('LMS E2E System Test', () => {
             console.log("Fetching Student ID...");
             // We need to use the token stored in localStorage for student, but request context doesn't share localStorage.
             // We can login as student again via API to get ID.
-            const studentLoginInfo = await request.post('http://127.0.0.1:5000/api/auth/login', { data: STUDENT });
+            const studentLoginInfo = await request.post(`${API_BASE}/api/auth/login`, { data: STUDENT });
             const studentId = (await studentLoginInfo.json()).data.user.id;
             console.log(`Student ID: ${studentId}`);
 
@@ -104,7 +108,7 @@ test.describe('LMS E2E System Test', () => {
             // 4. Force Enrollment in Backend (Simulate Webhook)
             console.log("Injecting Enrollment via Admin API...");
             try {
-                const enrollRes = await request.post('http://127.0.0.1:5000/api/enrollments', {
+                const enrollRes = await request.post(`${API_BASE}/api/enrollments`, {
                     headers: { Authorization: `Bearer ${adminToken}` },
                     data: {
                         student: studentId,
@@ -135,7 +139,7 @@ test.describe('LMS E2E System Test', () => {
             }
 
             // Relaxed check: Just verify we are on the page and it loaded
-            await expect(page.locator('h1', { hasText: 'My Learning' })).toBeVisible();
+            await expect(page.getByRole('heading', { name: /My Courses/i })).toBeVisible();
 
             // Optional: Soft check for course
             try {

@@ -52,6 +52,28 @@ const userSchema = new mongoose.Schema(
 			type: Boolean,
 			default: false,
 		},
+		welcomeChatCompleted: {
+			type: Boolean,
+			default: false,
+		},
+		age: {
+			type: Number,
+			min: 5,
+			max: 120,
+		},
+		educationLevel: {
+			type: String,
+			enum: [
+				"High School",
+				"Higher Secondary",
+				"Diploma",
+				"Bachelor's Degree",
+				"Master's Degree",
+				"Doctorate",
+				"Professional Certification",
+				"Other",
+			],
+		},
 		// References to profile tables
 		studentProfile: {
 			type: mongoose.Schema.Types.ObjectId,

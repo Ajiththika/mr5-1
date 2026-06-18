@@ -1,7 +1,6 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { aiService } from "@/services/ai.service";
 import { useEnhancedUser } from "@/contexts/EnhancedUserContext";
 import { authService } from "@/services/auth.service";
 

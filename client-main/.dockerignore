@@ -1,0 +1,16 @@
+node_modules
+.next
+.git
+.github
+*.md
+.env
+.env.*
+!.env.example
+!.env.*.example
+coverage
+test-results
+playwright-report
+e2e
+demo-screenshots
+scripts/sketchup_importer
+lint_results.txt

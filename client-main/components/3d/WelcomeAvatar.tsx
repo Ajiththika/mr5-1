@@ -1,51 +1,53 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, type MouseEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
+import dynamic from "next/dynamic";
 import {
   getTamilGreeting,
   type TamilGreeting,
-  type AvatarGestureState
+  type AvatarGestureState,
 } from "@/lib/tamil-greetings";
 import { useEnhancedUser } from "@/contexts/EnhancedUserContext";
-import { Volume2, VolumeX, MessageCircle } from "lucide-react";
+import {
+  Volume2,
+  VolumeX,
+  MessageCircle,
+  Sparkles,
+  School,
+  ArrowRight,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LocationData } from "@/services/location.service";
 
-
-
-
+const ClassroomMiniPreview = dynamic(
+  () =>
+    import("@/components/3d/ClassroomMiniPreview").then(
+      (mod) => mod.ClassroomMiniPreview,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full w-full items-center justify-center bg-slate-950/40">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-400/30 border-t-indigo-300" />
+      </div>
+    ),
+  },
+);
 
 interface WelcomeAvatarProps {
-  /** Override the Spline scene URL */
   sceneUrl?: string;
-  /** Show greeting text overlay */
   showGreetingText?: boolean;
-  /** Enable voice greeting */
   enableVoice?: boolean;
-  /** Custom class name */
   className?: string;
-  /** Callback when avatar is clicked */
   onAvatarClick?: () => void;
-  /** Compact mode for smaller displays */
   compact?: boolean;
-  /** User location data for personalized greetings */
   location?: LocationData;
 }
 
-/**
- * WelcomeAvatar - Tamil greeting 3D avatar
- * 
- * Features:
- * - Time-based Tamil greetings (Kalai/Madiya/Maalai Vanakkam)
- * - Hand-clasping gesture animation
- * - Voice greeting with TTS (conditionally enabled)
- * - Personalized greeting with user name
- */
 export function WelcomeAvatar({
   showGreetingText = true,
-  enableVoice = false, // Default to false to respect the requirement
+  enableVoice = false,
   className = "",
   onAvatarClick,
   compact = false,
@@ -56,14 +58,13 @@ export function WelcomeAvatar({
   const [, setGestureState] = useState<AvatarGestureState>("idle");
   const [isMuted, setIsMuted] = useState(false);
   const [hasGreeted, setHasGreeted] = useState(false);
+  const [letterOpen, setLetterOpen] = useState(true);
   const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
 
-  // Get current greeting on mount
   useEffect(() => {
     const currentGreeting = getTamilGreeting(new Date(), location || false);
     setGreeting(currentGreeting);
 
-    // Update greeting every minute
     const interval = setInterval(() => {
       setGreeting(getTamilGreeting(new Date(), location || false));
     }, 60000);
@@ -71,34 +72,26 @@ export function WelcomeAvatar({
     return () => clearInterval(interval);
   }, [location]);
 
-  // Speak greeting using Web Speech API
   const speakGreeting = useCallback(() => {
-    // Only speak if voice is enabled
     if (!enableVoice || isMuted || typeof window === "undefined") return;
 
-    // Cancel any ongoing speech
     window.speechSynthesis?.cancel();
 
-    const greetingText = `${greeting?.transliteration || "Vanakkam"}! Welcome to MR5 School. I am your AI learning assistant.`;
+    const greetingText = `${greeting?.transliteration || "Vanakkam"}! Welcome to MR5 School. Step into our 3D classroom and chat with your AI teacher anytime.`;
     const utterance = new SpeechSynthesisUtterance(greetingText);
-
-    // Configure voice settings
-    utterance.rate = 0.9; // Slightly slower for clarity
-    utterance.pitch = 1.1; // Slightly higher for female voice
+    utterance.rate = 0.9;
+    utterance.pitch = 1.1;
     utterance.volume = 0.8;
 
-    // Try to find a female voice
     const voices = window.speechSynthesis?.getVoices() || [];
     const femaleVoice = voices.find(
-      (v) => v.name.toLowerCase().includes("female") ||
+      (v) =>
+        v.name.toLowerCase().includes("female") ||
         v.name.toLowerCase().includes("samantha") ||
-        v.name.toLowerCase().includes("victoria")
+        v.name.toLowerCase().includes("victoria"),
     );
-    if (femaleVoice) {
-      utterance.voice = femaleVoice;
-    }
+    if (femaleVoice) utterance.voice = femaleVoice;
 
-    // Animation sync
     utterance.onstart = () => setGestureState("speaking");
     utterance.onend = () => setGestureState("idle");
     utterance.onerror = () => setGestureState("idle");
@@ -107,50 +100,43 @@ export function WelcomeAvatar({
     window.speechSynthesis?.speak(utterance);
   }, [isMuted, enableVoice, greeting]);
 
-  // Trigger greeting animation on first view
   useEffect(() => {
     if (!hasGreeted && greeting && enableVoice) {
-      // Start greeting gesture sequence
       setGestureState("greeting_start");
-
-      const sequence = [
-        { state: "greeting_hold" as const, delay: 500 },
-        { state: "speaking" as const, delay: 1500 },
-      ];
-
-      sequence.forEach(({ state, delay }) => {
-        setTimeout(() => setGestureState(state), delay);
-      });
-
-      // Speak after animation starts
+      setTimeout(() => setGestureState("greeting_hold"), 500);
       setTimeout(() => {
+        setGestureState("speaking");
         speakGreeting();
         setHasGreeted(true);
       }, 1000);
     }
   }, [hasGreeted, greeting, speakGreeting, enableVoice]);
 
-  // Cleanup speech on unmount
   useEffect(() => {
     return () => {
       window.speechSynthesis?.cancel();
     };
   }, []);
 
+  const openChat = useCallback(
+    (event?: MouseEvent) => {
+      event?.stopPropagation();
+      setLetterOpen(false);
+      onAvatarClick?.();
+    },
+    [onAvatarClick],
+  );
 
-
-  const toggleMute = () => {
-    if (!enableVoice) return; // Don't toggle mute if voice is disabled
-
-    if (!isMuted) {
-      window.speechSynthesis?.cancel();
-    }
+  const toggleMute = (event: MouseEvent) => {
+    event.stopPropagation();
+    if (!enableVoice) return;
+    if (!isMuted) window.speechSynthesis?.cancel();
     setIsMuted(!isMuted);
   };
 
-  const handleReplayGreeting = () => {
-    if (!enableVoice) return; // Don't replay if voice is disabled
-
+  const handleReplayGreeting = (event: MouseEvent) => {
+    event.stopPropagation();
+    if (!enableVoice) return;
     setGestureState("greeting_start");
     setTimeout(() => setGestureState("greeting_hold"), 500);
     setTimeout(() => {
@@ -161,112 +147,143 @@ export function WelcomeAvatar({
 
   if (!greeting) return null;
 
+  const firstName = user?.name?.split(" ")[0];
+
   return (
     <div
-      className={`relative group ${compact ? "h-[300px]" : "h-[500px]"} ${className}`}
-      onClick={onAvatarClick}
+      className={`group relative ${compact ? "h-[300px]" : "h-[500px]"} ${className}`}
     >
-      {/* 3D Avatar Scene */}
-      <div className="absolute inset-0 rounded-3xl overflow-hidden bg-gradient-to-b from-card/50 to-background/50 border border-primary/10 backdrop-blur-xl shadow-2xl">
-        {/* 
-            Safe fallback for 3D Scene to prevent crashes due to 403 Forbidden errors 
-            when the external Spline URL is inaccessible.
-            TODO: Restore this when valid .splinecode file is hosted locally.
-          */}
-        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-500/20 to-purple-500/20">
-          <div className="text-center p-8">
-            <div className="relative w-32 h-32 mx-auto mb-4 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full blur-2xl opacity-50 animate-pulse" />
-            <div className="relative w-32 h-32 mx-auto mb-4 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full blur-2xl opacity-50 animate-pulse" />
-            <Image
-              src="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=1000&auto=format&fit=crop"
-              alt="AI Assistant"
-              width={128}
-              height={128}
-              className="relative w-32 h-32 mx-auto rounded-full object-cover border-4 border-white/10 shadow-xl"
-            />
-          </div>
+      <div className="absolute inset-0 overflow-hidden rounded-3xl border border-primary/15 bg-gradient-to-b from-slate-900/80 to-slate-950 shadow-2xl">
+        <ClassroomMiniPreview className="absolute inset-0" />
+
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/55 via-transparent to-slate-950/10" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_75%_15%,rgba(99,102,241,0.12),transparent_50%)]" />
+
+        <div className="absolute left-4 top-4 z-10 flex items-center gap-2 rounded-full border border-white/10 bg-black/45 px-3 py-1.5 backdrop-blur-md">
+          <School className="h-3.5 w-3.5 text-indigo-300" />
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-indigo-100">
+            3D Classroom Preview
+          </span>
         </div>
 
-        {/*
-        <SplineScene
-          scene={actualSceneUrl}
-          className="w-full h-full"
-          onError={handleError}
-        /> 
-        */}
-
-        {/* Glassmorphism overlay gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent pointer-events-none" />
-      </div>
-
-      {/* Greeting Text Overlay */}
-      <AnimatePresence>
-        {showGreetingText && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="absolute bottom-0 left-0 right-0 p-6"
+        <div className="absolute right-4 top-4 z-10 flex gap-2">
+          {enableVoice && (
+            <>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={toggleMute}
+                className="h-9 w-9 border border-white/10 bg-black/45 backdrop-blur-md hover:bg-black/65"
+              >
+                {isMuted ? (
+                  <VolumeX className="h-4 w-4" />
+                ) : (
+                  <Volume2 className="h-4 w-4" />
+                )}
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={handleReplayGreeting}
+                className="h-9 w-9 border border-white/10 bg-black/45 backdrop-blur-md hover:bg-black/65"
+              >
+                <Volume2 className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+          <Button
+            size="sm"
+            onClick={openChat}
+            className="h-9 gap-2 border border-indigo-300/40 bg-gradient-to-r from-indigo-500 to-violet-500 px-3.5 text-xs font-semibold text-white shadow-lg shadow-indigo-500/25 hover:from-indigo-400 hover:to-violet-400"
           >
-            <div className="bg-background/60 backdrop-blur-md border border-primary/10 rounded-2xl p-4 space-y-2">
-              {/* Primary language text (Tamil script, Sinhala script, etc.) */}
-              <p className="text-2xl font-bold text-primary">
-                {greeting.primary}
-              </p>
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20">
+              <MessageCircle className="h-3.5 w-3.5" />
+            </span>
+            Chat with Teacher
+          </Button>
+        </div>
 
-              {/* Transliteration */}
-              <p className="text-lg text-foreground">
-                {greeting.transliteration}
-                {user?.name && <span className="text-muted-foreground">, {user.name}</span>}!
-              </p>
+        <AnimatePresence>
+          {letterOpen && (
+            <motion.button
+              type="button"
+              initial={{ opacity: 0, y: 24, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 16, scale: 0.98 }}
+              transition={{ duration: 0.35 }}
+              onClick={openChat}
+              className="absolute bottom-4 left-4 z-20 max-w-[min(100%,280px)] text-left"
+            >
+              <div className="overflow-hidden rounded-2xl border border-white/12 bg-slate-950/80 shadow-2xl backdrop-blur-xl transition-transform hover:scale-[1.01]">
+                <div className="border-b border-white/8 bg-gradient-to-r from-indigo-500/20 via-violet-500/10 to-transparent px-4 py-2.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-500/20">
+                        <MessageCircle className="h-4 w-4 text-indigo-200" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-widest text-indigo-200">
+                          Letter from your AI Teacher
+                        </p>
+                        <p className="text-xs text-slate-400">
+                          Friendly classroom chat · always here for you
+                        </p>
+                      </div>
+                    </div>
+                    <Sparkles className="h-4 w-4 text-amber-300" />
+                  </div>
+                </div>
 
-              {/* English translation */}
-              <p className="text-sm text-muted-foreground">
-                {greeting.english}
-              </p>
-
-              {/* Time indicator */}
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                <span>AI Avatar Online</span>
+                <div className="space-y-3 px-4 py-4">
+                  <p className="font-serif text-lg leading-relaxed text-white">
+                    Dear {firstName || "Learner"},
+                  </p>
+                  <p className="text-sm leading-relaxed text-slate-300">
+                    {greeting.transliteration}! Your virtual classroom is ready.
+                    Walk inside, explore the whiteboard, and ask me anything —
+                    lessons, homework, or a quick study break plan.
+                  </p>
+                  <p className="rounded-xl border border-white/8 bg-white/5 px-3 py-2 text-xs italic leading-relaxed text-slate-400">
+                    &quot;Tap this letter to open chat. I&apos;m your MR5 AI
+                    Teacher — patient, clear, and always on your side.&quot;
+                  </p>
+                  <div className="flex items-center justify-between gap-3 pt-1">
+                    <span className="text-[11px] text-slate-500">
+                      — MR5 School AI Faculty
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-500 px-3 py-1.5 text-xs font-semibold text-white">
+                      Open Chat
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
-          </motion.div>
+            </motion.button>
+          )}
+        </AnimatePresence>
+
+        {!letterOpen && (
+          <button
+            type="button"
+            onClick={openChat}
+            className="absolute bottom-4 left-4 z-20 max-w-[min(100%,280px)] rounded-2xl border border-indigo-400/25 bg-indigo-500/20 px-4 py-3 text-left backdrop-blur-md transition-colors hover:bg-indigo-500/30"
+          >
+            <p className="text-sm font-semibold text-white">
+              Continue chatting with your AI Teacher
+            </p>
+            <p className="text-xs text-indigo-100/80">
+              Tap to reopen the friendly classroom chat
+            </p>
+          </button>
         )}
-      </AnimatePresence>
 
-      {/* Control buttons - only show if voice is enabled */}
-      {enableVoice && (
-        <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleMute();
-            }}
-            className="bg-background/50 backdrop-blur-sm hover:bg-background/80"
-          >
-            {isMuted ? (
-              <VolumeX className="w-4 h-4" />
-            ) : (
-              <Volume2 className="w-4 h-4" />
-            )}
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleReplayGreeting();
-            }}
-            className="bg-background/50 backdrop-blur-sm hover:bg-background/80"
-          >
-            <MessageCircle className="w-4 h-4" />
-          </Button>
-        </div>
-      )}
-
+        {showGreetingText && (
+          <div className="pointer-events-none absolute left-4 top-16 z-10 max-w-[220px] rounded-2xl border border-white/10 bg-black/35 px-3 py-2 backdrop-blur-md">
+            <p className="text-sm font-bold text-primary">{greeting.primary}</p>
+            <p className="text-xs text-slate-300">{greeting.english}</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

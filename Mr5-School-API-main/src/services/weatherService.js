@@ -28,30 +28,70 @@ class WeatherService {
     static getMockWeather() {
         return {
             condition: "Clear",
-            temperature: 25,
-            humidity: 50,
-            windSpeed: 2,
-            city: "Default City"
+            temperature: 22,
+            humidity: 52,
+            windSpeed: 2.5,
+            city: "Local Classroom",
         };
     }
 
+    static getHourForTimezone(timezone) {
+        if (!timezone) return new Date().getHours();
+        try {
+            const parts = new Intl.DateTimeFormat("en-US", {
+                timeZone: timezone,
+                hour: "numeric",
+                hour12: false,
+            }).formatToParts(new Date());
+            const hour = parts.find((part) => part.type === "hour")?.value;
+            return hour ? Number(hour) : new Date().getHours();
+        } catch {
+            return new Date().getHours();
+        }
+    }
+
     /**
-     * Determine UI context based on weather and time
+     * Determine UI context based on weather and local time
      */
     static deriveUIProps(weather, hour) {
+        const temp = weather.temperature ?? 20;
+        const wind = weather.windSpeed ?? 0;
+        const key = (weather.condition || "Clear").toLowerCase();
+
         let theme = "sunny";
-        let colors = ["#FFD700", "#FF8C00"]; // Gold, DarkOrange
-        let isNight = hour < 6 || hour > 18;
+        let colors = ["#FFD700", "#FF8C00"];
+        let isNight = hour < 5 || hour >= 20;
+
+        if (hour >= 5 && hour < 11) {
+            colors = ["#FDE68A", "#F59E0B"];
+        } else if (hour >= 17 && hour < 20) {
+            colors = ["#FB923C", "#EA580C"];
+        }
 
         if (isNight) {
             theme = "night";
-            colors = ["#191970", "#000080"]; // MidnightBlue, Navy
-        } else if (weather.condition.toLowerCase().includes("rain")) {
+            colors = ["#191970", "#000080"];
+        } else if (key.includes("thunder")) {
+            theme = "thunderstorm";
+            colors = ["#334155", "#0f172a"];
+        } else if (key.includes("rain") || key.includes("drizzle")) {
             theme = "rainy";
-            colors = ["#4682B4", "#708090"]; // SteelBlue, SlateGray
-        } else if (weather.condition.toLowerCase().includes("cloud")) {
+            colors = ["#4682B4", "#708090"];
+        } else if (key.includes("mist") || key.includes("fog") || key.includes("haze")) {
+            theme = "foggy";
+            colors = ["#94A3B8", "#64748B"];
+        } else if (key.includes("cloud")) {
             theme = "cloudy";
-            colors = ["#B0C4DE", "#778899"]; // LightSteelBlue, LightSlateGray
+            colors = ["#B0C4DE", "#778899"];
+        } else if (temp <= 8) {
+            theme = "cold";
+            colors = ["#BFDBFE", "#60A5FA"];
+        } else if (wind >= 8) {
+            theme = "windy";
+            colors = ["#7DD3FC", "#38BDF8"];
+        } else if (key.includes("clear")) {
+            theme = "clear";
+            colors = ["#7DD3FC", "#38BDF8"];
         }
 
         return { theme, colors, isNight };

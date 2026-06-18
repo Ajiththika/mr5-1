@@ -25,7 +25,9 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/compone
 import { MoodDetector } from '@/components/classroom/MoodDetector';
 import Image from 'next/image';
 import { toast } from 'sonner';
-// import { cn } from '@/lib/utils';
+import { useEnhancedUser } from '@/contexts/EnhancedUserContext';
+import { studentLearningService } from '@/services/studentLearning.service';
+import { buildStudentAiSystemPrompt } from '@/lib/build-student-ai-prompt';
 
 interface Message {
     role: 'user' | 'ai';
@@ -53,6 +55,7 @@ interface TeachingAIModalProps {
 }
 
 export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTitle, lessonTitle, voiceInteraction }: TeachingAIModalProps) {
+    const { user } = useEnhancedUser();
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputMessage, setInputMessage] = useState('');
     const [isMuted, setIsMuted] = useState(false);
@@ -80,6 +83,75 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
         }, 2000);
         return () => clearInterval(interval);
     }, []);
+
+    useEffect(() => {
+        if (!isOpen) {
+            return;
+        }
+
+        if (user?.role !== 'student') {
+            if (messages.length === 0) {
+                setMessages([
+                    {
+                        role: 'ai',
+                        content:
+                            'Vanakkam! I am your MR5 AI Teacher. Ask me about lessons, the whiteboard, study breaks, or anything you are learning today.',
+                    },
+                ]);
+            }
+            return;
+        }
+
+        let cancelled = false;
+
+        (async () => {
+            try {
+                const response = await studentLearningService.getAiContext();
+                if (cancelled) return;
+
+                const profile = response.data.profile;
+                const history = response.data.recentMessages
+                    .filter((entry) => entry.role === 'user' || entry.role === 'assistant')
+                    .map((entry) => ({
+                        role: entry.role === 'user' ? 'user' as const : 'ai' as const,
+                        content: entry.content,
+                    }));
+
+                if (history.length > 0) {
+                    setMessages(history);
+                } else {
+                    const welcomeName = profile?.name?.split(' ')[0] || 'Learner';
+                    const levelLine = profile?.educationLevel
+                        ? ` I already know you are studying at **${profile.educationLevel}** level.`
+                        : '';
+                    const ageLine = profile?.age ? ` I remember you are **${profile.age}** years old.` : '';
+
+                    setMessages([
+                        {
+                            role: 'ai',
+                            content: `Vanakkam, ${welcomeName}! I am your MR5 AI Teacher.${levelLine}${ageLine} Ask me anything about lessons, your 3D classroom, or study breaks — I will teach you in a way that fits you.`,
+                        },
+                    ]);
+                }
+            } catch (error) {
+                console.error('Failed to load student chat memory', error);
+                setMessages([
+                    {
+                        role: 'ai',
+                        content:
+                            'Vanakkam! I am your MR5 AI Teacher. I am here to help you learn in a friendly, personal way.',
+                    },
+                ]);
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+        // Only reload memory when modal opens for a student session.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, user?.role, user?.id]);
+
     const {
         transcript = '',
         listening = false,
@@ -132,6 +204,33 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
     }, []);
 
     // Send message to Gemini API
+    const persistChatExchange = async (
+        userContent: string,
+        aiContent: string,
+        mode: 'text' | 'voice' = 'text',
+    ) => {
+        if (user?.role !== 'student') return;
+
+        try {
+            await studentLearningService.appendChatMemory({
+                role: 'user',
+                content: userContent,
+                source: lessonId ? 'lesson' : 'homepage',
+                mode,
+                course: courseId,
+            });
+            await studentLearningService.appendChatMemory({
+                role: 'assistant',
+                content: aiContent,
+                source: lessonId ? 'lesson' : 'homepage',
+                mode,
+                course: courseId,
+            });
+        } catch (error) {
+            console.error('Failed to persist chat memory', error);
+        }
+    };
+
     const sendToGeminiAPI = async (messageContent: string, imageData?: string) => {
         try {
             setIsSending(true);
@@ -152,14 +251,17 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
             }
 
             // Prepare messages array for the API
-            const contextParts = [
-                "You are an expert AI tutor specializing in personalized education.",
-                courseTitle ? `Course: ${courseTitle}.` : "",
-                lessonTitle ? `Current lesson: ${lessonTitle}.` : "",
-                courseId ? `Course ID: ${courseId}.` : "",
-                lessonId ? `Lesson ID: ${lessonId}.` : "",
-                "Provide detailed, accurate, and engaging explanations tailored to the student's level.",
-            ].filter(Boolean).join(" ");
+            const contextParts = buildStudentAiSystemPrompt({
+                user,
+                recentMessages: messages.map((msg) => ({
+                    role: msg.role === 'user' ? 'user' : 'assistant',
+                    content: msg.content,
+                })),
+                courseTitle,
+                lessonTitle,
+                courseId,
+                lessonId,
+            });
 
             const apiMessages = [
                 {
@@ -202,6 +304,7 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
 
             // Add AI response to messages
             setMessages(prev => [...prev, { role: 'ai', content: data.response }]);
+            await persistChatExchange(messageContent, data.response, imageData ? 'text' : 'text');
 
             // Simulate emotional analysis (in a real implementation, this would call the analyzeEmotions API)
             const emotions = ['High', 'Medium', 'Strong'];

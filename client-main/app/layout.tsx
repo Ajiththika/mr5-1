@@ -16,20 +16,24 @@ import { AccessibilityPreferencesSync } from "@/components/accessibility/Accessi
 import type { ReactNode } from "react";
 
 export const metadata: Metadata = genMeta({
-	title: "MR5 School - Learn with AI",
+	title: "3D Virtual Classroom & AI Teachers",
 	description:
-		"Advanced online learning platform with AI-powered avatars, interactive courses, and personalized education. Learn programming, data science, web development, and more with expert instructors.",
+		"Learn inside a live 3D virtual classroom with MR5 School. AI teachers remember your level, voice-enabled chat, immersive lessons, and personalized online education for students worldwide.",
 	keywords: [
-		"online learning",
-		"AI education",
+		"MR5 School",
+		"3D virtual classroom",
+		"AI teacher",
+		"online learning platform",
+		"immersive education",
+		"interactive classroom",
+		"personalized learning",
+		"AI tutor",
+		"virtual school",
+		"student learning app",
+		"360 classroom view",
+		"voice enabled learning",
+		"e-learning",
 		"online courses",
-		"programming courses",
-		"web development",
-		"data science",
-		"machine learning",
-		"interactive learning",
-		"virtual classroom",
-		"e-learning platform",
 	],
 	url: "/",
 	type: "website",
@@ -46,11 +50,12 @@ export default function RootLayout({
 }>) {
 	const organizationData = generateStructuredData("Organization");
 	const websiteData = generateStructuredData("WebSite");
+	const educationalData = generateStructuredData("EducationalOrganization");
 
 	return (
 		<html lang="en" suppressHydrationWarning className="dark">
 			<head>
-				<StructuredData data={[organizationData, websiteData]} />
+				<StructuredData data={[organizationData, websiteData, educationalData]} />
 				<link rel="canonical" href={process.env.NEXT_PUBLIC_SITE_URL || "https://mr5school.com"} />
 				<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
 				<meta name="theme-color" content="#18181b" />
