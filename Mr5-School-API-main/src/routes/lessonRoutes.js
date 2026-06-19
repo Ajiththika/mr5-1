@@ -7,6 +7,7 @@ import {
 	deleteLesson,
 } from "../controllers/lessonController.js";
 import { verifyToken, authorize } from "../middleware/authMiddleware.js";
+import { requireLegalConsent } from "../middleware/consentMiddleware.js";
 
 const router = express.Router();
 
@@ -15,6 +16,7 @@ router.get("/:id", getLessonById);
 
 // Protected routes
 router.use(verifyToken);
+router.use(requireLegalConsent);
 router.post("/", authorize("AI-TEACHER", "admin"), createLesson);
 router.put("/:id", authorize("AI-TEACHER", "admin"), updateLesson);
 router.delete("/:id", authorize("AI-TEACHER", "admin"), deleteLesson);

@@ -24,7 +24,8 @@ import { useVoiceInteraction } from "@/hooks/useVoiceInteraction";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { progressService } from "@/services/progress.service";
-import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export default function LessonPage() {
     const params = useParams();
@@ -260,7 +261,9 @@ export default function LessonPage() {
                         <div className="prose prose-invert max-w-none prose-headings:text-white prose-a:text-primary prose-strong:text-white prose-code:bg-white/10 prose-code:rounded prose-code:px-1 prose-pre:bg-black/50 prose-pre:border prose-pre:border-white/10">
                             {/* Simulate markdown content rendering */}
                             {currentLesson.content ? (
-                                <div dangerouslySetInnerHTML={{ __html: currentLesson.content }} />
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {currentLesson.content}
+                                </ReactMarkdown>
                             ) : (
                                 <div className="space-y-4 text-gray-400">
                                     <p>

@@ -3,5 +3,22 @@ dist/
 build/
 .next/
 .env
+.envcopy
+.env.*
+!.env.production.example
+!.env.example
 .cache/
 coverage/
+
+# Secrets and sensitive artifacts — never commit
+cookies.txt
+*.log
+test_output.txt
+*.bak
+
+# Test artifacts
+playwright-report/
+test-results/
+
+# Local backups
+backups/

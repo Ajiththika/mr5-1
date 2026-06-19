@@ -10,25 +10,54 @@ import {
     DialogDescription,
     DialogFooter
 } from "@/components/ui/dialog";
-import { ShieldCheck, Bot } from "lucide-react";
-// import { VisuallyHidden } from '@radix-ui/react-visually-hidden'; // Example if using Radix primitive directly
+import { ShieldCheck, Bot, Loader2 } from "lucide-react";
+import { useEnhancedUser } from "@/contexts/EnhancedUserContext";
+import { legalService } from "@/services/legal.service";
 
 export function AIConsentModal() {
+    const { user } = useEnhancedUser();
     const [open, setOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        const hasConsented = localStorage.getItem("mr5-ai-consent");
-        if (!hasConsented) {
-            // Small delay to not overwhelm on load
-            const timer = setTimeout(() => setOpen(true), 1500);
-            return () => clearTimeout(timer);
-        }
-    }, []);
+        if (!user) return;
 
-    const handleAccept = () => {
-        localStorage.setItem("mr5-ai-consent", "true");
-        setOpen(false);
+        let timer: ReturnType<typeof setTimeout> | undefined;
+
+        legalService
+            .getPreferences()
+            .then((prefs) => {
+                if (!prefs.aiFeatures) {
+                    timer = setTimeout(() => setOpen(true), 1500);
+                }
+            })
+            .catch(() => {
+                const legacy = localStorage.getItem("mr5-ai-consent");
+                if (!legacy) {
+                    timer = setTimeout(() => setOpen(true), 1500);
+                }
+            });
+
+        return () => {
+            if (timer) clearTimeout(timer);
+        };
+    }, [user]);
+
+    const handleAccept = async () => {
+        try {
+            setLoading(true);
+            await legalService.updatePreferences({ aiFeatures: true });
+            localStorage.setItem("mr5-ai-consent", "true");
+            setOpen(false);
+        } catch {
+            localStorage.setItem("mr5-ai-consent", "true");
+            setOpen(false);
+        } finally {
+            setLoading(false);
+        }
     };
+
+    if (!user) return null;
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -38,30 +67,13 @@ export function AIConsentModal() {
                         <div className="p-2 bg-blue-500/20 rounded-lg">
                             <Bot className="h-6 w-6 text-blue-400" />
                         </div>
-                        {/* 
-                            (1) Visible Title Example 
-                        */}
                         <DialogTitle className="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
                             AI-Powered Learning
                         </DialogTitle>
                     </div>
-
-                    {/* 
-                        (1) Visible Description Example:
-                        Used when the description provides context that strictly must be seen.
-                    */}
                     <DialogDescription className="text-blue-100/70 pt-2">
-                        Webe Advanst LMS uses Artificial Intelligence to enhance your learning experience.
+                        MR5 School uses Artificial Intelligence to enhance your learning experience.
                     </DialogDescription>
-
-                    {/* 
-                        (2) Visually Hidden Description Example (using sr-only class):
-                        Use this if the UI design excludes text but screen readers need context.
-                        
-                        <DialogDescription className="sr-only">
-                            Please accept the AI terms of service to continue.
-                        </DialogDescription>
-                    */}
                 </DialogHeader>
 
                 <div className="space-y-4 py-4">
@@ -89,9 +101,10 @@ export function AIConsentModal() {
                     </Button>
                     <Button
                         onClick={handleAccept}
+                        disabled={loading}
                         className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white border-0"
                     >
-                        Enable AI Features
+                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Enable AI Features"}
                     </Button>
                 </DialogFooter>
             </DialogContent>

@@ -14,7 +14,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { registerSchema } from "@/lib/schemas";
-import { User, Mail, Lock, Sparkles, ShieldCheck, Eye, EyeOff } from "lucide-react";
+import { User, Mail, Lock, Sparkles, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
@@ -29,6 +29,7 @@ function RegisterForm() {
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(false);
+    const [acceptLegal, setAcceptLegal] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -48,11 +49,18 @@ function RegisterForm() {
         try {
             registerSchema.parse(formData);
 
+            if (!acceptLegal) {
+                setErrors({ general: "You must accept the Terms of Service and Privacy Policy." });
+                setLoading(false);
+                return;
+            }
+
             await register(
                 formData.name,
                 formData.email,
                 formData.password,
                 formData.role as "student" | "AI-TEACHER",
+                { acceptLegal: true },
             );
         } catch (err: any) {
             console.error("Register Error:", err);
@@ -241,24 +249,30 @@ function RegisterForm() {
                     </Select>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-1 px-2 py-4 text-[10px] text-slate-500 font-medium">
-                    <ShieldCheck className="w-4 h-4 text-primary shrink-0" />
-                    <span>
-                      By creating an account, you agree to our{" "}
-                      <Link href="/terms" className="text-primary hover:underline">
+                <label className="flex cursor-pointer items-start gap-3 px-2 py-2">
+                    <input
+                        type="checkbox"
+                        checked={acceptLegal}
+                        onChange={(e) => setAcceptLegal(e.target.checked)}
+                        className="mt-0.5 h-4 w-4 rounded border-white/20 accent-primary"
+                        required
+                    />
+                    <span className="text-[10px] text-slate-500 font-medium leading-relaxed">
+                      I agree to the{" "}
+                      <Link href="/terms" className="text-primary hover:underline" target="_blank">
                         Terms of Service
                       </Link>{" "}
                       and{" "}
-                      <Link href="/privacy" className="text-primary hover:underline">
+                      <Link href="/privacy" className="text-primary hover:underline" target="_blank">
                         Privacy Policy
                       </Link>
                       .
                     </span>
-                </div>
+                </label>
 
                 <Button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || !acceptLegal}
                     aria-label="Create Account"
                     className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white font-bold h-12 rounded-2xl shadow-xl shadow-primary/20 transition-all hover:scale-[1.01] active:scale-95 group"
                 >

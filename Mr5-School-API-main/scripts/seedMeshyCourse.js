@@ -12,8 +12,6 @@ const __dirname = dirname(__filename);
 // Load environment variables
 dotenv.config({ path: join(__dirname, "../.env") });
 
-const MESHY_API_KEY = "msy_La9nd7MfJ51aFICObvgVjjfKG90LqMe3rbCu";
-
 const courseData = {
     title: "Meshy.ai 3D Generation Masterclass",
     description: "An industry-leading course on automating 3D asset creation. Learn to harness the Meshy.ai API to transform text and images into high-fidelity 3D models. This course covers authentication, task management, polling strategies, and engine-ready exports.",
@@ -68,13 +66,13 @@ const axios = require('axios');
 const client = axios.create({
   baseURL: 'https://api.meshy.ai/v1',
   headers: {
-    'Authorization': \`Bearer msy_La9nd7MfJ51aFICObvgVjjfKG90LqMe3rbCu\`,
+    'Authorization': \`Bearer \${process.env.MESHY_API_KEY}\`,
     'Content-Type': 'application/json'
   }
 });
 \`\`\`
 
-> **Note**: Your API key (msy_La9nd7...Me3rbCu) is linked to your billing. Never expose it in client-side code!
+> **Note**: Store your API key in \`MESHY_API_KEY\` — never expose it in client-side code!
         `,
         order: 2,
         duration: 15
@@ -206,10 +204,14 @@ async function seedMeshyCourse() {
         // Get AI Teacher
         let aiTeacher = await User.findOne({ role: { $in: ["AI-TEACHER", "admin"] } });
         if (!aiTeacher) {
+            const seedPassword = process.env.SEED_USER_PASSWORD;
+            if (!seedPassword) {
+                throw new Error("SEED_USER_PASSWORD env var is required to create the seed instructor.");
+            }
             aiTeacher = await User.create({
                 name: "AI Instructor (Meshy)",
                 email: "instructor@meshy-academy.ai",
-                password: "SecurePassword123",
+                password: seedPassword,
                 role: "admin",
                 isActive: true,
             });

@@ -33,6 +33,8 @@ export interface RegisterData {
     email: string;
     password: string;
     role?: "student" | "AI-TEACHER";
+    acceptLegal?: boolean;
+    documentVersionIds?: string[];
 }
 
 export interface UserProfile extends User {

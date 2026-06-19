@@ -7,10 +7,12 @@ import {
 	getAiContext,
 } from "../controllers/studentLearningController.js";
 import { verifyToken, authorize } from "../middleware/authMiddleware.js";
+import { requireLegalConsent } from "../middleware/consentMiddleware.js";
 
 const router = express.Router();
 
 router.use(verifyToken);
+router.use(requireLegalConsent);
 router.use(authorize("student"));
 
 router.get("/learning-profile", getLearningProfile);

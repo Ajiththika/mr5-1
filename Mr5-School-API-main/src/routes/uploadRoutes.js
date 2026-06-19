@@ -2,8 +2,10 @@ import express from "express";
 import upload from "../middleware/upload.js";
 import { asyncHandler } from "../middleware/errorHandler.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
+import { requireLegalConsent } from "../middleware/consentMiddleware.js";
 
 const router = express.Router();
+const protect = [verifyToken, requireLegalConsent];
 
 /**
  * @route   POST /api/upload
@@ -12,7 +14,7 @@ const router = express.Router();
  */
 router.post(
     "/",
-    verifyToken,
+    ...protect,
     upload.single("file"),
     asyncHandler(async (req, res) => {
         if (!req.file) {
@@ -42,7 +44,7 @@ router.post(
  */
 router.post(
     "/multiple",
-    verifyToken,
+    ...protect,
     upload.array("files", 5), // Max 5 files
     asyncHandler(async (req, res) => {
         if (!req.files || req.files.length === 0) {

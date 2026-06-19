@@ -2,8 +2,10 @@ import express from "express";
 import aiService from "../services/ai.service.js";
 import aiTeacherService from "../services/AITeacherService.js";
 import { verifyToken, authorize } from "../middleware/authMiddleware.js";
+import { requireLegalConsent } from "../middleware/consentMiddleware.js";
 
 const router = express.Router();
+const protect = [verifyToken, requireLegalConsent];
 
 // Middleware for rate limiting (basic consistent implementation)
 const rateLimit = (req, res, next) => {
@@ -15,7 +17,7 @@ const rateLimit = (req, res, next) => {
 // @desc    Interaction with RAG-enhanced AI Tutor
 // @route   POST /api/ai/tutor
 // @access  Private
-router.post("/tutor", verifyToken, rateLimit, async (req, res) => {
+router.post("/tutor", ...protect, rateLimit, async (req, res) => {
     try {
         const { query, courseId } = req.body;
         const userId = req.user.id;
@@ -33,7 +35,7 @@ router.post("/tutor", verifyToken, rateLimit, async (req, res) => {
 // @desc    Chat with AI Coach
 // @route   POST /api/ai/chat
 // @access  Private
-router.post("/chat", verifyToken, rateLimit, async (req, res) => {
+router.post("/chat", ...protect, rateLimit, async (req, res) => {
     try {
         const { messages, options } = req.body;
 
@@ -75,7 +77,7 @@ router.post("/chat", verifyToken, rateLimit, async (req, res) => {
 // @desc    Generate Course Summary & Quiz
 // @route   POST /api/ai/summary
 // @access  Private (AI-TEACHER/Admin)
-router.post("/summary", verifyToken, authorize("AI-TEACHER", "admin"), async (req, res) => {
+router.post("/summary", ...protect, authorize("AI-TEACHER", "admin"), async (req, res) => {
     try {
         const { content } = req.body;
         const result = await aiService.generateCourseSummaryAndQuiz(content);
@@ -88,7 +90,7 @@ router.post("/summary", verifyToken, authorize("AI-TEACHER", "admin"), async (re
 // @desc    Auto-grade Assignment
 // @route   POST /api/ai/grade
 // @access  Private
-router.post("/grade", verifyToken, async (req, res) => {
+router.post("/grade", ...protect, async (req, res) => {
     try {
         const { answer, rubric } = req.body;
         const result = await aiService.autoGrade({ studentAnswer: answer, rubric });
@@ -101,7 +103,7 @@ router.post("/grade", verifyToken, async (req, res) => {
 // @desc    Chat with Ollama directly
 // @route   POST /api/ai/ollama
 // @access  Private
-router.post("/ollama", verifyToken, rateLimit, async (req, res) => {
+router.post("/ollama", ...protect, rateLimit, async (req, res) => {
     try {
         const { messages, options } = req.body;
 
@@ -116,7 +118,7 @@ router.post("/ollama", verifyToken, rateLimit, async (req, res) => {
 // @desc    Chat with Gemini directly
 // @route   POST /api/ai/gemini
 // @access  Private
-router.post("/gemini", verifyToken, rateLimit, async (req, res) => {
+router.post("/gemini", ...protect, rateLimit, async (req, res) => {
     try {
         const { message, messages, options, multimodal } = req.body;
 
@@ -143,7 +145,7 @@ router.post("/gemini", verifyToken, rateLimit, async (req, res) => {
 // @desc    Detect Regional Information based on location
 // @route   POST /api/ai/detect-regional-info
 // @access  Private
-router.post("/detect-regional-info", verifyToken, async (req, res) => {
+router.post("/detect-regional-info", ...protect, async (req, res) => {
     try {
         const { location } = req.body;
         // If location is not provided, we could try to detect from IP, 
@@ -159,7 +161,7 @@ router.post("/detect-regional-info", verifyToken, async (req, res) => {
 // @desc    Generate Course Structure via AI
 // @route   POST /api/ai/generate-course
 // @access  Private
-router.post('/generate-course', verifyToken, async (req, res) => {
+router.post('/generate-course', ...protect, async (req, res) => {
     const { topic } = req.body;
 
     if (!topic) return res.status(400).json({ error: "Topic is required" });

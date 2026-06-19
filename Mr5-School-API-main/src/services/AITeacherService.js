@@ -9,9 +9,9 @@ import { getOllamaHost } from '../utils/ollamaEnv.js';
 
 class AITeacherService {
     constructor() {
-        this.openai = new OpenAI({
-            apiKey: process.env.OPENAI_API_KEY || 'dummy-key-for-init',
-        });
+        this.openai = process.env.OPENAI_API_KEY
+            ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+            : null;
         this.ollama = new Ollama({ host: getOllamaHost() });
 
         // Gemini initialization
@@ -98,6 +98,9 @@ class AITeacherService {
     }
 
     async _generateOpenAI(systemPrompt, userQuery) {
+        if (!this.openai) {
+            throw new Error("OPENAI_API_KEY is not configured");
+        }
         const response = await this.openai.chat.completions.create({
             model: "gpt-4-turbo-preview",
             messages: [

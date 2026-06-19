@@ -9,10 +9,12 @@ import {
 	createEnrollment
 } from "../controllers/enrollmentController.js";
 import { verifyToken as protect, authorize } from "../middleware/authMiddleware.js";
+import { requireLegalConsent } from "../middleware/consentMiddleware.js";
 
 const router = express.Router();
 
-router.use(protect); // All routes are protected
+router.use(protect);
+router.use(requireLegalConsent);
 
 router.get("/check/:courseId", checkEnrollmentAccess);
 router.get("/my", getStudentEnrollments); // New route for students to get their own enrollments

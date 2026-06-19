@@ -3,16 +3,20 @@ import nodemailer from "nodemailer";
 
 class SupportService {
     constructor() {
-        // Initialize nodemailer transporter
-        // In production, you would use environment variables for these credentials
+        const smtpUser = process.env.SMTP_USER;
+        const smtpPass = process.env.SMTP_PASS;
+
+        if (process.env.NODE_ENV === "production" && (!smtpUser || !smtpPass)) {
+            console.warn("SMTP credentials not configured; email support is disabled.");
+            this.transporter = null;
+            return;
+        }
+
         this.transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST || "smtp.ethereal.email",
-            port: parseInt(process.env.SMTP_PORT) || 587,
-            secure: false, // true for 465, false for other ports
-            auth: {
-                user: process.env.SMTP_USER || "your@email.com",
-                pass: process.env.SMTP_PASS || "your_password"
-            }
+            port: parseInt(process.env.SMTP_PORT, 10) || 587,
+            secure: false,
+            auth: smtpUser && smtpPass ? { user: smtpUser, pass: smtpPass } : undefined,
         });
     }
 
@@ -52,6 +56,10 @@ class SupportService {
     // Send support email
     async sendEmail(to, subject, body, attachments = []) {
         try {
+            if (!this.transporter) {
+                throw new Error("Email service is not configured");
+            }
+
             // Validate email
             if (!this.isValidEmail(to)) {
                 throw new Error("Invalid email address");

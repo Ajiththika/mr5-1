@@ -12,7 +12,13 @@ interface EnhancedUserContextType {
   loading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string, redirectTo?: string) => Promise<void>;
-  register: (name: string, email: string, password: string, role?: "student" | "AI-TEACHER") => Promise<void>;
+  register: (
+    name: string,
+    email: string,
+    password: string,
+    role?: "student" | "AI-TEACHER",
+    options?: { acceptLegal?: boolean; documentVersionIds?: string[] },
+  ) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
   clearUserCache: () => void;
@@ -197,7 +203,10 @@ export function EnhancedUserProvider({ children }: { children: React.ReactNode }
   const login = useCallback(async (email: string, password: string, redirectTo?: string) => {
     const response = await authService.login({ email, password });
     if (response.success && response.data) {
-      const { user: userData } = response.data;
+      const { user: userData, consentSatisfied } = response.data as {
+        user: User;
+        consentSatisfied?: boolean;
+      };
       // Note: accessToken/refreshToken are set as httpOnly cookies by the server
 
       setUser(userData);
@@ -208,6 +217,13 @@ export function EnhancedUserProvider({ children }: { children: React.ReactNode }
         redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//")
           ? redirectTo
           : null;
+
+      if (consentSatisfied === false) {
+        router.push(
+          `/legal/accept?redirect=${encodeURIComponent(safeRedirect || "/dashboard")}`,
+        );
+        return;
+      }
 
       if (safeRedirect) {
         router.push(safeRedirect);
@@ -239,18 +255,20 @@ export function EnhancedUserProvider({ children }: { children: React.ReactNode }
     email: string,
     password: string,
     role?: "student" | "AI-TEACHER",
+    options?: { acceptLegal?: boolean; documentVersionIds?: string[] },
   ) => {
     const response = await authService.register({
       name,
       email,
       password,
       role,
+      acceptLegal: options?.acceptLegal,
+      documentVersionIds: options?.documentVersionIds,
     });
 
     if (response.success && response.data) {
-      // Backend now auto-logs in after register (sets cookies)
-      await refreshUser(); // Fetch user data
-      router.push("/dashboard"); // Redirect to dashboard
+      await refreshUser();
+      router.push("/dashboard");
     }
   }, [refreshUser, router]);
 

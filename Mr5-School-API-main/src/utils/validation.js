@@ -6,6 +6,16 @@ export const registerSchema = z.object({
 	password: z.string().min(6, "Password must be at least 6 characters"),
 	role: z.enum(["student", "AI-TEACHER", "customer"]).optional(),
 	phone: z.string().optional(),
+	acceptLegal: z.boolean().optional(),
+	documentVersionIds: z.array(z.string()).optional(),
+}).superRefine((data, ctx) => {
+	if (process.env.NODE_ENV === "production" && data.acceptLegal !== true) {
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
+			message: "You must accept the legal agreements to register",
+			path: ["acceptLegal"],
+		});
+	}
 });
 
 export const loginSchema = z.object({

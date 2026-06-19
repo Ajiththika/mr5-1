@@ -5,6 +5,11 @@
 import { asyncHandler } from "../middleware/errorHandler.js";
 import { registerSchema, loginSchema } from "../utils/validation.js";
 import * as authService from "../services/authService.js";
+import {
+	recordAcceptances,
+	getMandatoryVersionIds,
+	getConsentStatus,
+} from "../services/legalConsentService.js";
 
 // Cookie options
 const getAccessTokenCookieOptions = () => ({
@@ -19,6 +24,14 @@ const getRefreshTokenCookieOptions = () => ({
 	expires: new Date(
 		Date.now() + (parseInt(process.env.REFRESH_TOKEN_EXPIRE_DAYS) || 7) * 24 * 60 * 60 * 1000
 	),
+	httpOnly: true,
+	secure: process.env.NODE_ENV === "production",
+	sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+	path: "/",
+});
+
+const consentCookieOptions = () => ({
+	expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
 	httpOnly: true,
 	secure: process.env.NODE_ENV === "production",
 	sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
@@ -67,6 +80,26 @@ export const register = asyncHandler(async (req, res) => {
 
 		setAuthCookies(res, accessToken, refreshToken);
 
+		if (validation.data.acceptLegal) {
+			const versionIds =
+				validation.data.documentVersionIds?.length > 0
+					? validation.data.documentVersionIds
+					: await getMandatoryVersionIds();
+
+			if (versionIds.length > 0) {
+				const status = await recordAcceptances(user._id, versionIds, {
+					acceptanceMethod: "clickwrap",
+					locale: "en",
+					source: "register",
+					ipAddress,
+					userAgent,
+				});
+				if (status.satisfied) {
+					res.cookie("mr5_consent_ok", "1", consentCookieOptions());
+				}
+			}
+		}
+
 		res.status(201).json({
 			success: true,
 			data: {
@@ -114,6 +147,13 @@ export const login = asyncHandler(async (req, res) => {
 
 		setAuthCookies(res, accessToken, refreshToken);
 
+		const consentStatus = await getConsentStatus(user._id);
+		if (consentStatus.satisfied) {
+			res.cookie("mr5_consent_ok", "1", consentCookieOptions());
+		} else {
+			res.cookie("mr5_consent_ok", "", { expires: new Date(0), httpOnly: true, path: "/" });
+		}
+
 		res.status(200).json({
 			success: true,
 			data: {
@@ -127,6 +167,7 @@ export const login = asyncHandler(async (req, res) => {
 					avatarUrl: user.avatarUrl,
 				},
 				accessToken,
+				consentSatisfied: consentStatus.satisfied,
 			},
 		});
 	} catch (error) {

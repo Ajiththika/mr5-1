@@ -7,13 +7,15 @@ import {
 	deleteSubmission,
 } from "../controllers/submissionController.js";
 import { verifyToken, authorize } from "../middleware/authMiddleware.js";
+import { requireLegalConsent } from "../middleware/consentMiddleware.js";
 
 const router = express.Router();
+const protect = [verifyToken, requireLegalConsent];
 
-router.get("/", verifyToken, authorize("AI-TEACHER", "admin"), getAllSubmissions);
-router.get("/:id", verifyToken, getSubmissionById);
-router.post("/", verifyToken, authorize("student"), createSubmission);
-router.put("/:id", verifyToken, authorize("AI-TEACHER", "admin"), updateSubmission);
-router.delete("/:id", verifyToken, authorize("admin"), deleteSubmission);
+router.get("/", ...protect, authorize("AI-TEACHER", "admin"), getAllSubmissions);
+router.get("/:id", ...protect, getSubmissionById);
+router.post("/", ...protect, authorize("student"), createSubmission);
+router.put("/:id", ...protect, authorize("AI-TEACHER", "admin"), updateSubmission);
+router.delete("/:id", ...protect, authorize("admin"), deleteSubmission);
 
 export default router;

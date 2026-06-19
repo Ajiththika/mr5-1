@@ -39,6 +39,7 @@ import uploadRoutes from "./routes/uploadRoutes.js";
 import pricingRoutes from "./routes/pricingRoutes.js";
 import progressRoutes from "./routes/progressRoutes.js";
 import shopRoutes from "./routes/shopRoutes.js";
+import legalRoutes from "./routes/legalRoutes.js";
 import { handleStripeWebhook } from "./controllers/paymentController.js";
 import { validateEnv } from "./config/env.js";
 import aiService from "./services/ai.service.js"; // Import aiService instance
@@ -52,37 +53,55 @@ passportConfig(passport);
 // Validate environment variables
 validateEnv();
 
-console.log("Starting server...");
-console.log("Environment variables:");
-console.log("- PORT:", process.env.PORT);
-console.log("- NODE_ENV:", process.env.NODE_ENV);
-console.log("- MONGO_URI:", process.env.MONGO_URI ? "SET" : "NOT SET");
+const isProduction = process.env.NODE_ENV === "production";
+
+if (!isProduction) {
+    console.log("Starting server...");
+    console.log("- PORT:", process.env.PORT);
+    console.log("- NODE_ENV:", process.env.NODE_ENV);
+}
 
 const app = express();
 
+if (isProduction) {
+    app.set("trust proxy", 1);
+}
+
 // CORS configuration - MUST be before any security middleware
-const allowedOrigins = [
-    process.env.CORS_ORIGIN || "http://localhost:3000",
-    ...(process.env.CORS_EXTRA_ORIGINS || "")
+const parseOrigins = (value) =>
+    (value || "")
         .split(",")
         .map((o) => o.trim())
-        .filter(Boolean),
-    "http://localhost:3001",
-    "http://localhost:*", // Allow any localhost port for development
+        .filter(Boolean);
+
+const productionOrigins = [
+    process.env.CORS_ORIGIN,
+    ...parseOrigins(process.env.CORS_EXTRA_ORIGINS),
     "https://mr5school.com",
     "https://www.mr5school.com",
     "https://app.mr5school.com",
-    "https://mr5school.vercel.app", // Vercel frontend deployment
-    "https://mr5-school-api.vercel.app", // Vercel backend deployment
+].filter(Boolean);
+
+const developmentOrigins = [
+    process.env.CORS_ORIGIN || "http://localhost:3000",
+    ...parseOrigins(process.env.CORS_EXTRA_ORIGINS),
+    "http://localhost:3001",
+    "https://mr5school.com",
+    "https://www.mr5school.com",
+    "https://app.mr5school.com",
 ];
 
-const localOriginPatterns = [
-    /^http:\/\/localhost(?::\d+)?$/,
-    /^http:\/\/127\.0\.0\.1(?::\d+)?$/,
-    /^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/,
-    /^http:\/\/10\.\d+\.\d+\.\d+(:\d+)?$/,
-    /^http:\/\/172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+(:\d+)?$/,
-];
+const allowedOrigins = isProduction ? productionOrigins : developmentOrigins;
+
+const localOriginPatterns = isProduction
+    ? []
+    : [
+        /^http:\/\/localhost(?::\d+)?$/,
+        /^http:\/\/127\.0\.0\.1(?::\d+)?$/,
+        /^http:\/\/192\.168\.\d+\.\d+(?::\d+)?$/,
+        /^http:\/\/10\.\d+\.\d+\.\d+(?::\d+)?$/,
+        /^http:\/\/172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+(?::\d+)?$/,
+    ];
 
 const isAllowedOrigin = (origin) => {
     if (!origin) return true;
@@ -91,12 +110,7 @@ const isAllowedOrigin = (origin) => {
         return true;
     }
 
-    return allowedOrigins.some((allowedOrigin) => {
-        if (allowedOrigin === "http://localhost:*") {
-            return origin.startsWith("http://localhost:");
-        }
-        return origin === allowedOrigin;
-    });
+    return allowedOrigins.includes(origin);
 };
 
 // Dynamic CORS configuration
@@ -173,6 +187,7 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/pricing", pricingRoutes);
 app.use("/api/progress", progressRoutes);
 app.use("/api/shop", shopRoutes);
+app.use("/api/legal", legalRoutes);
 
 // Health check endpoint
 app.get("/health", (req, res) => {

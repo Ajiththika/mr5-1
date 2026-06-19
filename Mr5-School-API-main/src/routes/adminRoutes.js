@@ -6,10 +6,12 @@ import {
 	getPlatformStats
 } from "../controllers/adminController.js";
 import { verifyToken, authorize } from "../middleware/authMiddleware.js";
+import { requireLegalConsent } from "../middleware/consentMiddleware.js";
 
 const router = express.Router();
 
 router.use(verifyToken);
+router.use(requireLegalConsent);
 
 router.get("/stats", authorize("admin"), getPlatformStats);
 router.use(authorize("admin"));

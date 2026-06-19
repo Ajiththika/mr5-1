@@ -19,6 +19,15 @@ const CONSENT_PROTECTED_PREFIXES = [
 	"/api/payments",
 	"/api/assignments",
 	"/api/submissions",
+	"/api/progress",
+	"/api/upload",
+	"/api/context",
+	"/api/tts",
+	"/api/livekit",
+	"/api/avatar",
+	"/api/avatar-support-agent",
+	"/api/shop",
+	"/api/lessons",
 ];
 
 /**
@@ -43,7 +52,10 @@ export async function requireLegalConsent(req, res, next) {
 			return next();
 		}
 
-		if (process.env.LEGAL_RECONSENT_ENFORCED === "false") {
+		if (
+			process.env.LEGAL_RECONSENT_ENFORCED === "false" &&
+			process.env.NODE_ENV !== "production"
+		) {
 			return next();
 		}
 

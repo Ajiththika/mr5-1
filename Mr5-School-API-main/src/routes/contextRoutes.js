@@ -3,6 +3,7 @@ import rateLimit from "express-rate-limit";
 import { syncContext, getMyContext } from "../controllers/contextController.js";
 import { getPublicWeather } from "../controllers/weatherController.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
+import { requireLegalConsent } from "../middleware/consentMiddleware.js";
 
 const router = express.Router();
 
@@ -16,6 +17,7 @@ const weatherLimiter = rateLimit({
 router.get("/weather", weatherLimiter, getPublicWeather);
 
 router.use(verifyToken);
+router.use(requireLegalConsent);
 
 router.get("/me", getMyContext);
 router.post("/sync", syncContext);

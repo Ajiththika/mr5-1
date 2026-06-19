@@ -189,6 +189,9 @@ const connectDB = async () => {
 		cachedConnection = mongoose.connection;
 		console.log("MongoDB Connected Successfully");
 
+		const { seedLegalDocumentsIfEmpty } = await import("../services/legalConsentService.js");
+		await seedLegalDocumentsIfEmpty();
+
 		await seedDevelopmentData();
 		return mongoose.connection;
 	} catch (error) {
@@ -202,6 +205,10 @@ const connectDB = async () => {
 			await mongoose.connect(uri, options);
 			cachedConnection = mongoose.connection;
 			console.log("MongoDB Connected Successfully using in-memory MongoDB");
+
+			const { seedLegalDocumentsIfEmpty } = await import("../services/legalConsentService.js");
+			await seedLegalDocumentsIfEmpty();
+
 			await seedDevelopmentData();
 			return mongoose.connection;
 		}
