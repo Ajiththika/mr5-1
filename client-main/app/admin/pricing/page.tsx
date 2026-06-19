@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,7 +27,6 @@ export default function PricingAdmin() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
-    // New rule form
     const [newRule, setNewRule] = useState({
         location: { country: '', state: '', city: '' },
         taxPercentage: 0,
@@ -76,13 +76,12 @@ export default function PricingAdmin() {
     if (loading) return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="animate-spin" /></div>;
 
     return (
-        <div className="p-8 max-w-6xl mx-auto space-y-8">
-            <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-extrabold tracking-tight">Location-based Pricing Management</h1>
-                <p className="text-muted-foreground">Manage taxes and currency multipliers per region</p>
-            </div>
+        <div className="space-y-8">
+            <AdminPageHeader
+                title="Regional Pricing"
+                description="Manage taxes and currency multipliers per region"
+            />
 
-            {/* Create New Rule Section */}
             <div className="bg-card border rounded-2xl p-6 shadow-sm">
                 <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
                     <Plus className="w-5 h-5 text-primary" /> Create New Pricing Rule
@@ -151,7 +150,6 @@ export default function PricingAdmin() {
                 </form>
             </div>
 
-            {/* List Existing Rules */}
             <div className="grid gap-4">
                 {rules.map((rule: any) => (
                     <div key={rule._id} className="bg-background border rounded-xl p-4 flex items-center justify-between hover:border-primary/50 transition-colors shadow-sm">

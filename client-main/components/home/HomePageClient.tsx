@@ -5,6 +5,8 @@ export const dynamic = "force-dynamic";
 import { useState, useEffect } from "react";
 import { BentoGrid, BentoItem } from "@/components/ui/bento-grid";
 import { Navbar } from "@/components/layout/navbar";
+import { Footer } from "@/components/layout/footer";
+import { HomePricingSection } from "@/components/home/HomePricingSection";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import nextDynamic from "next/dynamic";
@@ -367,7 +369,11 @@ export default function HomePageClient() {
             </div>
           </BentoItem>
         </BentoGrid>
+
+        <HomePricingSection />
       </main>
+
+      <Footer />
 
       <StudentWelcomeChat
         open={isWelcomeChatOpen}

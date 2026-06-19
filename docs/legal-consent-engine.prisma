@@ -1,0 +1,195 @@
+// MR5 School — Legal Consent Engine (PostgreSQL / Prisma reference schema)
+// Use when migrating from MongoDB. Current production path uses Mongoose models.
+//
+// LEGAL REVIEW REQUIRED: Retention policies, IP logging, and child-consent
+// fields must be approved by qualified counsel before enabling in production.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  student
+  AI_TEACHER
+  admin
+}
+
+enum LegalDocumentType {
+  platform_terms
+  privacy_policy
+  cookie_notice
+  refund_policy
+  acceptable_use
+  parental_consent
+  ai_features_addendum
+  spatial_telemetry_addendum
+}
+
+enum AcceptanceMethod {
+  clickwrap
+  oauth_register
+  api
+  admin_override
+}
+
+enum ConsentEventType {
+  accepted
+  revoked
+  reconsent_required
+  reconsent_completed
+  preference_updated
+  document_published
+  document_retired
+}
+
+model User {
+  id                   String            @id @default(cuid())
+  email                String            @unique
+  name                 String
+  role                 UserRole          @default(student)
+  age                  Int?
+  isActive             Boolean           @default(true)
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  deletedAt            DateTime?
+
+  legalAcceptances     LegalAcceptance[]
+  consentPreferences   UserConsentPreferences?
+  consentAuditLogs     ConsentAuditLog[]
+  enrollments          CourseEnrollment[]
+  spatialInteractionLogs SpatialInteractionLog[]
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+model LegalDocument {
+  id          String              @id @default(cuid())
+  slug        String              @unique
+  type        LegalDocumentType
+  title       String
+  description String?
+  isMandatory Boolean             @default(false)
+  isPublished Boolean             @default(false)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  versions    LegalDocumentVersion[]
+
+  @@index([type, isPublished])
+  @@map("legal_documents")
+}
+
+model LegalDocumentVersion {
+  id                    String          @id @default(cuid())
+  documentId            String
+  versionNumber         String
+  content               String          @db.Text
+  contentFormat         String          @default("markdown")
+  summaryOfChanges      String?         @db.Text
+  effectiveAt           DateTime
+  requiresReacceptance  Boolean         @default(true)
+  isCurrent             Boolean         @default(false)
+  publishedByUserId     String?
+  createdAt             DateTime        @default(now())
+
+  document              LegalDocument   @relation(fields: [documentId], references: [id], onDelete: Restrict)
+  acceptances           LegalAcceptance[]
+
+  @@unique([documentId, versionNumber])
+  @@index([documentId, isCurrent])
+  @@index([effectiveAt])
+  @@map("legal_document_versions")
+}
+
+model LegalAcceptance {
+  id                  String            @id @default(cuid())
+  userId              String
+  documentVersionId   String
+  acceptedAt          DateTime          @default(now())
+  acceptanceMethod    AcceptanceMethod
+  locale              String            @default("en")
+  source              String            @default("web")
+  ipAddressHash       String?
+  userAgentTruncated  String?           @db.VarChar(256)
+  isRevoked           Boolean           @default(false)
+  revokedAt           DateTime?
+
+  user                User              @relation(fields: [userId], references: [id], onDelete: Restrict)
+  documentVersion     LegalDocumentVersion @relation(fields: [documentVersionId], references: [id], onDelete: Restrict)
+
+  @@index([userId, acceptedAt])
+  @@index([documentVersionId])
+  @@index([userId, documentVersionId, isRevoked])
+  @@map("legal_acceptances")
+}
+
+model UserConsentPreferences {
+  id                    String    @id @default(cuid())
+  userId                String    @unique
+  aiFeatures            Boolean   @default(false)
+  spatialTelemetry      Boolean   @default(false)
+  marketingEmail        Boolean   @default(false)
+  analyticsEnhanced     Boolean   @default(false)
+  updatedAt             DateTime  @updatedAt
+  updatedViaVersion     String?
+
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_consent_preferences")
+}
+
+model ConsentAuditLog {
+  id              String           @id @default(cuid())
+  userId          String?
+  actorUserId     String?
+  eventType       ConsentEventType
+  documentSlug    String?
+  versionNumber   String?
+  metadata        Json?
+  ipAddressHash   String?
+  createdAt       DateTime         @default(now())
+
+  user            User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([eventType, createdAt])
+  @@map("consent_audit_logs")
+}
+
+model CourseEnrollment {
+  id          String    @id @default(cuid())
+  userId      String
+  courseId    String
+  enrolledAt  DateTime  @default(now())
+  progressPct Float     @default(0)
+  status      String    @default("active")
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@map("course_enrollments")
+}
+
+model SpatialInteractionLog {
+  id          String    @id @default(cuid())
+  userId      String
+  courseId    String?
+  roomType    String
+  eventType   String
+  metadata    Json?
+  recordedAt  DateTime  @default(now())
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, recordedAt])
+  @@index([courseId, recordedAt])
+  @@map("spatial_interaction_logs")
+}

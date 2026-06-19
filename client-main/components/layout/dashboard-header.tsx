@@ -17,11 +17,11 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DashboardSidebar } from "./dashboard-sidebar";
 import { ThemeCustomizer } from "@/components/theme-customizer";
 import { Input } from "@/components/ui/input";
-import { NavigationItem } from "@/data/navigation";
+import { NavigationItem, NavigationSection } from "@/data/navigation";
 
 interface DashboardHeaderProps {
     title: string;
-    navigation?: NavigationItem[];
+    navigation?: NavigationItem[] | NavigationSection[];
 }
 
 export function DashboardHeader({ title, navigation }: DashboardHeaderProps) {

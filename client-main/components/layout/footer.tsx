@@ -5,6 +5,14 @@ import Link from "next/link";
 import { Moon, Sun } from "lucide-react";
 import { useState } from "react";
 
+const FOOTER_LINKS = [
+    { label: "Home", href: "/" },
+    { label: "Courses", href: "/courses" },
+    { label: "Pricing", href: "/pricing" },
+    { label: "Instructors", href: "/instructors" },
+    { label: "Support", href: "/contact" },
+];
+
 export function Footer({ year = 2025 }: { year?: number }) {
     const [isDark, setIsDark] = useState(true);
 
@@ -15,7 +23,7 @@ export function Footer({ year = 2025 }: { year?: number }) {
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6">
 
                     {/* Left: Logo & Tagline */}
-                    <div className="flex items-center gap-4">
+                    <Link href="/" className="flex items-center gap-4 group">
                         <div className="relative w-10 h-10">
                             <Image
                                 src="/assets/mr5-logo-neon.png"
@@ -26,27 +34,28 @@ export function Footer({ year = 2025 }: { year?: number }) {
                             />
                         </div>
                         <div>
-                            <div className="text-sm font-bold text-white tracking-wide">MR5 School</div>
+                            <div className="text-sm font-bold text-white tracking-wide group-hover:text-[#00b8ff] transition-colors">MR5 School</div>
                             <div className="text-xs text-blue-200/70 font-medium">Smart Way to Grow.</div>
                         </div>
-                    </div>
+                    </Link>
 
                     {/* Center: Navigation */}
-                    <nav aria-label="Footer links" className="hidden md:flex gap-8 text-sm font-medium text-blue-100/80">
-                        {['Courses', 'Pricing', 'Instructors', 'Support'].map((item) => (
+                    <nav aria-label="Footer links" className="flex flex-wrap justify-center gap-4 md:gap-8 text-sm font-medium text-blue-100/80">
+                        {FOOTER_LINKS.map((item) => (
                             <Link
-                                key={item}
-                                href={`/${item.toLowerCase()}`}
+                                key={item.label}
+                                href={item.href}
                                 className="hover:text-[#00b8ff] hover:drop-shadow-[0_0_8px_rgba(0,184,255,0.6)] transition-all duration-300 transform hover:-translate-y-0.5"
                             >
-                                {item}
+                                {item.label}
                             </Link>
                         ))}
                     </nav>
 
                     {/* Right: CTA Group */}
                     <div className="flex items-center gap-4">
-                        <button
+                        <Link
+                            href="/contact"
                             aria-label="Request demo"
                             className="px-5 py-2.5 rounded-full text-white font-semibold text-sm transition-all duration-300 hover:scale-105 active:scale-95"
                             style={{
@@ -56,7 +65,7 @@ export function Footer({ year = 2025 }: { year?: number }) {
                             }}
                         >
                             Get a demo
-                        </button>
+                        </Link>
 
                         <div className="h-8 w-[1px] bg-white/10 mx-1" />
 

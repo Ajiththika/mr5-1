@@ -241,9 +241,19 @@ function RegisterForm() {
                     </Select>
                 </div>
 
-                <div className="flex items-center gap-2 px-2 py-4 text-[10px] text-slate-500 font-medium">
-                    <ShieldCheck className="w-4 h-4 text-primary" />
-                    By creating an account, you agree to our Terms of Service and Privacy Policy.
+                <div className="flex flex-wrap items-center gap-1 px-2 py-4 text-[10px] text-slate-500 font-medium">
+                    <ShieldCheck className="w-4 h-4 text-primary shrink-0" />
+                    <span>
+                      By creating an account, you agree to our{" "}
+                      <Link href="/terms" className="text-primary hover:underline">
+                        Terms of Service
+                      </Link>{" "}
+                      and{" "}
+                      <Link href="/privacy" className="text-primary hover:underline">
+                        Privacy Policy
+                      </Link>
+                      .
+                    </span>
                 </div>
 
                 <Button

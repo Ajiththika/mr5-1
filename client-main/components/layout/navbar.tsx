@@ -62,6 +62,12 @@ export function Navbar() {
 							Library
 						</Link>
 						<Link
+							href="/pricing"
+							className="px-4 py-1.5 text-sm text-muted-foreground hover:text-white hover:bg-white/10 rounded-full transition-all duration-300"
+						>
+							Pricing
+						</Link>
+						<Link
 							href="/about"
 							className="px-4 py-1.5 text-sm text-muted-foreground hover:text-white hover:bg-white/10 rounded-full transition-all duration-300"
 						>
@@ -161,10 +167,24 @@ export function Navbar() {
 									<div className="flex flex-col gap-2">
 										<h3 className="text-sm font-medium text-muted-foreground mb-2 px-2 uppercase tracking-wider">Navigation</h3>
 										<Link
+											href="/"
+											className="px-4 py-3 text-lg font-medium hover:bg-white/5 rounded-lg transition-colors flex items-center justify-between group"
+										>
+											Home
+											<span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+										</Link>
+										<Link
 											href="/courses"
 											className="px-4 py-3 text-lg font-medium hover:bg-white/5 rounded-lg transition-colors flex items-center justify-between group"
 										>
 											Library
+											<span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+										</Link>
+										<Link
+											href="/pricing"
+											className="px-4 py-3 text-lg font-medium hover:bg-white/5 rounded-lg transition-colors flex items-center justify-between group"
+										>
+											Pricing
 											<span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
 										</Link>
 										<Link
