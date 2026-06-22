@@ -303,12 +303,13 @@ export function SchoolCampusScene({
     }
   };
 
-  const heightClass = variant === "immersive" ? "h-screen min-h-[600px]" : "h-[600px]";
+  const heightClass =
+    variant === "immersive" ? "h-screen min-h-[600px]" : "h-full min-h-[300px]";
 
   return (
     <div
       ref={containerRef}
-      className={`relative w-full ${heightClass} rounded-3xl overflow-hidden border border-white/10 shadow-2xl bg-[#020617] ${className}`}
+      className={`preview-3d-root relative w-full ${heightClass} overflow-hidden rounded-3xl border border-white/10 bg-[#020617] shadow-2xl ${className}`}
     >
       {variant === "immersive" && onBack && (
         <div className="absolute top-4 left-4 z-20">
@@ -323,9 +324,11 @@ export function SchoolCampusScene({
       )}
 
       <Canvas
+        className="preview-3d-canvas-host !absolute inset-0 h-full w-full"
         dpr={[1, variant === "immersive" ? 1.75 : 1.5]}
         gl={{ antialias: true, powerPreference: "high-performance" }}
         shadows={false}
+        style={{ touchAction: "none" }}
       >
         <Suspense fallback={<Loader />}>
           <CampusSceneContent
@@ -338,7 +341,7 @@ export function SchoolCampusScene({
         </Suspense>
       </Canvas>
 
-      <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+      <div className="absolute top-4 right-4 z-20 flex items-center gap-2 preview-3d-ui preview-3d-ui--interactive">
         <button
           type="button"
           onClick={() => setIsNight((v) => !v)}
@@ -359,33 +362,35 @@ export function SchoolCampusScene({
         )}
       </div>
 
-      <div className="absolute bottom-4 left-4 z-20 bg-black/55 backdrop-blur px-3 py-2 rounded-xl text-white text-xs border border-white/10 max-w-xs">
-        <div className="flex items-center gap-2 mb-1 text-sky-200 font-semibold">
-          <GraduationCap className="h-3.5 w-3.5" />
-          MR5 Virtual Campus
+      <div className="preview-3d-ui preview-3d-ui--interactive absolute bottom-3 left-3 right-3 z-20 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div className="rounded-xl border border-white/10 bg-black/60 px-3 py-2 text-xs text-white backdrop-blur-md">
+          <div className="mb-0.5 flex items-center gap-2 font-semibold text-sky-200">
+            <GraduationCap className="h-3.5 w-3.5" />
+            MR5 Virtual Campus
+          </div>
+          <p className="text-[11px] text-white/75">
+            {courseId
+              ? "Tap a room below to enter."
+              : "Enroll to explore the campus."}
+          </p>
         </div>
-        <p className="text-white/75">
-          {courseId
-            ? "Click glowing markers to enter classrooms and school facilities."
-            : "Enroll to unlock interactive campus navigation."}
-        </p>
-      </div>
 
-      {courseId && anchors.length > 0 && (
-        <div className="absolute bottom-4 right-4 z-20 hidden md:flex flex-col gap-2">
-          {anchors.map((anchor) => (
-            <button
-              key={anchor.id}
-              type="button"
-              onClick={() => handleRoomSelect(anchor.id)}
-              className="bg-black/50 hover:bg-sky-600/80 backdrop-blur px-3 py-1.5 rounded-lg text-white text-xs border border-white/10 flex items-center gap-2 transition-colors"
-            >
-              <MapPin className="h-3 w-3 text-sky-300" />
-              {anchor.label}
-            </button>
-          ))}
-        </div>
-      )}
+        {courseId && anchors.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {anchors.map((anchor) => (
+              <button
+                key={anchor.id}
+                type="button"
+                onClick={() => handleRoomSelect(anchor.id)}
+                className="flex items-center gap-1.5 rounded-full border border-white/15 bg-black/55 px-3 py-1.5 text-[11px] font-medium text-white backdrop-blur-md transition-colors hover:border-sky-400/40 hover:bg-sky-600/70"
+              >
+                <MapPin className="h-3 w-3 text-sky-300" />
+                {anchor.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

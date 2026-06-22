@@ -30,7 +30,7 @@ export default function ClassroomRoomLayout({
   children: ReactNode;
 }) {
   return (
-    <main className="h-screen w-full" aria-label="Immersive classroom experience">
+    <main className="h-dvh w-full overflow-hidden" aria-label="Immersive classroom experience">
       {children}
     </main>
   );

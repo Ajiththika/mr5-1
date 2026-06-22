@@ -26,7 +26,7 @@ export default function ClassroomPage() {
 
   return (
     <CourseAccessGate courseId={courseId}>
-      <div className="h-screen w-full overflow-hidden">
+      <div className="h-full min-h-0 w-full overflow-hidden">
         {ClassroomRoomScene ? (
           <ClassroomRoomScene courseId={courseId} onExit={backToCampus} />
         ) : (

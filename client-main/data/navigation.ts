@@ -91,10 +91,4 @@ export const studentNavigation: NavigationItem[] = [
   { title: "Schedule", href: "/student/schedule", icon: Calendar },
 ];
 
-export const teacherNavigation: NavigationItem[] = [
-  { title: "Dashboard", href: "/teacher", icon: LayoutDashboard },
-  { title: "My Classes", href: "/teacher/classes", icon: GraduationCap },
-  { title: "Course Builder", href: "/teacher/builder", icon: BookOpen },
-  { title: "Students", href: "/teacher/students", icon: Users },
-  { title: "Analytics", href: "/teacher/analytics", icon: BarChart3 },
-];
+// AI-TEACHER routes use /admin and course management — legacy /teacher/* paths were removed.

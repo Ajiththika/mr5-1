@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useEnhancedUser } from "@/contexts/EnhancedUserContext";
 import { applyFontScale, applyReduceMotion } from "@/lib/color-themes";
+import { getAudioSettingsStore } from "@/lib/audio";
 
 const FONT_SCALE: Record<string, number> = {
   small: 0.9,
@@ -22,6 +23,10 @@ export function AccessibilityPreferencesSync() {
 
     applyReduceMotion(accessibility.reducedMotion);
     applyFontScale(FONT_SCALE[accessibility.fontSize] ?? 1);
+
+    if (accessibility.reducedMotion) {
+      getAudioSettingsStore().update({ reducedAudio: true });
+    }
 
     if (accessibility.highContrast) {
       document.documentElement.classList.add("high-contrast");

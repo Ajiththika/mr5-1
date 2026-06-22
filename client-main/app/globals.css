@@ -122,6 +122,74 @@
     mix-blend-mode: soft-light;
   }
 
+  /* Classroom 3D canvas fills the flex area below the header */
+  .classroom-scene-viewport {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .classroom-scene-viewport > .classroom-scene-canvas {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100%;
+    max-height: 100%;
+    touch-action: none;
+  }
+
+  .classroom-scene-viewport canvas {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* Shared 3D preview surfaces (homepage, course page) */
+  .preview-3d-root {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    min-height: 280px;
+  }
+
+  /* Only stretch the WebGL canvas host — not UI overlay siblings */
+  .preview-3d-root > .preview-3d-canvas-host {
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 0;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .preview-3d-root .preview-3d-canvas-host canvas,
+  .preview-3d-root > .preview-3d-canvas-host canvas {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .preview-3d-ui {
+    position: absolute;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  .preview-3d-ui--interactive {
+    pointer-events: auto;
+  }
+
+  /* Cinematic vignette for interior classroom preview */
+  .preview-cinematic-vignette {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    background:
+      radial-gradient(ellipse 85% 70% at 50% 45%, transparent 35%, rgba(2, 6, 23, 0.55) 100%),
+      linear-gradient(to top, rgba(2, 6, 23, 0.65) 0%, transparent 28%),
+      linear-gradient(to bottom, rgba(2, 6, 23, 0.35) 0%, transparent 18%);
+  }
+
   /* Antigravity Text Glow - Premium Gradient */
   .text-glow {
     @apply bg-clip-text text-transparent bg-gradient-to-br from-white via-white/90 to-white/40;

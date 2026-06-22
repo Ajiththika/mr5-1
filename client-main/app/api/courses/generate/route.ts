@@ -1,0 +1,27 @@
+import { NextRequest, NextResponse } from "next/server";
+
+function getApiBaseUrl(): string {
+  return process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:5001";
+}
+
+function forwardCookies(request: NextRequest): HeadersInit {
+  const cookie = request.headers.get("cookie");
+  return cookie ? { cookie, "Content-Type": "application/json" } : { "Content-Type": "application/json" };
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const payload = await request.json();
+    const response = await fetch(`${getApiBaseUrl()}/api/courses/discovery/generate`, {
+      method: "POST",
+      headers: forwardCookies(request),
+      body: JSON.stringify(payload),
+      cache: "no-store",
+    });
+
+    const body = await response.json();
+    return NextResponse.json(body, { status: response.status });
+  } catch {
+    return NextResponse.json({ success: false, error: "Generation service unavailable" }, { status: 502 });
+  }
+}

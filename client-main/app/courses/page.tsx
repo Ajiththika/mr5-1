@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, useMemo, useEffect, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -18,14 +19,25 @@ import {
   ShoppingCart,
   BookOpen,
   AlertCircle,
+  Search,
+  X,
+  Sparkles,
 } from "lucide-react";
 import { courseService, Course } from "@/services/course.service";
+import {
+  courseDiscoveryService,
+  type DiscoveryResult,
+} from "@/services/courseDiscovery.service";
 import { paymentService } from "@/services/payment.service";
 import { useEnhancedUser } from "@/contexts/EnhancedUserContext";
 import { StructuredData } from "@/components/seo/StructuredData";
 import { generateStructuredData } from "@/lib/seo";
 import Image from "next/image";
+import Link from "next/link";
 import { toast } from "sonner";
+import { useDebounce } from "@/hooks/useDebounce";
+import { CourseDiscoveryPanel } from "@/components/courses/CourseDiscoveryPanel";
+import { GenerationProgressCard } from "@/components/courses/GenerationProgressCard";
 
 const COURSE_FALLBACK_THUMB = "/assets/dashboard/course-icon-1.png";
 
@@ -77,16 +89,77 @@ function CourseCardImage({
   );
 }
 
-export default function CoursesPage() {
+function CoursesPageContent() {
   const { user } = useEnhancedUser();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const urlSearch = searchParams?.get("search")?.trim() ?? "";
+
+  const [searchInput, setSearchInput] = useState(urlSearch);
+  const debouncedSearch = useDebounce(searchInput, 300);
+
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedLevel, setSelectedLevel] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("popular");
   const [courses, setCourses] = useState<Course[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [enrollingCourseId, setEnrollingCourseId] = useState<string | null>(null);
+  const [categories, setCategories] = useState<string[]>(["all"]);
+  const [levels, setLevels] = useState<string[]>(["all"]);
+  const [discovery, setDiscovery] = useState<DiscoveryResult | null>(null);
+  const [discoveryLoading, setDiscoveryLoading] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [activeJobId, setActiveJobId] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+
+  useEffect(() => {
+    setSearchInput(urlSearch);
+  }, [urlSearch]);
+
+  useEffect(() => {
+    const trimmed = debouncedSearch.trim();
+    if (trimmed === urlSearch) return;
+
+    const params = new URLSearchParams(searchParams?.toString() ?? "");
+    if (trimmed) {
+      params.set("search", trimmed);
+    } else {
+      params.delete("search");
+    }
+
+    const qs = params.toString();
+    router.replace(qs ? `/courses?${qs}` : "/courses", { scroll: false });
+  }, [debouncedSearch, urlSearch, router, searchParams]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadFilterOptions = async () => {
+      try {
+        const response = await courseService.getAllCourses({ limit: 100 });
+        if (cancelled) return;
+        const all = response.data ?? [];
+        setCategories([
+          "all",
+          ...Array.from(new Set(all.map((c) => c.category).filter(Boolean) as string[])),
+        ]);
+        setLevels([
+          "all",
+          ...Array.from(new Set(all.map((c) => c.level).filter(Boolean))),
+        ]);
+      } catch {
+        /* filter options are optional */
+      }
+    };
+
+    void loadFilterOptions();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -94,15 +167,24 @@ export default function CoursesPage() {
     const loadCourses = async () => {
       setLoading(true);
       setError(null);
+
       try {
-        const response = await courseService.getAllCourses();
+        const response = await courseService.searchCourses({
+          search: urlSearch || undefined,
+          category: selectedCategory !== "all" ? selectedCategory : undefined,
+          level: selectedLevel !== "all" ? selectedLevel : undefined,
+          limit: 100,
+        });
+
         if (!cancelled) {
           setCourses(response.data ?? []);
+          setTotal(response.total ?? 0);
         }
       } catch {
         if (!cancelled) {
           setError("Unable to load courses. Make sure the API server is running.");
           setCourses([]);
+          setTotal(0);
         }
       } finally {
         if (!cancelled) {
@@ -111,21 +193,123 @@ export default function CoursesPage() {
       }
     };
 
-    loadCourses();
+    void loadCourses();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [urlSearch, selectedCategory, selectedLevel]);
 
-  const categories = useMemo(() => {
-    const cats = Array.from(new Set(courses.map((c) => c.category).filter(Boolean)));
-    return ["all", ...cats];
-  }, [courses]);
+  useEffect(() => {
+    if (!urlSearch.trim() || urlSearch.trim().length < 2) {
+      setSuggestions([]);
+      setDiscovery(null);
+      return;
+    }
 
-  const levels = useMemo(() => {
-    const lvls = Array.from(new Set(courses.map((c) => c.level).filter(Boolean)));
-    return ["all", ...lvls];
-  }, [courses]);
+    let cancelled = false;
+
+    const loadSuggestions = async () => {
+      try {
+        const result = await courseDiscoveryService.getSuggestions(urlSearch);
+        if (!cancelled) setSuggestions(result.suggestions.slice(0, 4));
+      } catch {
+        /* suggestions are optional */
+      }
+    };
+
+    void loadSuggestions();
+    return () => {
+      cancelled = true;
+    };
+  }, [urlSearch]);
+
+  useEffect(() => {
+    if (!user || !urlSearch.trim() || urlSearch.trim().length < 2) {
+      setDiscovery(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const analyzeSearch = async () => {
+      setDiscoveryLoading(true);
+      try {
+        const result = await courseDiscoveryService.discover(urlSearch);
+        if (!cancelled) setDiscovery(result);
+
+        if (result.action === "open_existing" && result.courseId && total === 0) {
+          router.push(`/course/${result.courseId}`);
+        }
+      } catch {
+        if (!cancelled) setDiscovery(null);
+      } finally {
+        if (!cancelled) setDiscoveryLoading(false);
+      }
+    };
+
+    void analyzeSearch();
+    return () => {
+      cancelled = true;
+    };
+  }, [urlSearch, user, total, router]);
+
+  const handleOpenCourse = useCallback(
+    (courseId: string) => {
+      router.push(`/course/${courseId}`);
+    },
+    [router],
+  );
+
+  const handleGenerateCourse = useCallback(async () => {
+    if (!user) {
+      toast.error("Please login to create a course");
+      router.push(`/login?redirect=/courses?search=${encodeURIComponent(urlSearch)}`);
+      return;
+    }
+
+    if (!urlSearch.trim()) return;
+
+    try {
+      setGenerating(true);
+      const result = await courseDiscoveryService.startGeneration(urlSearch);
+
+      if (result.action === "open_existing" && result.courseId) {
+        router.push(`/course/${result.courseId}`);
+        return;
+      }
+
+      if (result.jobId) {
+        setActiveJobId(result.jobId);
+        toast.success("Building your course — this takes a minute or two");
+      }
+    } catch {
+      toast.error("Could not start course generation");
+    } finally {
+      setGenerating(false);
+    }
+  }, [user, urlSearch, router]);
+
+  const handleGenerationComplete = useCallback(
+    (courseId: string) => {
+      toast.success("Your course is ready!");
+      router.push(`/course/${courseId}/room/classroom`);
+    },
+    [router],
+  );
+
+  const sortedCourses = useMemo(() => {
+    const sorted = [...courses];
+    switch (sortBy) {
+      case "price-low":
+        return sorted.sort((a, b) => a.price - b.price);
+      case "price-high":
+        return sorted.sort((a, b) => b.price - a.price);
+      default:
+        return sorted.sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
+    }
+  }, [courses, sortBy]);
 
   const handleEnroll = async (courseId: string) => {
     if (!user) {
@@ -157,42 +341,18 @@ export default function CoursesPage() {
     }
   };
 
-  const filteredCourses = useMemo(() => {
-    let filtered = courses;
-
-    if (selectedCategory !== "all") {
-      filtered = filtered.filter((course) => course.category === selectedCategory);
-    }
-
-    if (selectedLevel !== "all") {
-      filtered = filtered.filter((course) => course.level === selectedLevel);
-    }
-
-    switch (sortBy) {
-      case "price-low":
-        filtered = [...filtered].sort((a, b) => a.price - b.price);
-        break;
-      case "price-high":
-        filtered = [...filtered].sort((a, b) => b.price - a.price);
-        break;
-      default:
-        filtered = [...filtered].sort(
-          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-        break;
-    }
-
-    return filtered;
-  }, [courses, selectedCategory, selectedLevel, sortBy]);
-
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setSelectedCategory("all");
     setSelectedLevel("all");
     setSortBy("popular");
-  };
+    setSearchInput("");
+  }, []);
 
   const hasActiveFilters =
-    selectedCategory !== "all" || selectedLevel !== "all" || sortBy !== "popular";
+    selectedCategory !== "all" ||
+    selectedLevel !== "all" ||
+    sortBy !== "popular" ||
+    searchInput.trim() !== "";
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -263,8 +423,44 @@ export default function CoursesPage() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="mb-12 sticky top-20 z-40"
         >
-          <div className="bg-surface/80 backdrop-blur-xl border border-white/5 shadow-2xl rounded-2xl p-4 flex flex-col md:flex-row gap-4 items-center justify-end">
-            <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 no-scrollbar">
+          <div className="bg-surface/80 backdrop-blur-xl border border-white/5 shadow-2xl rounded-2xl p-4 flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
+            <div className="relative flex-1 min-w-0">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={searchInput}
+                onChange={(event) => setSearchInput(event.target.value)}
+                placeholder="Search any topic — JavaScript, AI agents, UI design…"
+                aria-label="Search courses"
+                className="h-11 rounded-xl border-white/10 bg-white/5 pl-10 pr-10"
+              />
+              {searchInput && (
+                <button
+                  type="button"
+                  onClick={() => setSearchInput("")}
+                  aria-label="Clear search"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
+            {suggestions.length > 0 && searchInput.trim().length >= 2 && (
+              <div className="flex flex-wrap gap-2 mt-2 px-1">
+                {suggestions.map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    onClick={() => setSearchInput(suggestion)}
+                    className="text-xs rounded-full border border-white/10 bg-white/5 px-3 py-1 hover:border-primary/50 transition-colors"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="flex gap-2 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0 no-scrollbar">
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger className="w-[160px] bg-white/5 border-white/10 h-11 rounded-xl">
                   <SelectValue placeholder="Category" />
@@ -315,10 +511,45 @@ export default function CoursesPage() {
           </div>
         </motion.div>
 
+        {activeJobId && urlSearch && (
+          <div className="mb-8">
+            <GenerationProgressCard
+              jobId={activeJobId}
+              query={urlSearch}
+              onComplete={handleGenerationComplete}
+              onFailed={(err) => toast.error(err)}
+            />
+          </div>
+        )}
+
+        {urlSearch && user && discovery && !activeJobId && (
+          <div className="mb-8">
+            {discoveryLoading ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground px-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Analyzing your search intent…
+              </div>
+            ) : (
+              <CourseDiscoveryPanel
+                discovery={discovery}
+                onOpenCourse={handleOpenCourse}
+                onGenerate={handleGenerateCourse}
+                generating={generating}
+              />
+            )}
+          </div>
+        )}
+
         <div className="mb-6 flex items-center justify-between px-2">
           <p className="text-sm text-muted-foreground font-mono uppercase tracking-wider">
             Library Index <span className="text-primary mx-2">{"//"}</span>{" "}
-            {loading ? "…" : filteredCourses.length} Items Found
+            {loading ? "…" : total} Items Found
+            {urlSearch ? (
+              <span className="normal-case tracking-normal text-slate-400">
+                {" "}
+                for &ldquo;{urlSearch}&rdquo;
+              </span>
+            ) : null}
           </p>
         </div>
 
@@ -327,7 +558,7 @@ export default function CoursesPage() {
             <div key="loading" className="flex items-center justify-center py-32">
               <div className="flex flex-col items-center gap-4">
                 <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground animate-pulse">Loading courses…</p>
+                <p className="text-sm text-muted-foreground animate-pulse">Searching courses…</p>
               </div>
             </div>
           ) : error ? (
@@ -346,7 +577,7 @@ export default function CoursesPage() {
                 Retry
               </Button>
             </motion.div>
-          ) : filteredCourses.length > 0 ? (
+          ) : sortedCourses.length > 0 ? (
             <motion.div
               key="courses-grid"
               variants={containerVariants}
@@ -355,8 +586,9 @@ export default function CoursesPage() {
               exit="hidden"
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
             >
-              {filteredCourses.map((course, index) => (
+              {sortedCourses.map((course, index) => (
                 <motion.div key={course._id} variants={itemVariants} layout className="h-full">
+                  <Link href={`/course/${course._id}`} className="block h-full">
                   <div className="group relative h-full border border-white/5 bg-surface overflow-hidden rounded-2xl hover:border-primary/50 transition-colors duration-500">
                     <div className="relative aspect-[4/3] overflow-hidden">
                       <CourseCardImage course={course} index={index} />
@@ -376,6 +608,11 @@ export default function CoursesPage() {
                         <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
                           {course.description}
                         </p>
+                        {course.teacher?.name && (
+                          <p className="text-xs text-slate-400">
+                            Instructor: {course.teacher.name}
+                          </p>
+                        )}
                       </div>
 
                       <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between">
@@ -388,7 +625,11 @@ export default function CoursesPage() {
                           </span>
                         </div>
                         <Button
-                          onClick={() => handleEnroll(course._id)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            void handleEnroll(course._id);
+                          }}
                           disabled={enrollingCourseId === course._id}
                           size="sm"
                           className="bg-white/5 hover:bg-primary hover:text-white text-foreground border border-white/10 transition-all duration-300"
@@ -405,6 +646,7 @@ export default function CoursesPage() {
 
                     <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-t from-primary/10 to-transparent" />
                   </div>
+                  </Link>
                 </motion.div>
               ))}
             </motion.div>
@@ -421,9 +663,20 @@ export default function CoursesPage() {
               </div>
               <h3 className="text-2xl font-bold mb-3">No matching courses</h3>
               <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-                We couldn&apos;t find any courses matching your filters. Try adjusting category or
-                level.
+                {urlSearch
+                  ? `We couldn't find an exact course for "${urlSearch}". You can create a complete course automatically.`
+                  : "We couldn't find any courses matching your filters. Try adjusting category or level."}
               </p>
+              {urlSearch && (
+                <Button
+                  onClick={() => void handleGenerateCourse()}
+                  disabled={generating}
+                  className="mb-4"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Create Course for &ldquo;{urlSearch}&rdquo;
+                </Button>
+              )}
               <Button
                 onClick={clearFilters}
                 variant="outline"
@@ -436,5 +689,21 @@ export default function CoursesPage() {
         </AnimatePresence>
       </main>
     </div>
+  );
+}
+
+function CoursesPageFallback() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <Loader2 className="h-10 w-10 animate-spin text-primary" />
+    </div>
+  );
+}
+
+export default function CoursesPage() {
+  return (
+    <Suspense fallback={<CoursesPageFallback />}>
+      <CoursesPageContent />
+    </Suspense>
   );
 }

@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useEnhancedUser } from "@/contexts/EnhancedUserContext";
 import { loginSchema } from "@/lib/schemas";
 import { Mail, Lock, LogIn, Wand2, Eye, EyeOff } from "lucide-react";
+import { ForgotPasswordModal } from "@/components/auth/forgot-password-modal";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
@@ -25,6 +26,7 @@ function LoginForm() {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [forgotOpen, setForgotOpen] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -130,7 +132,13 @@ function LoginForm() {
                     <div className="space-y-2">
                         <div className="flex items-center justify-between ml-1">
                             <Label htmlFor="password" className="text-xs uppercase tracking-widest text-slate-500 font-bold">Password</Label>
-                            <Link href="/forgot-password" className="text-[10px] uppercase font-bold text-primary hover:underline">Forgot?</Link>
+                            <button
+                                type="button"
+                                onClick={() => setForgotOpen(true)}
+                                className="text-[10px] uppercase font-bold text-primary hover:underline"
+                            >
+                                Forgot?
+                            </button>
                         </div>
                         <div className="relative">
                             <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
@@ -226,6 +234,7 @@ function LoginForm() {
                     Register
                 </Link>
             </div>
+            <ForgotPasswordModal _open={forgotOpen} onOpenChange={setForgotOpen} />
         </motion.div>
     );
 }

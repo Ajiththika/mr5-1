@@ -14,6 +14,8 @@ import { PerformanceMonitor } from "@/components/PerformanceMonitor";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { AccessibilityPreferencesSync } from "@/components/accessibility/AccessibilityPreferencesSync";
 import { ConsentFeaturesBootstrap } from "@/components/legal/ConsentFeaturesBootstrap";
+import { LanguageProvider } from "@/contexts/LanguageContext";
+import { AudioProvider } from "@/contexts/AudioContext";
 import type { ReactNode } from "react";
 
 export const metadata: Metadata = genMeta({
@@ -105,9 +107,9 @@ export default function RootLayout({
 				/>
 			</head>
 			<body className={`${inter.className} bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary`} suppressHydrationWarning>
-				{/* Global Noise Texture */}
 				<div className="noise-bg" />
 
+				<LanguageProvider>
 				<ThemeProvider
 					attribute="class"
 					defaultTheme="dark"
@@ -122,9 +124,11 @@ export default function RootLayout({
 										<AccessibilityPreferencesSync />
 										<ConsentFeaturesBootstrap />
 										<DashboardContextProvider>
-											{children}
-											<Toaster />
-											<PerformanceMonitor />
+											<AudioProvider>
+												{children}
+												<Toaster />
+												<PerformanceMonitor />
+											</AudioProvider>
 										</DashboardContextProvider>
 									</EnhancedUserProvider>
 								</ErrorBoundary>
@@ -132,6 +136,7 @@ export default function RootLayout({
 						</UIPreferencesProvider>
 					</ThemeColorProvider>
 				</ThemeProvider>
+				</LanguageProvider>
 			</body>
 		</html>
 	);

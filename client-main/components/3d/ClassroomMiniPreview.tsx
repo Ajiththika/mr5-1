@@ -15,9 +15,10 @@ import * as THREE from "three";
 
 const CLASSROOM_GLB = "/assets/3d/rooms/classroom.glb";
 const LOOK_SENSITIVITY = 0.0028;
-const AUTO_ROTATE_SPEED = 0.14;
-const PITCH_MIN = -0.42;
-const PITCH_MAX = 0.34;
+const AUTO_ROTATE_SPEED = 0.22;
+const PITCH_MIN = -0.48;
+const PITCH_MAX = 0.38;
+const CINEMATIC_FOV = 46;
 
 interface MiniViewState {
   eye: THREE.Vector3;
@@ -149,7 +150,7 @@ function InteriorPreviewCamera({ viewState }: { viewState: MiniViewState }) {
     camera.position.copy(viewState.eye);
     camera.lookAt(viewState.lookAt);
     if (camera instanceof THREE.PerspectiveCamera) {
-      camera.fov = 50;
+      camera.fov = CINEMATIC_FOV;
     }
     camera.near = 0.08;
     camera.far = 36;
@@ -288,14 +289,22 @@ function MiniScene({
         color="#fff7ed"
         castShadow
       />
-      <directionalLight position={[4, 5, -2]} intensity={0.35} color="#c7d2fe" />
+      <directionalLight position={[4, 5, -2]} intensity={0.42} color="#c7d2fe" />
       <pointLight
         position={[0, 3.4, -2.2]}
-        intensity={0.45}
+        intensity={0.55}
         color="#fef9c3"
         distance={14}
       />
-      <Environment preset="apartment" environmentIntensity={0.55} />
+      <spotLight
+        position={[0, 4.2, -1.5]}
+        angle={0.45}
+        penumbra={0.6}
+        intensity={0.35}
+        color="#fff7ed"
+        castShadow
+      />
+      <Environment preset="apartment" environmentIntensity={0.62} />
       <MiniClassroomModel onReady={setViewState} />
       {viewState && <InteriorPreviewCamera viewState={viewState} />}
     </>
@@ -310,19 +319,28 @@ export function ClassroomMiniPreview({ className = "" }: ClassroomMiniPreviewPro
   const [viewState, setViewState] = useState<MiniViewState | null>(null);
 
   return (
-    <div className={`relative h-full w-full ${className}`}>
+    <div className={`preview-3d-root relative min-h-[280px] h-full w-full ${className}`}>
       <Canvas
-        dpr={[1, 1.4]}
-        camera={{ position: [0, 1.32, 3.2], fov: 50, near: 0.08, far: 36 }}
-        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+        className="preview-3d-canvas-host !absolute inset-0 h-full w-full"
+        dpr={[1, 1.75]}
+        camera={{ position: [0, 1.32, 3.2], fov: CINEMATIC_FOV, near: 0.08, far: 36 }}
+        gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
         style={{ touchAction: "none" }}
       >
         <Suspense fallback={<Loader />}>
           <MiniScene viewState={viewState} setViewState={setViewState} />
         </Suspense>
       </Canvas>
-      <div className="pointer-events-none absolute left-3 top-12 z-10 rounded-full border border-white/15 bg-black/50 px-2.5 py-1 text-[10px] font-medium text-white/85 backdrop-blur-sm">
-        Drag to look 360°
+      <div className="preview-cinematic-vignette" aria-hidden />
+      <div className="preview-3d-ui left-3 top-3">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/45 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-indigo-100 backdrop-blur-md">
+          Cinematic · 360°
+        </span>
+      </div>
+      <div className="preview-3d-ui inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/75 to-transparent px-3 pb-3 pt-10">
+        <p className="text-center text-[10px] font-medium text-white/80">
+          Drag to look around · Interior classroom preview
+        </p>
       </div>
     </div>
   );

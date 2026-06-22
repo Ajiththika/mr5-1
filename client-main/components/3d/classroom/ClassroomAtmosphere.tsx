@@ -1,14 +1,20 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { EnvironmentLighting } from "@/lib/classroom-environment";
+import { PhysicsCurtainSystem } from "@/features/classroom/simulation/PhysicsCurtainSystem";
 
 interface ClassroomAtmosphereProps {
   lighting: EnvironmentLighting;
   windowNormal: THREE.Vector3;
   windowCenter: THREE.Vector3;
+  curtainOpen: number;
+  fanSpeed: number;
+  curtainStrength: number;
+  windSpeed: number;
+  lightsOn: boolean;
 }
 
 function WindowBackdrop({
@@ -16,11 +22,17 @@ function WindowBackdrop({
   bottom,
   center,
   normal,
+  sunIntensity,
+  curtainOpen,
+  lightsOn,
 }: {
   top: string;
   bottom: string;
   center: THREE.Vector3;
   normal: THREE.Vector3;
+  sunIntensity: number;
+  curtainOpen: number;
+  lightsOn: boolean;
 }) {
   const groupRef = useRef<THREE.Group>(null);
 
@@ -47,11 +59,22 @@ function WindowBackdrop({
     groupRef.current.lookAt(center.clone().add(normal));
   }, [center, normal]);
 
+  const glowOpacity = (0.15 + sunIntensity * 0.12) * (0.35 + curtainOpen * 0.65);
+
   return (
     <group ref={groupRef}>
       <mesh>
         <planeGeometry args={[14, 5]} />
         <meshBasicMaterial map={texture} toneMapped={false} />
+      </mesh>
+      <mesh position={[0, 0, -0.02]}>
+        <planeGeometry args={[12, 4.2]} />
+        <meshBasicMaterial
+          color="#fef3c7"
+          transparent
+          opacity={glowOpacity * (lightsOn ? 1 : 0.25)}
+          toneMapped={false}
+        />
       </mesh>
     </group>
   );
@@ -99,14 +122,14 @@ function WindowRain() {
 
 function LightningFlash({ active }: { active: boolean }) {
   const lightRef = useRef<THREE.PointLight>(null);
-  const [flash, setFlash] = useState(0);
+  const flashRef = useRef(0);
 
   useFrame((_, delta) => {
     if (!active) return;
-    if (Math.random() < 0.002) setFlash(1);
-    if (flash > 0) {
-      setFlash((value) => Math.max(0, value - delta * 3.5));
-      if (lightRef.current) lightRef.current.intensity = flash * 2.4;
+    if (Math.random() < 0.002) flashRef.current = 1;
+    if (flashRef.current > 0) {
+      flashRef.current = Math.max(0, flashRef.current - delta * 3.5);
+      if (lightRef.current) lightRef.current.intensity = flashRef.current * 2.4;
     } else if (lightRef.current) {
       lightRef.current.intensity = 0;
     }
@@ -116,19 +139,76 @@ function LightningFlash({ active }: { active: boolean }) {
   return <pointLight ref={lightRef} position={[0, 4, -5]} color="#e0f2fe" distance={18} />;
 }
 
-function WindCurtain({ active }: { active: boolean }) {
-  const ref = useRef<THREE.Mesh>(null);
-  useFrame((state) => {
-    if (!ref.current || !active) return;
-    ref.current.rotation.z = Math.sin(state.clock.elapsedTime * 1.6) * 0.06;
+function PhysicsCurtain({
+  active,
+  openLevel,
+  fanSpeed,
+  windSpeed,
+  curtainStrength,
+  position,
+}: {
+  active: boolean;
+  openLevel: number;
+  fanSpeed: number;
+  windSpeed: number;
+  curtainStrength: number;
+  position: [number, number, number];
+}) {
+  const leftRef = useRef<THREE.Mesh>(null);
+  const rightRef = useRef<THREE.Mesh>(null);
+  const systemRef = useRef(new PhysicsCurtainSystem());
+
+  useFrame((state, delta) => {
+    const snap = systemRef.current.step(delta, {
+      openLevel,
+      windSpeed,
+      fanSpeed,
+      curtainStrength,
+      elapsed: state.clock.elapsedTime,
+    });
+
+    const spread = 0.35 + openLevel * 0.45;
+    if (leftRef.current) {
+      leftRef.current.rotation.z = snap.swayX + snap.flutter;
+      leftRef.current.position.x = position[0] - spread * 0.5;
+      leftRef.current.scale.y = 0.55 + openLevel * 0.45;
+    }
+    if (rightRef.current) {
+      rightRef.current.rotation.z = -snap.swayZ - snap.flutter * 0.8;
+      rightRef.current.position.x = position[0] + spread * 0.5;
+      rightRef.current.scale.y = 0.55 + openLevel * 0.45;
+    }
   });
 
-  if (!active) return null;
+  if (!active && openLevel < 0.05) return null;
+
+  const opacity = 0.12 + openLevel * 0.22;
+
   return (
-    <mesh ref={ref} position={[4.5, 2.2, -2.8]}>
-      <planeGeometry args={[0.8, 2.4, 8, 16]} />
-      <meshStandardMaterial color="#e2e8f0" transparent opacity={0.22} side={THREE.DoubleSide} />
-    </mesh>
+    <group position={position}>
+      <mesh ref={leftRef} position={[-0.2, 0, 0]}>
+        <planeGeometry args={[0.75, 2.5, 6, 14]} />
+        <meshStandardMaterial
+          color="#e8edf5"
+          transparent
+          opacity={opacity}
+          side={THREE.DoubleSide}
+          roughness={0.92}
+          metalness={0}
+        />
+      </mesh>
+      <mesh ref={rightRef} position={[0.2, 0, 0]}>
+        <planeGeometry args={[0.75, 2.5, 6, 14]} />
+        <meshStandardMaterial
+          color="#e2e8f0"
+          transparent
+          opacity={opacity}
+          side={THREE.DoubleSide}
+          roughness={0.92}
+          metalness={0}
+        />
+      </mesh>
+    </group>
   );
 }
 
@@ -136,7 +216,17 @@ export function ClassroomAtmosphere({
   lighting,
   windowNormal,
   windowCenter,
+  curtainOpen,
+  fanSpeed,
+  curtainStrength,
+  windSpeed,
+  lightsOn,
 }: ClassroomAtmosphereProps) {
+  const curtainPos = useMemo((): [number, number, number] => {
+    const offset = windowCenter.clone().add(windowNormal.clone().multiplyScalar(0.15));
+    return [offset.x + 1.2, offset.y, offset.z];
+  }, [windowCenter, windowNormal]);
+
   return (
     <group>
       <WindowBackdrop
@@ -144,11 +234,21 @@ export function ClassroomAtmosphere({
         bottom={lighting.windowSkyBottom}
         center={windowCenter}
         normal={windowNormal}
+        sunIntensity={lighting.sunIntensity}
+        curtainOpen={curtainOpen}
+        lightsOn={lightsOn}
       />
       {lighting.effects.rain && <WindowRain />}
       <LightningFlash active={lighting.effects.lightning} />
-      <WindCurtain active={lighting.effects.wind} />
-      {lighting.ceilingIntensity > 0.2 && (
+      <PhysicsCurtain
+        active={lighting.effects.wind || fanSpeed > 0.08}
+        openLevel={curtainOpen}
+        fanSpeed={fanSpeed}
+        windSpeed={windSpeed}
+        curtainStrength={curtainStrength}
+        position={curtainPos}
+      />
+      {lightsOn && lighting.ceilingIntensity > 0.2 && (
         <>
           <pointLight
             position={[-2, 3.2, 1]}

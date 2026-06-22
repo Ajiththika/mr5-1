@@ -26,6 +26,11 @@ const courseSchema = new mongoose.Schema(
 		isApproved: { type: Boolean, default: false },
 		prerequisites: [{ type: String }],
 		tags: [{ type: String }],
+		learningOutcomes: [{ type: String }],
+		estimatedWeeks: { type: Number },
+		isGenerated: { type: Boolean, default: false },
+		generationJob: { type: mongoose.Schema.Types.ObjectId, ref: "CourseGenerationJob" },
+		syllabusSnapshot: { type: mongoose.Schema.Types.Mixed },
 	},
 	{ timestamps: true },
 );

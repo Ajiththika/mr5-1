@@ -22,9 +22,9 @@ test.describe("Classroom environment", () => {
       timeout: 30000,
     });
 
-    const statusPanel = page.getByLabel("Classroom environment status");
+    const statusPanel = page.getByLabel(/classroom environment|room atmosphere/i);
     await expect(statusPanel).toBeVisible({ timeout: 45000 });
-    await expect(statusPanel).toContainText(/live environment/i);
+    await expect(statusPanel).toContainText(/room atmosphere/i);
   });
 
   test("dev override switches weather theme in development", async ({ page }) => {
@@ -45,7 +45,7 @@ test.describe("Classroom environment", () => {
     await page.getByRole("button", { name: /^night$/i }).click();
     await page.getByRole("button", { name: /^rainy$/i }).click();
 
-    const statusPanel = page.getByLabel("Classroom environment status");
+    const statusPanel = page.getByLabel(/classroom environment|room atmosphere/i);
     await expect(statusPanel).toContainText(/night/i);
     await expect(statusPanel).toContainText(/rainy/i);
   });

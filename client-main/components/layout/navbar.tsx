@@ -20,9 +20,12 @@ import {
 import { ThemeCustomizer } from "@/components/theme-customizer";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
+import { LanguageSelector } from "@/components/i18n/LanguageSelector";
 
 export function Navbar() {
 	const { user, logout } = useEnhancedUser();
+	const { t } = useTranslation();
 	const [showLogin, setShowLogin] = useState(false);
 	const [showSignup, setShowSignup] = useState(false);
 
@@ -48,7 +51,7 @@ export function Navbar() {
 								MR5 School
 							</span>
 							<span className="text-[10px] text-muted-foreground/80 tracking-widest font-mono uppercase">
-								Smart Way to Grow
+								{t("nav.tagline")}
 							</span>
 						</div>
 					</Link>
@@ -59,25 +62,25 @@ export function Navbar() {
 							href="/courses"
 							className="px-4 py-1.5 text-sm text-muted-foreground hover:text-white hover:bg-white/10 rounded-full transition-all duration-300"
 						>
-							Library
+							{t("nav.library")}
 						</Link>
 						<Link
 							href="/pricing"
 							className="px-4 py-1.5 text-sm text-muted-foreground hover:text-white hover:bg-white/10 rounded-full transition-all duration-300"
 						>
-							Pricing
+							{t("nav.pricing")}
 						</Link>
 						<Link
 							href="/about"
 							className="px-4 py-1.5 text-sm text-muted-foreground hover:text-white hover:bg-white/10 rounded-full transition-all duration-300"
 						>
-							Manifesto
+							{t("nav.manifesto")}
 						</Link>
 						<Link
 							href="/contact"
 							className="px-4 py-1.5 text-sm text-muted-foreground hover:text-white hover:bg-white/10 rounded-full transition-all duration-300"
 						>
-							Connect
+							{t("nav.connect")}
 						</Link>
 						{user?.role === 'student' && (
 							<Link
@@ -85,13 +88,16 @@ export function Navbar() {
 								className="px-4 py-1.5 text-sm text-primary font-bold hover:text-white hover:bg-primary/20 rounded-full transition-all duration-300 flex items-center gap-1.5 group"
 							>
 								<Sparkles className="w-3.5 h-3.5 group-hover:rotate-12 transition-transform" />
-								Avatar Studio
+								{t("nav.avatarStudio")}
 							</Link>
 						)}
 					</div>
 
 					{/* Auth Buttons */}
 					<div className="flex items-center gap-3">
+						<div className="hidden sm:block">
+							<LanguageSelector compact />
+						</div>
 						<ThemeCustomizer />
 						<RealTimeNotifications />
 						{user ? (
@@ -123,12 +129,12 @@ export function Navbar() {
 										<Link href={`/${user.role}`}>{user.role}</Link>
 									</DropdownMenuItem>
 									<DropdownMenuItem asChild className="focus:bg-primary/20 focus:text-white cursor-pointer">
-										<Link href="/profile">Profile settings</Link>
+										<Link href="/profile">{t("nav.profile")}</Link>
 									</DropdownMenuItem>
 									<DropdownMenuSeparator className="bg-white/10" />
 									<DropdownMenuItem onClick={logout} className="text-red-400 focus:bg-red-500/10 focus:text-red-300 cursor-pointer">
 										<LogOut className="mr-2 h-4 w-4" />
-										Log out
+										{t("nav.logout")}
 									</DropdownMenuItem>
 								</DropdownMenuContent>
 							</DropdownMenu>
@@ -139,13 +145,13 @@ export function Navbar() {
 									onClick={() => setShowLogin(true)}
 									className="text-muted-foreground hover:text-white hover:bg-white/5"
 								>
-									Sign In
+									{t("nav.signIn")}
 								</Button>
 								<Button
 									onClick={() => setShowSignup(true)}
 									className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_0_15px_rgba(var(--primary-channel),0.4)] transition-all duration-300 hover:scale-105"
 								>
-									Start Learning
+									{t("nav.startLearning")}
 								</Button>
 							</div>
 						)}
@@ -161,44 +167,47 @@ export function Navbar() {
 							</SheetTrigger>
 							<SheetContent side="right" className="bg-background/95 backdrop-blur-xl border-white/10 w-[300px]">
 								<SheetHeader>
-									<SheetTitle className="text-left text-lg font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">Menu</SheetTitle>
+									<SheetTitle className="text-left text-lg font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">{t("nav.menu")}</SheetTitle>
 								</SheetHeader>
 								<div className="flex flex-col gap-6 mt-10">
+									<div className="sm:hidden px-2">
+										<LanguageSelector />
+									</div>
 									<div className="flex flex-col gap-2">
-										<h3 className="text-sm font-medium text-muted-foreground mb-2 px-2 uppercase tracking-wider">Navigation</h3>
+										<h3 className="text-sm font-medium text-muted-foreground mb-2 px-2 uppercase tracking-wider">{t("nav.menu")}</h3>
 										<Link
 											href="/"
 											className="px-4 py-3 text-lg font-medium hover:bg-white/5 rounded-lg transition-colors flex items-center justify-between group"
 										>
-											Home
+											{t("nav.home")}
 											<span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
 										</Link>
 										<Link
 											href="/courses"
 											className="px-4 py-3 text-lg font-medium hover:bg-white/5 rounded-lg transition-colors flex items-center justify-between group"
 										>
-											Library
+											{t("nav.library")}
 											<span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
 										</Link>
 										<Link
 											href="/pricing"
 											className="px-4 py-3 text-lg font-medium hover:bg-white/5 rounded-lg transition-colors flex items-center justify-between group"
 										>
-											Pricing
+											{t("nav.pricing")}
 											<span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
 										</Link>
 										<Link
 											href="/about"
 											className="px-4 py-3 text-lg font-medium hover:bg-white/5 rounded-lg transition-colors flex items-center justify-between group"
 										>
-											Manifesto
+											{t("nav.manifesto")}
 											<span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
 										</Link>
 										<Link
 											href="/contact"
 											className="px-4 py-3 text-lg font-medium hover:bg-white/5 rounded-lg transition-colors flex items-center justify-between group"
 										>
-											Connect
+											{t("nav.connect")}
 											<span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
 										</Link>
 									</div>
@@ -206,10 +215,10 @@ export function Navbar() {
 									{!user && (
 										<div className="flex flex-col gap-3 mt-4 px-2">
 											<Button onClick={() => setShowLogin(true)} variant="secondary" className="w-full justify-center">
-												Sign In
+												{t("nav.signIn")}
 											</Button>
 											<Button onClick={() => setShowSignup(true)} className="w-full justify-center">
-												Start Learning
+												{t("nav.startLearning")}
 											</Button>
 										</div>
 									)}

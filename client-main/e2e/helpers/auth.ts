@@ -15,13 +15,16 @@ export async function bypassIntroAndLoading(page: Page) {
 async function completeOnboarding(page: Page) {
   await page.waitForURL(/\/onboarding/, { timeout: 15000 });
 
-  const next = page.getByRole("button", { name: /^next$/i });
-  if (await next.isEnabled({ timeout: 5000 }).catch(() => false)) {
-    await next.click();
+  const nameInput = page.locator("#displayName");
+  if (await nameInput.isVisible().catch(() => false)) {
+    const value = await nameInput.inputValue();
+    if (!value.trim()) {
+      await nameInput.fill("E2E Student");
+    }
+    await page.getByRole("button", { name: /^next$/i }).click();
   }
 
-  await page.locator("button.rounded-xl.border-2").first().click();
-
+  await page.locator("button.rounded-xl.border-2").first().click({ timeout: 10000 });
   await page.getByRole("button", { name: /^next$/i }).click();
   await page.getByRole("button", { name: /enter campus/i }).click();
   await page.waitForURL(/\/student|\/dashboard/, { timeout: 45000 });

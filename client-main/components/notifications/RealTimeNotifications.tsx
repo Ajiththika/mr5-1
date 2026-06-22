@@ -5,6 +5,7 @@ import { Bell, X, CheckCircle, AlertCircle, Info } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { getBrandSoundManager } from "@/lib/audio";
 
 interface Notification {
   id: string;
@@ -19,45 +20,70 @@ interface Notification {
   };
 }
 
+const WELCOME_NOTIFICATION_KEY = "mr5_welcome_notification_v1";
+
 export function RealTimeNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
-  // Using toast directly from sonner package
+  const [hydrated, setHydrated] = useState(false);
 
-  // Load notifications from localStorage on mount
   useEffect(() => {
+    let loaded: Notification[] = [];
     const savedNotifications = localStorage.getItem("notifications");
+
     if (savedNotifications) {
       try {
         const parsed = JSON.parse(savedNotifications);
-        const withDates = parsed.map((n: any) => ({
+        loaded = parsed.map((n: Notification) => ({
           ...n,
-          timestamp: new Date(n.timestamp)
+          timestamp: new Date(n.timestamp),
         }));
-        setNotifications(withDates);
-        setUnreadCount(withDates.filter((n: Notification) => !n.read).length);
       } catch (e) {
         console.error("Failed to parse notifications", e);
       }
     }
+
+    const welcomeAlreadyShown = localStorage.getItem(WELCOME_NOTIFICATION_KEY) === "true";
+    if (loaded.length === 0 && !welcomeAlreadyShown) {
+      loaded = [
+        {
+          id: Math.random().toString(36).substr(2, 9),
+          title: "Welcome to MR5 School!",
+          message: "Explore our courses and start learning today.",
+          type: "info",
+          timestamp: new Date(),
+          read: false,
+        },
+      ];
+      localStorage.setItem(WELCOME_NOTIFICATION_KEY, "true");
+    }
+
+    setNotifications(loaded);
+    setUnreadCount(loaded.filter((n) => !n.read).length);
+    setHydrated(true);
   }, []);
 
-  // Save notifications to localStorage whenever they change
   useEffect(() => {
+    if (!hydrated) return;
     localStorage.setItem("notifications", JSON.stringify(notifications));
-    setUnreadCount(notifications.filter(n => !n.read).length);
-  }, [notifications]);
+    setUnreadCount(notifications.filter((n) => !n.read).length);
+  }, [hydrated, notifications]);
 
-  const addNotification = useCallback((notification: Omit<Notification, "id" | "timestamp" | "read">) => {
+  const addNotification = useCallback((notification: Omit<Notification, "id" | "timestamp" | "read"> & { skipSound?: boolean }) => {
+    const { skipSound, ...payload } = notification;
     const newNotification: Notification = {
       id: Math.random().toString(36).substr(2, 9),
       timestamp: new Date(),
       read: false,
-      ...notification
+      ...payload,
     };
 
     setNotifications(prev => [newNotification, ...prev.slice(0, 9)]); // Keep only last 10 notifications
+
+    if (!skipSound) {
+      getBrandSoundManager().playNotification(payload.type);
+    }
 
     // Show toast notification
     toast(notification.title, {
@@ -68,18 +94,6 @@ export function RealTimeNotifications() {
       } : undefined
     });
   }, []);
-
-  // Initialize notifications
-  useEffect(() => {
-    // Only add a welcome notification if the user has no notifications
-    if (notifications.length === 0) {
-      addNotification({
-        title: "Welcome to MR5 School!",
-        message: "Explore our courses and start learning today.",
-        type: "info"
-      });
-    }
-  }, [addNotification, notifications.length]); // Run once on mount if empty
 
   const markAsRead = (id: string) => {
     setNotifications(prev =>

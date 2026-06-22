@@ -15,7 +15,6 @@ import {
   Environment,
   Html,
   Image,
-  Text,
   useGLTF,
   useProgress,
 } from "@react-three/drei";
@@ -23,21 +22,33 @@ import {
   ArrowLeft,
   BookOpen,
   DoorOpen,
-  Eye,
-  GraduationCap,
+  Gamepad2,
   Presentation,
   UserRound,
 } from "lucide-react";
 import * as THREE from "three";
+import TeachingAIModal from "@/components/ai/TeachingAIModal";
+import { useEnhancedUser } from "@/contexts/EnhancedUserContext";
 import { TeacherPlaytimePanel } from "@/components/classroom/teacher-playtime-panel";
-import { ClassroomStatusPanel } from "@/components/classroom/ClassroomStatusPanel";
+import { ClassroomStoreProvider, useClassroomStore } from "@/features/classroom/store/classroom.store";
+import { useWeatherSync } from "@/features/classroom/hooks/useWeatherSync";
+import { EnvironmentPanel } from "@/features/classroom/ui/EnvironmentPanel";
+import { ControlDock } from "@/features/classroom/ui/ControlDock";
+import { PlaytimePanel } from "@/features/classroom/ui/PlaytimePanel";
+import { TeacherChallengePanel } from "@/features/classroom/ui/TeacherChallengePanel";
 import { EnvironmentDevPanel } from "@/components/classroom/EnvironmentDevPanel";
 import { ClassroomEnvironmentProvider, useClassroomEnvironment } from "@/contexts/ClassroomEnvironmentContext";
 import { ClassroomAtmosphere } from "@/components/3d/classroom/ClassroomAtmosphere";
+import { CeilingFan } from "@/components/3d/classroom/CeilingFan";
+import { ClassroomAmbienceAudio } from "@/components/3d/classroom/ClassroomAmbienceAudio";
+import { WallControlPanel } from "@/components/3d/classroom/WallControlPanel";
+import { useAudio } from "@/hooks/useAudio";
+import { getBrandSoundManager } from "@/lib/audio";
+import { useTranslation } from "@/hooks/useTranslation";
 import type { EnvironmentLighting } from "@/lib/classroom-environment";
 
 const CLASSROOM_GLB = "/assets/3d/rooms/classroom.glb";
-const LOGO_URL = "/images/mr5-logo.png";
+const BOARD_LOGO_URL = "/assets/mr5-logo-neon.png";
 
 const LOOK_SENSITIVITY = 0.0021;
 const CAMERA_BLEND_SPEED = 5.5;
@@ -73,6 +84,10 @@ interface ClassroomViewState {
   studentPreset: CameraPreset;
   teacherPreset: CameraPreset;
   anchors: ClassroomAnchor[];
+  ceilingY: number;
+  roomCenter: THREE.Vector3;
+  fanSwitchPosition: THREE.Vector3;
+  fanSwitchLookAt: THREE.Vector3;
 }
 
 function Loader() {
@@ -194,6 +209,8 @@ function deriveClassroomViewState(root: THREE.Object3D): ClassroomViewState {
 
   const roomBox = new THREE.Box3().setFromObject(root);
   const floorY = roomBox.min.y + 0.02;
+  const ceilingY = roomBox.max.y - 0.05;
+  const roomCenter = roomBox.getCenter(new THREE.Vector3());
 
   const boardBounds =
     getMeshBounds(root, ["board"]) ??
@@ -239,11 +256,20 @@ function deriveClassroomViewState(root: THREE.Object3D): ClassroomViewState {
 
   const logoPosition = boardCenter
     .clone()
-    .add(wallNormal.clone().multiplyScalar(0.07));
-  logoPosition.y = boardBounds.max.y + 0.34;
+    .add(wallNormal.clone().multiplyScalar(0.08));
+  logoPosition.y = boardBounds.max.y + 0.2;
   const logoLookAt = logoPosition
     .clone()
     .add(classDirection.clone().multiplyScalar(2));
+
+  const fanSwitchPosition = board
+    .clone()
+    .add(boardSide.clone().multiplyScalar(2.35))
+    .add(wallNormal.clone().multiplyScalar(0.07));
+  fanSwitchPosition.y = floorY + 1.42;
+  const fanSwitchLookAt = fanSwitchPosition
+    .clone()
+    .add(classDirection.clone().multiplyScalar(-2));
 
   const studentEye = new THREE.Vector3(
     seat.x,
@@ -326,6 +352,10 @@ function deriveClassroomViewState(root: THREE.Object3D): ClassroomViewState {
     studentPreset,
     teacherPreset,
     anchors,
+    ceilingY,
+    roomCenter,
+    fanSwitchPosition,
+    fanSwitchLookAt,
   };
 }
 
@@ -561,7 +591,7 @@ function ClassroomModel({
   );
 }
 
-function WallBranding({
+function BoardLogo({
   position,
   lookAt,
 }: {
@@ -578,54 +608,27 @@ function WallBranding({
 
   return (
     <group ref={groupRef}>
-      <mesh receiveShadow castShadow position={[0, 0, -0.01]}>
-        <boxGeometry args={[1.85, 0.48, 0.035]} />
+      <mesh receiveShadow position={[0, 0, -0.012]}>
+        <planeGeometry args={[0.78, 0.78]} />
         <meshStandardMaterial
-          color="#0b1224"
-          roughness={0.42}
-          metalness={0.22}
-          envMapIntensity={0.85}
+          color="#0a1020"
+          roughness={0.35}
+          metalness={0.15}
+          envMapIntensity={0.9}
         />
       </mesh>
-      <mesh position={[0, 0, 0.018]}>
-        <planeGeometry args={[1.5, 0.38]} />
-        <meshStandardMaterial
-          color="#111827"
-          roughness={0.88}
-          metalness={0.04}
-          transparent
-          opacity={0.35}
-        />
+      <mesh position={[0, 0, -0.006]}>
+        <planeGeometry args={[0.74, 0.74]} />
+        <meshStandardMaterial color="#111827" roughness={0.9} metalness={0.02} />
       </mesh>
-      {/* eslint-disable-next-line jsx-a11y/alt-text -- drei Image is a 3D texture billboard, not an HTML img */}
+      {/* eslint-disable-next-line jsx-a11y/alt-text -- drei Image is a 3D texture billboard */}
       <Image
-        url={LOGO_URL}
-        position={[-0.56, 0.01, 0.03]}
-        scale={[0.38, 0.38]}
+        url={BOARD_LOGO_URL}
+        position={[0, 0, 0.02]}
+        scale={[0.68, 0.68]}
         transparent
+        toneMapped={false}
       />
-      <Text
-        position={[0.04, 0.05, 0.03]}
-        fontSize={0.115}
-        color="#f8fafc"
-        anchorX="left"
-        anchorY="middle"
-        letterSpacing={0.045}
-        outlineWidth={0.008}
-        outlineColor="#0f172a"
-      >
-        MR5 SCHOOL
-      </Text>
-      <Text
-        position={[0.02, -0.09, 0.03]}
-        fontSize={0.042}
-        color="#94a3b8"
-        anchorX="left"
-        anchorY="middle"
-        letterSpacing={0.08}
-      >
-        LEARN WITH AI
-      </Text>
     </group>
   );
 }
@@ -741,9 +744,15 @@ function TeacherCharacter({
 function ClassroomLighting({
   viewState,
   lighting,
+  lightsOn,
+  curtainOpen,
+  sunMultiplier,
 }: {
   viewState: ClassroomViewState;
   lighting: EnvironmentLighting;
+  lightsOn: boolean;
+  curtainOpen: number;
+  sunMultiplier: number;
 }) {
   const windowDir = useMemo(() => {
     const side = new THREE.Vector3()
@@ -752,16 +761,23 @@ function ClassroomLighting({
     return side.multiplyScalar(-1);
   }, [viewState.classDirection]);
 
+  const lightMul = lightsOn ? 1 : 0.22;
+  const curtainAtten = 0.38 + curtainOpen * 0.62;
+  const sun = lighting.sunIntensity * sunMultiplier * curtainAtten * lightMul;
+  const ambient = lighting.ambientIntensity * lightMul;
+  const fill = lighting.fillIntensity * lightMul;
+  const board = lighting.boardIntensity * lightMul;
+
   return (
     <>
-      <ambientLight intensity={lighting.ambientIntensity} color={lighting.ambientColor} />
+      <ambientLight intensity={ambient} color={lighting.ambientColor} />
       <hemisphereLight
-        args={["#dbeafe", "#1e293b", lighting.fillIntensity]}
+        args={["#dbeafe", "#1e293b", fill]}
         position={[0, 6, 0]}
       />
       <directionalLight
         position={[windowDir.x * 7, 5.5, windowDir.z * 7]}
-        intensity={lighting.sunIntensity}
+        intensity={sun}
         color={lighting.sunColor}
         castShadow
         shadow-mapSize={[2048, 2048]}
@@ -771,7 +787,8 @@ function ClassroomLighting({
         shadow-camera-right={9}
         shadow-camera-top={9}
         shadow-camera-bottom={-9}
-        shadow-bias={-0.00015}
+        shadow-bias={-0.00012}
+        shadow-normalBias={0.02}
       />
       <directionalLight
         position={[
@@ -779,7 +796,7 @@ function ClassroomLighting({
           3.5,
           viewState.classDirection.z * -3,
         ]}
-        intensity={lighting.fillIntensity}
+        intensity={fill}
         color={lighting.fillColor}
       />
       <pointLight
@@ -788,7 +805,7 @@ function ClassroomLighting({
           viewState.board.y + 0.8,
           viewState.board.z,
         ]}
-        intensity={lighting.boardIntensity}
+        intensity={board}
         color="#fef3c7"
         distance={10}
       />
@@ -799,8 +816,8 @@ function ClassroomLighting({
           viewState.teacherStand.z,
         ]}
         angle={0.55}
-        penumbra={0.65}
-        intensity={lighting.effects.thunder ? 0.35 : 0.22}
+        penumbra={0.72}
+        intensity={lightsOn ? (lighting.effects.thunder ? 0.35 : 0.24) : 0.06}
         color="#f8fafc"
         castShadow={false}
       />
@@ -869,13 +886,48 @@ function ClassroomContent({
   viewState,
   cameraMode,
   onViewStateReady,
+  onFanSpeedChange,
+  onWallTeacher,
+  onWallStudent,
+  wallLabels,
 }: {
   viewState: ClassroomViewState | null;
   cameraMode: CameraMode;
   onViewStateReady: (state: ClassroomViewState) => void;
+  onFanSpeedChange: (speed: number) => void;
+  onWallTeacher: () => void;
+  onWallStudent: () => void;
+  wallLabels: {
+    panel: string;
+    fan: string;
+    fanOn: string;
+    fanOff: string;
+    teacher: string;
+    student: string;
+  };
 }) {
   const { environment } = useClassroomEnvironment();
+  const { computed, weather } = useWeatherSync();
+  const { controls, setFanEnabled } = useClassroomStore();
   const { lighting } = environment;
+  const [fanSpeed, setFanSpeed] = useState(0);
+
+  const handleFanSpeed = useCallback(
+    (speed: number) => {
+      setFanSpeed(speed);
+      onFanSpeedChange(speed);
+    },
+    [onFanSpeedChange],
+  );
+
+  const fanEnvironment = useMemo(
+    () => ({
+      temperature: weather?.temperature,
+      humidity: weather?.humidity,
+      comfort: computed.roomComfort,
+    }),
+    [weather?.temperature, weather?.humidity, computed.roomComfort],
+  );
 
   const windowVectors = useMemo(() => {
     if (!viewState) return null;
@@ -893,20 +945,57 @@ function ClassroomContent({
   return (
     <>
       <SceneRendererSetup />
+      <ClassroomAmbienceAudio />
       <ClassroomSceneEnvironment lighting={lighting} />
       <ClassroomModel onViewStateReady={onViewStateReady} />
       {viewState && windowVectors && (
         <>
-          <ClassroomLighting viewState={viewState} lighting={lighting} />
+          <ClassroomLighting
+            viewState={viewState}
+            lighting={lighting}
+            lightsOn={controls.lightsOn}
+            curtainOpen={controls.curtainOpen}
+            sunMultiplier={computed.sunIntensity}
+          />
           <ClassroomAtmosphere
             lighting={lighting}
             windowNormal={windowVectors.windowNormal}
             windowCenter={windowVectors.windowCenter}
+            curtainOpen={controls.curtainOpen}
+            fanSpeed={fanSpeed}
+            curtainStrength={computed.curtainStrength}
+            windSpeed={weather.windSpeed}
+            lightsOn={controls.lightsOn}
           />
           <PracticalLabBench viewState={viewState} />
-          <WallBranding
+          <BoardLogo
             position={viewState.logoPosition}
             lookAt={viewState.logoLookAt}
+          />
+          <CeilingFan
+            position={[
+              viewState.roomCenter.x,
+              viewState.ceilingY,
+              viewState.roomCenter.z,
+            ]}
+            enabled={controls.fanEnabled}
+            mode={controls.fanMode}
+            autoIntensity={computed.fanIntensity}
+            scale={1.1}
+            onSpeedChange={handleFanSpeed}
+            environment={fanEnvironment}
+          />
+          <WallControlPanel
+            position={viewState.fanSwitchPosition}
+            lookAt={viewState.fanSwitchLookAt}
+            fanOn={controls.fanEnabled}
+            onFanToggle={() => {
+              getBrandSoundManager().playToggle();
+              setFanEnabled(!controls.fanEnabled);
+            }}
+            onTeacher={onWallTeacher}
+            onStudent={onWallStudent}
+            labels={wallLabels}
           />
           <TeacherCharacter
             position={viewState.teacherStand}
@@ -914,9 +1003,9 @@ function ClassroomContent({
           />
           <ContactShadows
             position={[0, viewState.floorY + 0.01, 0]}
-            opacity={lighting.effects.rain ? 0.48 : 0.35}
+            opacity={lighting.effects.rain ? 0.5 : 0.38}
             scale={14}
-            blur={2.8}
+            blur={3.2}
             far={5.5}
           />
           <ClassroomCameraRig viewState={viewState} mode={cameraMode} />
@@ -971,21 +1060,59 @@ export interface ClassroomRoomSceneProps {
 export function ClassroomRoomScene({ courseId, onExit }: ClassroomRoomSceneProps) {
   return (
     <ClassroomEnvironmentProvider>
-      <ClassroomRoomSceneInner courseId={courseId} onExit={onExit} />
+      <ClassroomStoreProvider>
+        <ClassroomRoomSceneInner courseId={courseId} onExit={onExit} />
+      </ClassroomStoreProvider>
     </ClassroomEnvironmentProvider>
   );
 }
 
 function ClassroomRoomSceneInner({ courseId, onExit }: ClassroomRoomSceneProps) {
+  const { user } = useEnhancedUser();
+  const { t } = useTranslation();
+  const { togglePlaytime, toggleChallenge } = useClassroomStore();
+  const { playToggle, playBell, playChatOpen } = useAudio();
   const [viewState, setViewState] = useState<ClassroomViewState | null>(null);
-  const [cameraMode, setCameraMode] = useState<CameraMode>("student");
+  const [fanSpeed, setFanSpeed] = useState(0);
+  const [aiChatOpen, setAiChatOpen] = useState(false);
+
+  const cameraMode: CameraMode =
+    user?.role === "admin" || user?.role === "AI-TEACHER" ? "teacher" : "student";
+
+  const wallLabels = useMemo(
+    () => ({
+      panel: t("classroom.wall.panel"),
+      fan: t("classroom.wall.fan"),
+      fanOn: t("classroom.wall.fanOn"),
+      fanOff: t("classroom.wall.fanOff"),
+      teacher: t("classroom.wall.teacher"),
+      student: t("classroom.wall.student"),
+    }),
+    [t],
+  );
+
+  const handleWallTeacher = useCallback(() => {
+    playToggle();
+    if (cameraMode === "teacher") {
+      toggleChallenge();
+      return;
+    }
+    playChatOpen();
+    setAiChatOpen(true);
+  }, [cameraMode, toggleChallenge, playToggle, playChatOpen]);
+
+  const handleWallStudent = useCallback(() => {
+    playToggle();
+    if (cameraMode === "student") {
+      togglePlaytime();
+      return;
+    }
+    playChatOpen();
+    setAiChatOpen(true);
+  }, [cameraMode, togglePlaytime, playToggle, playChatOpen]);
 
   const handleViewStateReady = useCallback((state: ClassroomViewState) => {
     setViewState(state);
-  }, []);
-
-  const toggleCameraMode = useCallback(() => {
-    setCameraMode((current) => (current === "student" ? "teacher" : "student"));
   }, []);
 
   const handleAction = useCallback(
@@ -997,18 +1124,20 @@ function ClassroomRoomSceneInner({ courseId, onExit }: ClassroomRoomSceneProps) 
         return;
       }
       if (id === "teacher") {
-        setCameraMode("teacher");
+        playChatOpen();
+        setAiChatOpen(true);
         return;
       }
       if (id === "board" || id === "lesson") {
+        playBell();
         window.location.href = `/course/${courseId}/lesson/start`;
       }
     },
-    [courseId, onExit],
+    [courseId, onExit, playBell, playChatOpen],
   );
 
   const modeLabel =
-    cameraMode === "student" ? "Student Desk View" : "Teacher View";
+    cameraMode === "student" ? t("classroom.studentView") : t("classroom.teacherView");
 
   return (
     <div className="flex h-full w-full flex-col bg-slate-950">
@@ -1021,31 +1150,24 @@ function ClassroomRoomSceneInner({ courseId, onExit }: ClassroomRoomSceneProps) 
               className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-white/15 bg-white/10 px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-white/20 sm:px-3 sm:text-sm"
             >
               <ArrowLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">Back to Campus</span>
-              <span className="sm:hidden">Back</span>
+              <span className="hidden sm:inline">{t("classroom.back")}</span>
+              <span className="sm:hidden">{t("classroom.backShort")}</span>
             </button>
           )}
           <div className="min-w-0">
             <h1 className="truncate text-base font-bold tracking-tight text-white sm:text-lg">
-              Classroom
+              {t("classroom.title")}
             </h1>
             <p className="truncate text-[10px] text-slate-400 sm:text-[11px]">
               MR5 School · {modeLabel}
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={toggleCameraMode}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-indigo-400/30 bg-indigo-500/15 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-indigo-100 transition-colors hover:bg-indigo-500/25 sm:text-[11px]"
-        >
-          <Eye className="h-3.5 w-3.5" />
-          {cameraMode === "student" ? "Teacher View" : "Student View"}
-        </button>
       </header>
 
-      <div className="relative min-h-0 flex-1">
+      <div className="classroom-scene-viewport relative min-h-0 flex-1 overflow-hidden">
         <Canvas
+          className="classroom-scene-canvas"
           dpr={[1, 1.5]}
           shadows
           gl={{ antialias: true, powerPreference: "high-performance" }}
@@ -1056,21 +1178,37 @@ function ClassroomRoomSceneInner({ courseId, onExit }: ClassroomRoomSceneProps) 
               viewState={viewState}
               cameraMode={cameraMode}
               onViewStateReady={handleViewStateReady}
+              onFanSpeedChange={setFanSpeed}
+              onWallTeacher={handleWallTeacher}
+              onWallStudent={handleWallStudent}
+              wallLabels={wallLabels}
             />
           </Suspense>
         </Canvas>
 
         <div className="pointer-events-none absolute inset-0 z-10 flex flex-col justify-between p-3 sm:p-4">
           <div className="pointer-events-none flex items-start justify-between gap-3">
-            <ClassroomStatusPanel />
+            <EnvironmentPanel />
             <EnvironmentDevPanel />
           </div>
 
-          {cameraMode === "teacher" && (
-            <div className="pointer-events-none flex justify-end">
-              <TeacherPlaytimePanel />
+          <div className="pointer-events-none flex flex-1 items-end justify-between gap-3 pt-2">
+            <div className="flex max-w-[min(100%,280px)] flex-col justify-end gap-2">
+              {cameraMode === "student" && <PlaytimePanel />}
+              {cameraMode === "teacher" && (
+                <>
+                  <TeacherChallengePanel />
+                  <div className="pointer-events-auto hidden lg:block">
+                    <TeacherPlaytimePanel />
+                  </div>
+                </>
+              )}
             </div>
-          )}
+          </div>
+
+          <div className="pointer-events-auto absolute bottom-[5.75rem] right-3 z-20 sm:bottom-[6.25rem] sm:right-4">
+            <ControlDock fanSpeed={fanSpeed} />
+          </div>
 
           <div className="flex flex-col justify-end">
           <div className="pointer-events-none mb-3 flex justify-center">
@@ -1078,43 +1216,48 @@ function ClassroomRoomSceneInner({ courseId, onExit }: ClassroomRoomSceneProps) 
           </div>
 
           <div className="pointer-events-auto rounded-2xl border border-white/10 bg-slate-950/80 p-3 shadow-2xl backdrop-blur-md sm:p-4">
-            <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-[11px] text-slate-300 sm:text-xs">
-                {cameraMode === "student"
-                  ? "Seated at your desk · drag to look around"
-                  : "Teacher perspective · drag to scan the class"}
-              </p>
-              <button
-                type="button"
-                onClick={toggleCameraMode}
-                className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-violet-400/25 bg-violet-500/15 px-2.5 py-1 text-[10px] font-medium text-violet-100 transition-colors hover:bg-violet-500/25 sm:text-[11px]"
-              >
-                <GraduationCap className="h-3.5 w-3.5" />
-                Switch to {cameraMode === "student" ? "Teacher" : "Student"} View
-              </button>
-            </div>
-            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
+            <p className="mb-3 text-[11px] text-slate-300 sm:text-xs">
+              {cameraMode === "student"
+                ? t("classroom.studentHint")
+                : t("classroom.teacherHint")}
+            </p>
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end">
               <ActionButton
-                label="Whiteboard"
+                label={t("classroom.whiteboard")}
                 icon={<Presentation className="h-4 w-4" />}
                 tone="indigo"
                 onClick={() => handleAction("board")}
               />
               <ActionButton
-                label="Start Lesson"
+                label={t("classroom.startLesson")}
                 icon={<BookOpen className="h-4 w-4" />}
                 tone="emerald"
                 onClick={() => handleAction("lesson")}
               />
               <ActionButton
-                label="AI Teacher"
+                label={t("classroom.aiTeacher")}
                 icon={<UserRound className="h-4 w-4" />}
                 tone="slate"
-                active={cameraMode === "teacher"}
                 onClick={() => handleAction("teacher")}
               />
+              {cameraMode === "student" && (
+                <ActionButton
+                  label={t("classroom.playtime")}
+                  icon={<Gamepad2 className="h-4 w-4" />}
+                  tone="violet"
+                  onClick={togglePlaytime}
+                />
+              )}
+              {cameraMode === "teacher" && (
+                <ActionButton
+                  label={t("classroom.challenges")}
+                  icon={<Gamepad2 className="h-4 w-4" />}
+                  tone="violet"
+                  onClick={toggleChallenge}
+                />
+              )}
               <ActionButton
-                label="Exit Room"
+                label={t("classroom.exit")}
                 icon={<DoorOpen className="h-4 w-4" />}
                 tone="amber"
                 onClick={() => handleAction("exit")}
@@ -1124,6 +1267,12 @@ function ClassroomRoomSceneInner({ courseId, onExit }: ClassroomRoomSceneProps) 
           </div>
         </div>
       </div>
+
+      <TeachingAIModal
+        isOpen={aiChatOpen}
+        onClose={() => setAiChatOpen(false)}
+        courseId={courseId}
+      />
     </div>
   );
 }

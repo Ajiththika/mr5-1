@@ -33,6 +33,24 @@ describe('courseService', () => {
         jest.clearAllMocks();
     });
 
+    it('should search courses via search endpoint', async () => {
+        const response = {
+            data: {
+                data: [mockCourse],
+                total: 1,
+                page: 1,
+                limit: 50,
+            },
+        };
+        mockedApi.get.mockResolvedValueOnce(response as any);
+
+        const result = await courseService.searchCourses({ search: 'huly', page: 1, limit: 50 });
+        expect(mockedApi.get).toHaveBeenCalledWith('/api/courses/search', {
+            params: { page: 1, limit: 50, search: 'huly' },
+        });
+        expect(result).toEqual(response.data);
+    });
+
     it('should fetch all courses', async () => {
         const response = { data: { success: true, data: [mockCourse], total: 1, page: 1, limit: 10, totalPages: 1 } };
         mockedApi.get.mockResolvedValueOnce(response as any);

@@ -13,6 +13,11 @@ const lessonSchema = new mongoose.Schema(
 		content: String,
 		duration: Number, // in minutes
 		order: Number, // for sorting lessons
+		moduleTitle: String,
+		objectives: [{ type: String }],
+		example: String,
+		practiceTask: String,
+		quiz: [{ type: mongoose.Schema.Types.Mixed }],
 	},
 	{ timestamps: true },
 );

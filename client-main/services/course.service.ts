@@ -29,7 +29,38 @@ export interface CoursesResponse {
 	totalPages: number;
 }
 
+export interface CourseSearchResponse {
+	data: Course[];
+	total: number;
+	page: number;
+	limit: number;
+}
+
 export const courseService = {
+	searchCourses: async (params?: {
+		search?: string;
+		page?: number;
+		limit?: number;
+		category?: string;
+		level?: string;
+	}): Promise<CourseSearchResponse> => {
+		const query: Record<string, string | number> = {
+			page: params?.page ?? 1,
+			limit: params?.limit ?? 50,
+		};
+
+		const search = params?.search?.trim();
+		if (search) query.search = search;
+		if (params?.category) query.category = params.category;
+		if (params?.level) query.level = params.level;
+
+		const response = await apiClient.get<CourseSearchResponse>(
+			"/api/courses/search",
+			{ params: query },
+		);
+		return response.data;
+	},
+
 	getAllCourses: async (params?: {
 		page?: number;
 		limit?: number;

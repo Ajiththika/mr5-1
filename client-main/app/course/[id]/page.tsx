@@ -24,7 +24,23 @@ import { motion } from "framer-motion";
 import { Navbar } from "@/components/layout/navbar";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import dynamic from "next/dynamic";
 import type { SchoolCampusSceneProps } from "@/components/3d/school-campus-scene";
+
+const ClassroomMiniPreview = dynamic(
+    () =>
+        import("@/components/3d/ClassroomMiniPreview").then(
+            (mod) => mod.ClassroomMiniPreview,
+        ),
+    {
+        ssr: false,
+        loading: () => (
+            <div className="flex h-full min-h-[360px] w-full items-center justify-center bg-slate-950">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        ),
+    },
+);
 
 export default function CoursePage() {
     const { user, loading: authLoading } = useEnhancedUser();
@@ -36,6 +52,7 @@ export default function CoursePage() {
     const [verifying, setVerifying] = useState(true);
     const [courseData, setCourseData] = useState<any>(null);
     const [courseError, setCourseError] = useState(false);
+    const [previewMode, setPreviewMode] = useState<"classroom" | "campus">("classroom");
     const [SchoolScene, setSchoolScene] = useState<ComponentType<SchoolCampusSceneProps> | null>(null);
 
     useEffect(() => {
@@ -218,30 +235,57 @@ export default function CoursePage() {
 
                             <div className="relative bg-[#020617]/80 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] overflow-hidden shadow-2xl">
 
-                                {/* 3D Preview Area */}
-                                <div className="aspect-video w-full bg-black relative">
-                                    {!user || !hasAccess ? (
-                                        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center p-8 bg-black/60 backdrop-blur-md">
-                                            <Lock className="w-12 h-12 text-slate-500 mb-4" />
-                                            <h3 className="text-xl font-bold uppercase tracking-widest italic mb-2">Campus Encrypted</h3>
-                                            <p className="text-slate-400 text-sm max-w-[200px]">Complete enrollment to unlock virtual 3D campus</p>
+                                {/* 3D Cinematic Preview — always visible */}
+                                <div className="preview-3d-root relative min-h-[360px] h-[min(52vw,440px)] w-full bg-slate-950">
+                                    {previewMode === "classroom" ? (
+                                        <ClassroomMiniPreview className="h-full w-full" />
+                                    ) : SchoolScene ? (
+                                        <SchoolScene
+                                            courseId={courseId}
+                                            variant="preview"
+                                            className="h-full rounded-none border-0 shadow-none"
+                                        />
+                                    ) : (
+                                        <div className="flex h-full w-full items-center justify-center bg-black/80">
+                                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
                                         </div>
-                                    ) : null}
-                                    <div className="absolute inset-0 z-10">
-                                        {SchoolScene ? (
-                                            <SchoolScene courseId={courseId} variant="preview" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center bg-black/80">
-                                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                                            </div>
+                                    )}
+
+                                    <div className="preview-3d-ui preview-3d-ui--interactive absolute left-3 top-3 flex gap-1.5">
+                                        <button
+                                            type="button"
+                                            onClick={() => setPreviewMode("classroom")}
+                                            className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-wider backdrop-blur-md transition-colors ${
+                                                previewMode === "classroom"
+                                                    ? "border-indigo-400/50 bg-indigo-600/80 text-white"
+                                                    : "border-white/15 bg-black/45 text-white/70 hover:bg-black/60"
+                                            }`}
+                                        >
+                                            Classroom
+                                        </button>
+                                        {hasAccess && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setPreviewMode("campus")}
+                                                className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-wider backdrop-blur-md transition-colors ${
+                                                    previewMode === "campus"
+                                                        ? "border-sky-400/50 bg-sky-600/80 text-white"
+                                                        : "border-white/15 bg-black/45 text-white/70 hover:bg-black/60"
+                                                }`}
+                                            >
+                                                Campus
+                                            </button>
                                         )}
                                     </div>
 
-                                    {/* HUD Elements */}
-                                    <div className="absolute top-6 left-6 z-30 font-mono text-[10px] text-primary space-y-1">
-                                        <p>SECURE_LINK: ACTIVE</p>
-                                        <p>CAMPUS_ID: {courseId.slice(0, 8).toUpperCase()}</p>
-                                    </div>
+                                    {!user || !hasAccess ? (
+                                        <div className="preview-3d-ui preview-3d-ui--interactive absolute right-3 top-3 flex items-center gap-2 rounded-full border border-amber-400/30 bg-black/55 px-3 py-1.5 backdrop-blur-md">
+                                            <Lock className="h-3.5 w-3.5 text-amber-300" />
+                                            <span className="text-[10px] font-semibold text-amber-100">
+                                                Enroll to enter rooms
+                                            </span>
+                                        </div>
+                                    ) : null}
                                 </div>
 
                                 {/* Conversion Area */}

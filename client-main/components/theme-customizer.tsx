@@ -22,11 +22,13 @@ import {
     LayoutGrid,
     RotateCcw,
     Palette,
-    Monitor
+    Monitor,
+    Volume2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
+import { AudioSettingsPanel } from "@/components/settings/AudioSettingsPanel";
 
 export function ThemeCustomizer() {
     const { setTheme, theme } = useTheme();
@@ -471,6 +473,20 @@ export function ThemeCustomizer() {
                                         <span>Default</span>
                                         <span>Large</span>
                                     </div>
+                                </motion.div>
+
+                                {/* Audio identity */}
+                                <motion.div
+                                    className="space-y-3"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.15 }}
+                                >
+                                    <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                                        <Volume2 className="w-3 h-3" />
+                                        MR5 Sound
+                                    </div>
+                                    <AudioSettingsPanel compact />
                                 </motion.div>
 
                                 {/* Accessibility Options */}

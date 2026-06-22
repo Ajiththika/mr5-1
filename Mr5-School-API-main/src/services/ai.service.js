@@ -157,7 +157,7 @@ class AIService {
         // Use default provider (Gemini is best for this structured JSON task usually)
         const prompt = `
             Based on the detected location information: "${locationInfo}", 
-            determine: language, timezone, gradingSystem, regionalPreferences.
+            Determine: language, timezone, gradingSystem, regionalPreferences.
             Return JSON with keys: language, timezone, gradingSystem, regionalPreferences.
         `;
 
@@ -176,6 +176,75 @@ class AIService {
             console.warn("Failed to parse regional JSON", e);
             return { language: "English", timezone: "UTC", gradingSystem: "Standard" }; // Fallback
         }
+    }
+
+    parseJsonFromResponse(text) {
+        const jsonStr = (text || "").replace(/```json/g, "").replace(/```/g, "").trim();
+        return JSON.parse(jsonStr);
+    }
+
+    async generateCourseStructure(topic, intent = {}) {
+        const { COURSE_STRUCTURE_SYSTEM, buildCourseStructurePrompt } = await import("../prompts/courseGeneration.prompts.js");
+
+        const response = await this.chatCompletion({
+            messages: [
+                { role: "system", content: COURSE_STRUCTURE_SYSTEM },
+                { role: "user", content: buildCourseStructurePrompt(topic, intent) },
+            ],
+            temperature: 0.4,
+            max_tokens: 8000,
+        });
+
+        const text = response.choices[0]?.message?.content || "";
+        const parsed = this.parseJsonFromResponse(text);
+
+        if (!parsed.title || !Array.isArray(parsed.modules)) {
+            throw new Error("AI returned invalid course structure");
+        }
+
+        parsed.tags = [parsed.category, topic].filter(Boolean);
+        return parsed;
+    }
+
+    async generateCourseSummaryAndQuiz(content) {
+        const { buildSummaryQuizPrompt } = await import("../prompts/courseGeneration.prompts.js");
+
+        const response = await this.chatCompletion({
+            messages: [{ role: "user", content: buildSummaryQuizPrompt(content) }],
+            temperature: 0.3,
+            max_tokens: 1500,
+        });
+
+        const text = response.choices[0]?.message?.content || "";
+        return this.parseJsonFromResponse(text);
+    }
+
+    async moderateContent(text) {
+        const blocked = ["hack", "illegal", "weapon", "exploit"];
+        const lower = (text || "").toLowerCase();
+        const flagged = blocked.some((word) => lower.includes(word));
+        return { flagged, categories: flagged ? ["policy"] : [] };
+    }
+
+    async autoGrade({ studentAnswer, rubric }) {
+        const prompt = `Grade this student answer against the rubric.
+Return JSON: { "score": 0-100, "feedback": "string", "strengths": [], "improvements": [] }
+
+Rubric: ${JSON.stringify(rubric)}
+Student Answer: ${studentAnswer}`;
+
+        const response = await this.chatCompletion({
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0.2,
+            max_tokens: 800,
+        });
+
+        const text = response.choices[0]?.message?.content || "";
+        return this.parseJsonFromResponse(text);
+    }
+
+    async multimodalChatCompletion({ messages, ...options }) {
+        return this.chatCompletion({ messages, ...options });
     }
 }
 

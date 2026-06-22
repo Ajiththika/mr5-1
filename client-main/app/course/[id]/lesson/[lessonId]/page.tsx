@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { progressService } from "@/services/progress.service";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { toast } from "sonner";
 
 export default function LessonPage() {
     const params = useParams();

@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { BentoGrid, BentoItem } from "@/components/ui/bento-grid";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
@@ -10,6 +10,7 @@ import { HomePricingSection } from "@/components/home/HomePricingSection";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import nextDynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { useEnhancedUser } from "@/contexts/EnhancedUserContext";
 import {
   Sparkles,
@@ -25,8 +26,10 @@ import TeachingAIModal from "@/components/ai/TeachingAIModal";
 import { StudentWelcomeChat } from "@/components/chat/StudentWelcomeChat";
 import { useVoiceInteraction } from "@/hooks/useVoiceInteraction";
 import { getTamilGreeting } from "@/lib/tamil-greetings";
-import { useCommonTracking } from "@/hooks/useAnalytics";
 import { motion } from "framer-motion";
+import { useCommonTracking } from "@/hooks/useAnalytics";
+import { ChatShortcutButton } from "@/components/home/ChatShortcutButton";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const WelcomeAvatar = nextDynamic(
   () =>
@@ -59,9 +62,34 @@ export default function HomePageClient() {
     typeof getTamilGreeting
   > | null>(null);
 
+  const router = useRouter();
   const { user } = useEnhancedUser();
+  const { t } = useTranslation();
   const voiceInteraction = useVoiceInteraction("gemini");
   const { trackNavigation } = useCommonTracking();
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleSearch = () => {
+    const query = searchQuery.trim();
+    if (query) {
+      router.push(`/courses?search=${encodeURIComponent(query)}`);
+      return;
+    }
+    router.push("/courses");
+  };
+
+  useEffect(() => {
+    const handleShortcut = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+
+    window.addEventListener("keydown", handleShortcut);
+    return () => window.removeEventListener("keydown", handleShortcut);
+  }, []);
 
   const needsStudentWelcome =
     user?.role === "student" && user?.welcomeChatCompleted !== true;
@@ -128,10 +156,10 @@ export default function HomePageClient() {
               transition={{ duration: 0.5 }}
             >
               <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-white/80 to-white/50 tracking-tight">
-                3D Virtual Classroom
+                {t("homepage.title")}
               </h1>
               <p className="text-xl md:text-2xl text-muted-foreground font-light mt-1">
-                Learn with AI Teachers
+                {t("homepage.subtitle")}
               </p>
             </motion.div>
             <motion.p
@@ -155,18 +183,27 @@ export default function HomePageClient() {
             className="relative group w-full md:w-96 perspective-1000 mt-4 md:mt-0"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-primary/30 via-purple-500/30 to-blue-500/30 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition duration-700 will-change-transform" />
-            <div className="relative flex items-center bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-foreground/70 shadow-2xl backdrop-blur-md transition-transform duration-300 group-hover:scale-[1.02] group-hover:border-white/20">
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                handleSearch();
+              }}
+              className="relative flex items-center bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-foreground/70 shadow-2xl backdrop-blur-md transition-transform duration-300 group-hover:scale-[1.02] group-hover:border-white/20"
+            >
               <Search className="w-5 h-5 mr-3 text-muted-foreground group-hover:text-primary transition-colors" />
               <input
+                ref={searchInputRef}
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
                 type="text"
-                placeholder="Search courses, lessons, topics..."
+                placeholder={t("homepage.searchPlaceholder")}
                 aria-label="Search courses"
                 className="bg-transparent border-none outline-none flex-1 placeholder:text-muted-foreground/50 text-foreground w-full"
               />
               <span className="ml-auto text-[10px] font-bold bg-black/20 border border-white/5 px-2 py-1 rounded text-muted-foreground/70 tracking-widest hidden md:inline-block">
                 ⌘K
               </span>
-            </div>
+            </form>
           </motion.div>
         </div>
 
@@ -252,7 +289,7 @@ export default function HomePageClient() {
                 </div>
               </div>
 
-              <div className="flex-1 relative min-h-[320px] md:min-h-auto">
+              <div className="flex-1 relative min-h-[320px] md:min-h-[380px]">
                 <WelcomeAvatar
                   showGreetingText={false}
                   enableVoice={!needsStudentWelcome}
@@ -374,6 +411,8 @@ export default function HomePageClient() {
       </main>
 
       <Footer />
+
+      <ChatShortcutButton onClick={openStudentChat} />
 
       <StudentWelcomeChat
         open={isWelcomeChatOpen}

@@ -1,4 +1,5 @@
 import Course from "../models/Course.js";
+import User from "../models/User.js";
 import { paginate } from "../utils/pagination.js";
 import cache from "../utils/cache.js";
 
@@ -17,31 +18,42 @@ const escapeRegex = (string) => {
  * @returns {Promise<Object>} Paginated result
  */
 export const getAllCourses = async (queryParams) => {
-    const { page, limit, teacher, level, language, search, isApproved } = queryParams;
+    const { page, limit, teacher, level, language, search, isApproved, category } = queryParams;
 
-    // Create cache key based on query parameters
     const cacheKey = `courses:${JSON.stringify(queryParams)}`;
     
-    // Try to get from cache first
     const cachedResult = cache.get(cacheKey);
     if (cachedResult) {
         return cachedResult;
     }
 
-    // Build query
     const query = {};
     if (teacher) query.teacher = teacher;
     if (level) query.level = level;
     if (language) query.language = language;
+    if (category) query.category = category;
     if (isApproved !== undefined) query.isApproved = isApproved === "true";
-    if (search) {
-        // Escape search term to prevent ReDoS attacks
-        const escapedSearch = escapeRegex(search);
-        query.$or = [
+
+    const searchTerm = typeof search === "string" ? search.trim() : "";
+    if (searchTerm) {
+        const escapedSearch = escapeRegex(searchTerm);
+        const matchingTeachers = await User.find({
+            name: { $regex: escapedSearch, $options: "i" },
+        })
+            .select("_id")
+            .lean();
+
+        const teacherIds = matchingTeachers.map((entry) => entry._id);
+        const orConditions = [
             { title: { $regex: escapedSearch, $options: "i" } },
             { description: { $regex: escapedSearch, $options: "i" } },
-            { category: { $regex: escapedSearch, $options: "i" } },
         ];
+
+        if (teacherIds.length > 0) {
+            orConditions.push({ teacher: { $in: teacherIds } });
+        }
+
+        query.$or = orConditions;
     }
 
     const result = await paginate(Course, query, {

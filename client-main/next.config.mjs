@@ -95,6 +95,15 @@ const nextConfig = {
 			},
 		];
 	},
+	async redirects() {
+		return [
+			{ source: "/avatar/list", destination: "/apps/avatar-creator", permanent: false },
+			{ source: "/avatar/register", destination: "/register", permanent: false },
+			{ source: "/apps/course-generator", destination: "/courses", permanent: false },
+			{ source: "/ai-assistant/avatar-support", destination: "/ai-assistant", permanent: false },
+			{ source: "/course/:id/school", destination: "/course/:id", permanent: false },
+		];
+	},
 };
 
 export default nextConfig;

@@ -1,17 +1,17 @@
-import { useRegionalSettings } from "@/contexts/RegionalSettingsContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { translate, type MessageKey } from "@/lib/i18n/messages";
 import { translations } from "@/lib/translations";
 
 export function useTranslation() {
-    const { settings } = useRegionalSettings();
-    const rawLang = settings?.language || 'en';
-    const language = rawLang.includes(',')
-        ? rawLang.split(',')[0].trim().substring(0, 2).toLowerCase()
-        : (rawLang.length > 2 ? rawLang.substring(0, 2).toLowerCase() : rawLang.toLowerCase());
+  const { locale, setLocale } = useLanguage();
 
-    const t = (key: string) => {
-        const langDict = translations[language] || translations['en'];
-        return langDict[key] || key;
-    };
+  const t = (key: string) => {
+    if (key.includes(".")) {
+      return translate(locale, key as MessageKey);
+    }
+    const legacy = translations[locale]?.[key] ?? translations.en?.[key];
+    return legacy ?? key;
+  };
 
-    return { t, language };
+  return { t, locale, setLocale };
 }
