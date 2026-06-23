@@ -16,7 +16,7 @@ export function StudentPageHeader({
   return (
     <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight md:text-3xl bg-gradient-to-r from-foreground via-foreground/90 to-muted-foreground bg-clip-text text-transparent">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
           {title}
         </h1>
         {description && (

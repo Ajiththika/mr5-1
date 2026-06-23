@@ -28,6 +28,17 @@ GitHub Actions → ECR → ECS rolling deploy
 
 ## Step 1 — Verify locally (zero errors)
 
+**API must have a valid `MONGO_URI` before login will work.**
+
+```bash
+cd Mr5-School-API-main
+cp .env.production.example .env
+# Required: MONGO_URI, JWT_SECRET (32+ chars), CORS_ORIGIN, CLIENT_URL
+PORT=5001 NODE_ENV=development node src/app.js
+```
+
+Wait for: `Connected to MongoDB successfully` before testing login.
+
 ```bash
 cd /path/to/Mr5
 npm run verify

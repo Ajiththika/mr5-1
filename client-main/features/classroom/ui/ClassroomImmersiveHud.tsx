@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { EnvironmentPanel } from "./EnvironmentPanel";
+import { EnvironmentDevPanel } from "@/components/classroom/EnvironmentDevPanel";
 import { ControlDock } from "./ControlDock";
 import { PlaytimePanel } from "./PlaytimePanel";
 import { TeacherChallengePanel } from "./TeacherChallengePanel";
@@ -237,6 +238,7 @@ export function ClassroomImmersiveHud({
           {menuOpen && (
             <div className="space-y-3 pt-2">
               <EnvironmentPanel className="w-full max-w-none !bg-transparent !border-0 !shadow-none" />
+              <EnvironmentDevPanel />
               {cameraMode === "student" && <PlaytimePanel />}
               {cameraMode === "teacher" && (
                 <>

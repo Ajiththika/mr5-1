@@ -34,15 +34,15 @@ export function Navbar() {
 			<nav className="sticky top-0 z-50 border-b border-border bg-card/95 shadow-[0_1px_0_oklch(var(--border)),0_4px_16px_oklch(var(--shadow-color)/0.04)] backdrop-blur-md transition-all duration-300">
 				<div className="container mx-auto px-4 py-3 flex items-center justify-between">
 					{/* Logo with Animation */}
-					<Link href="/" className="flex items-center gap-3 group relative ml-1">
-						<div className="absolute -inset-2 bg-primary/20 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-						<div className="relative w-10 h-10 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
+					<Link href="/" className="group relative ml-1 flex -translate-y-0.5 items-center gap-2.5">
+						<div className="absolute -inset-2 rounded-xl bg-primary/15 opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-100" />
+						<div className="relative h-11 w-11 shrink-0 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 sm:h-12 sm:w-12">
 							<Image
-								src="/images/mr5-logo.png"
+								src="/assets/mr5-logo-neon.png"
 								alt="MR5 School Logo"
 								fill
-								sizes="48px"
-								className="object-contain drop-shadow-[0_0_10px_rgba(var(--primary-channel),0.5)]"
+								sizes="(max-width: 640px) 44px, 48px"
+								className="object-contain drop-shadow-[0_0_12px_rgba(0,184,255,0.35)] dark:drop-shadow-[0_0_14px_rgba(0,184,255,0.5)]"
 								priority
 							/>
 						</div>
@@ -148,8 +148,10 @@ export function Navbar() {
 									{t("nav.signIn")}
 								</Button>
 								<Button
+									data-testid="nav-start-learning"
 									onClick={() => setShowSignup(true)}
-									className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_0_15px_rgba(var(--primary-channel),0.4)] transition-all duration-300 hover:scale-105"
+									size="lg"
+									className="rounded-full border-2 border-primary/50 !bg-primary px-5 !text-white shadow-[0_4px_14px_oklch(var(--primary)/0.4)] transition-all duration-300 hover:!bg-primary/90 hover:!text-white hover:shadow-[0_6px_18px_oklch(var(--primary)/0.45)] active:scale-[0.98]"
 								>
 									{t("nav.startLearning")}
 								</Button>
@@ -224,7 +226,7 @@ export function Navbar() {
 											<Button onClick={() => setShowLogin(true)} variant="secondary" className="w-full justify-center">
 												{t("nav.signIn")}
 											</Button>
-											<Button onClick={() => setShowSignup(true)} className="w-full justify-center">
+											<Button onClick={() => setShowSignup(true)} className="w-full justify-center rounded-full font-semibold !text-white">
 												{t("nav.startLearning")}
 											</Button>
 										</div>

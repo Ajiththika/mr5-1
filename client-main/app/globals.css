@@ -216,6 +216,19 @@
     pointer-events: none;
   }
 
+  /* Homepage hero shell: canvas root + overlay siblings */
+  .preview-3d-shell {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  .preview-3d-shell > .preview-3d-root {
+    position: absolute;
+    inset: 0;
+    min-height: 0;
+  }
+
   .preview-3d-ui--interactive {
     pointer-events: auto;
   }

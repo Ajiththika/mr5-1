@@ -4,6 +4,7 @@ import { MongoMemoryServer } from "mongodb-memory-server";
 // Cache the connection for serverless environments (Vercel)
 let cachedConnection = null;
 let mongoMemoryServer = null;
+let connectionPromise = null;
 
 const buildConnectionOptions = () => ({
 	// Connection pool settings for serverless
@@ -163,9 +164,45 @@ const seedDevelopmentData = async () => {
 		]);
 		console.log("Seeded shop items for development");
 	}
+
+	const { recordAcceptances, getMandatoryVersionIds } = await import(
+		"../services/legalConsentService.js"
+	);
+	const versionIds = await getMandatoryVersionIds();
+	if (versionIds.length > 0) {
+		const devUsers = await User.find({
+			email: { $in: ["student@mr5school.com", "admin@mr5school.com", "onboard@mr5school.com"] },
+		}).exec();
+		for (const devUser of devUsers) {
+			await recordAcceptances(devUser._id, versionIds, {
+				acceptanceMethod: "api",
+				locale: "en",
+				source: "development-seed",
+			});
+		}
+		console.log("Seeded legal consent for development users");
+	}
 };
 
 const connectDB = async () => {
+	if (mongoose.connection.readyState === 1) {
+		return mongoose.connection;
+	}
+
+	if (connectionPromise) {
+		return connectionPromise;
+	}
+
+	connectionPromise = connectDBInternal().finally(() => {
+		if (mongoose.connection.readyState !== 1) {
+			connectionPromise = null;
+		}
+	});
+
+	return connectionPromise;
+};
+
+const connectDBInternal = async () => {
 	let options = buildConnectionOptions();
 	try {
 		if (cachedConnection && mongoose.connection.readyState === 1) {
@@ -197,8 +234,19 @@ const connectDB = async () => {
 	} catch (error) {
 		console.error(`MongoDB Connection Error: ${error?.message || error}`);
 
+		const isRecoverableConnectionError =
+			error.name === "MongoServerSelectionError" ||
+			error.name === "MongoNetworkError" ||
+			error.message.includes("ECONNREFUSED") ||
+			error.message.includes("ENOTFOUND") ||
+			error.message.includes("querySrv") ||
+			error.message.includes("getaddrinfo") ||
+			error.message.includes("failed to connect") ||
+			error.message.includes("Server selection timed out") ||
+			!process.env.MONGO_URI;
+
 		if ((process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test") &&
-			(error.message.includes("ECONNREFUSED") || error.message.includes("failed to connect") || !process.env.MONGO_URI)) {
+			isRecoverableConnectionError) {
 			console.warn("Falling back to in-memory MongoDB for development/test.");
 			const memoryServer = await createMemoryServer();
 			const uri = memoryServer.getUri();
@@ -216,13 +264,14 @@ const connectDB = async () => {
 		console.error("⚠️  ERROR: Failed to connect to database!");
 		console.error("Please make sure your .env has a correct MONGO_URI and the database is reachable.");
 
-		if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+		if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
 			throw error;
 		}
 
 		console.warn("The server will continue running, but database operations will fail.");
+		return null;
 	}
 };
 
 export default connectDB;
-export { connectDB as connectToDatabase };
+export { connectDB as connectToDatabase, connectDB as getDbConnection };

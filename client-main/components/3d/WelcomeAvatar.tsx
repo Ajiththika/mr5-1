@@ -25,8 +25,8 @@ const ClassroomMiniPreview = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-full w-full items-center justify-center bg-slate-950/40">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-400/30 border-t-indigo-300" />
+      <div className="flex h-full w-full items-center justify-center rounded-3xl border border-border/40 bg-muted/30">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
       </div>
     ),
   },
@@ -107,14 +107,14 @@ export function WelcomeAvatar({
     [onAvatarClick],
   );
 
+  const shellClass = `preview-3d-shell group relative overflow-hidden rounded-3xl border border-border/50 shadow-[0_8px_32px_oklch(var(--shadow-color)/0.12)] ${
+    compact ? "min-h-[280px]" : "min-h-[320px]"
+  } h-full ${className}`;
+
   if (!greeting) {
     return (
-      <div
-        className={`group relative ${compact ? "min-h-[280px]" : "min-h-[320px]"} h-full ${className}`}
-      >
-        <div className="preview-3d-root absolute inset-0 overflow-hidden rounded-3xl border border-white/10 bg-slate-950 shadow-2xl">
-          <ClassroomMiniPreview className="h-full w-full" />
-        </div>
+      <div className={shellClass}>
+        <ClassroomMiniPreview className="absolute inset-0 h-full w-full" showChrome={false} />
       </div>
     );
   }
@@ -122,65 +122,55 @@ export function WelcomeAvatar({
   const firstName = user?.name?.split(" ")[0];
 
   return (
-    <div
-      className={`group relative ${compact ? "min-h-[280px]" : "min-h-[320px]"} h-full ${className}`}
-    >
-      <div className="preview-3d-root absolute inset-0 overflow-hidden rounded-3xl border border-white/10 bg-slate-950 shadow-2xl">
-        <ClassroomMiniPreview className="h-full w-full" />
-        <div className="preview-cinematic-vignette" aria-hidden />
+    <div className={shellClass}>
+      <ClassroomMiniPreview className="absolute inset-0 h-full w-full" showChrome={false} />
+      <div className="preview-cinematic-vignette pointer-events-none" aria-hidden />
 
-        <div className="preview-3d-ui preview-3d-ui--interactive left-3 top-3 flex items-center gap-2 rounded-full border border-white/10 bg-black/50 px-3 py-1.5 backdrop-blur-md">
-          <School className="h-3.5 w-3.5 text-indigo-300" />
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-indigo-100">
-            {t("homepage.title")}
-          </span>
+      <div className="preview-3d-ui preview-3d-ui--interactive left-3 top-3 flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 py-1.5 backdrop-blur-md">
+        <School className="h-3.5 w-3.5 text-indigo-300" />
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-indigo-100">
+          {t("homepage.title")}
+        </span>
+      </div>
+
+      {showGreetingText && (
+        <div className="preview-3d-ui left-3 top-12 max-w-[200px] rounded-xl border border-white/10 bg-black/35 px-3 py-2 backdrop-blur-md">
+          <p className="text-sm font-bold text-primary">{greeting.primary}</p>
+          <p className="text-xs text-slate-300">{greeting.english}</p>
         </div>
+      )}
 
-        {showGreetingText && (
-          <div className="preview-3d-ui left-3 top-12 max-w-[200px] rounded-xl border border-white/10 bg-black/35 px-3 py-2 backdrop-blur-md">
-            <p className="text-sm font-bold text-primary">{greeting.primary}</p>
-            <p className="text-xs text-slate-300">{greeting.english}</p>
-          </div>
-        )}
-
-        <div className="preview-3d-ui preview-3d-ui--interactive inset-x-0 bottom-0 flex items-center justify-between gap-2 border-t border-white/10 bg-slate-950/75 p-3 backdrop-blur-md">
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-white">
-              {firstName ? `Hi ${firstName}` : "Welcome"}
-            </p>
-            <p className="truncate text-[11px] text-slate-400">
-              {t("homepage.subtitle")}
-            </p>
-          </div>
-          <div className="flex shrink-0 items-center gap-1.5">
-            {enableVoice && (
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (!isMuted) window.speechSynthesis?.cancel();
-                  setIsMuted(!isMuted);
-                }}
-                className="h-9 w-9 border border-white/10 bg-black/40"
-              >
-                {isMuted ? (
-                  <VolumeX className="h-4 w-4" />
-                ) : (
-                  <Volume2 className="h-4 w-4" />
-                )}
-              </Button>
-            )}
+      <div className="preview-3d-ui preview-3d-ui--interactive inset-x-0 bottom-0 flex items-center justify-between gap-2 border-t border-white/10 bg-slate-950/70 p-3 backdrop-blur-md">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-white">
+            {firstName ? `Hi ${firstName}` : "Welcome"}
+          </p>
+          <p className="truncate text-[11px] text-slate-400">{t("homepage.subtitle")}</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {enableVoice && (
             <Button
-              size="sm"
-              onClick={openChat}
-              className="h-9 gap-2 bg-gradient-to-r from-indigo-500 to-violet-500 px-3 text-xs font-semibold text-white hover:from-indigo-400 hover:to-violet-400"
+              size="icon"
+              variant="ghost"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!isMuted) window.speechSynthesis?.cancel();
+                setIsMuted(!isMuted);
+              }}
+              className="h-9 w-9 border border-white/10 bg-black/40"
             >
-              <MessageCircle className="h-4 w-4" />
-              <span className="hidden sm:inline">{t("homepage.chatShortcut")}</span>
-              <span className="sm:hidden">Chat</span>
+              {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
             </Button>
-          </div>
+          )}
+          <Button
+            size="sm"
+            onClick={openChat}
+            className="h-9 gap-2 bg-gradient-to-r from-indigo-500 to-violet-500 px-3 text-xs font-semibold text-white hover:from-indigo-400 hover:to-violet-400"
+          >
+            <MessageCircle className="h-4 w-4" />
+            <span className="hidden sm:inline">{t("homepage.chatShortcut")}</span>
+            <span className="sm:hidden">Chat</span>
+          </Button>
         </div>
       </div>
     </div>

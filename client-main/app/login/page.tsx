@@ -64,6 +64,11 @@ function LoginForm() {
                     } else {
                         errorMessage = err.response.statusText || "Server Error";
                     }
+
+                    if (err.response.status === 503) {
+                        errorMessage =
+                            "The server is still connecting to the database. Wait a few seconds and try again.";
+                    }
                 } else if (err.message) {
                     errorMessage = err.message;
                 }

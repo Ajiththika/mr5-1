@@ -34,7 +34,7 @@ export function CourseCard({
       spotlightColor="rgba(var(--primary-channel), 0.15)"
     >
       <div className="relative z-10 flex h-full flex-col bg-surface/50 p-4 transition-colors hover:bg-surface/80">
-        <div className="relative mb-4 aspect-video w-full overflow-hidden rounded-lg border border-white/5">
+        <div className="relative mb-4 aspect-video w-full overflow-hidden rounded-lg border border-border">
           <Image
             src={iconPath}
             alt={title}
@@ -67,7 +67,7 @@ export function CourseCard({
                 {progress}%
               </span>
             </div>
-            <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-white/5">
+            <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-muted">
               <div
                 className="absolute left-0 top-0 h-full bg-primary transition-all duration-500 ease-out shadow-[0_0_10px_rgba(var(--primary-channel),0.5)]"
                 style={{ width: `${progress}%` }}
@@ -77,11 +77,7 @@ export function CourseCard({
         </div>
 
         <div className="mt-6">
-          <Button
-            className="w-full border border-primary/20 bg-primary/10 text-primary transition-all duration-300 hover:border-primary hover:bg-primary hover:text-white"
-            size="sm"
-            asChild
-          >
+          <Button className="w-full font-semibold shadow-sm" size="sm" asChild>
             <Link href={`/course/${courseId}`}>
               <Play className="mr-2 h-4 w-4" />
               {buttonText}

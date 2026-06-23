@@ -272,13 +272,18 @@ function MiniScene({
 
 interface ClassroomMiniPreviewProps {
   className?: string;
+  /** When false, only renders the WebGL canvas (overlays live on parent). */
+  showChrome?: boolean;
 }
 
-export function ClassroomMiniPreview({ className = "" }: ClassroomMiniPreviewProps) {
+export function ClassroomMiniPreview({
+  className = "",
+  showChrome = true,
+}: ClassroomMiniPreviewProps) {
   const [viewState, setViewState] = useState<MiniViewState | null>(null);
 
   return (
-    <div className={`preview-3d-root relative min-h-[280px] h-full w-full ${className}`}>
+    <div className={`preview-3d-root relative h-full min-h-[280px] w-full ${className}`}>
       <Canvas
         className="preview-3d-canvas-host !absolute inset-0 h-full w-full"
         dpr={[1, 1.75]}
@@ -290,17 +295,21 @@ export function ClassroomMiniPreview({ className = "" }: ClassroomMiniPreviewPro
           <MiniScene viewState={viewState} setViewState={setViewState} />
         </Suspense>
       </Canvas>
-      <div className="preview-cinematic-vignette" aria-hidden />
-      <div className="preview-3d-ui left-3 top-3">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/45 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-indigo-100 backdrop-blur-md">
-          Cinematic · 360°
-        </span>
-      </div>
-      <div className="preview-3d-ui inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/75 to-transparent px-3 pb-3 pt-10">
-        <p className="text-center text-[10px] font-medium text-white/80">
-          Drag to look around · Interior classroom preview
-        </p>
-      </div>
+      {showChrome && (
+        <>
+          <div className="preview-cinematic-vignette" aria-hidden />
+          <div className="preview-3d-ui left-3 top-3">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/45 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-indigo-100 backdrop-blur-md">
+              Cinematic · 360°
+            </span>
+          </div>
+          <div className="preview-3d-ui inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/75 to-transparent px-3 pb-3 pt-10">
+            <p className="text-center text-[10px] font-medium text-white/80">
+              Drag to look around · Interior classroom preview
+            </p>
+          </div>
+        </>
+      )}
     </div>
   );
 }

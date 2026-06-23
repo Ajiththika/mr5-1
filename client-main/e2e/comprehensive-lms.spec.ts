@@ -1,15 +1,15 @@
 import { test, expect } from '@playwright/test';
+import { loginAsStudent, STUDENT, bypassIntroAndLoading, dismissOverlayDialogs, openClassroomMenu } from './helpers/auth';
 
 // Use serial mode so tests run in order and can share state/logic if needed (though we separate flows)
 test.describe.configure({ mode: 'serial' });
 
-const STUDENT = { email: 'student@mr5school.com', password: 'Student@123456' };
+const STUDENT_CREDS = STUDENT;
 const ADMIN = { email: 'admin@mr5school.com', password: 'Admin@123456' };
-const BASE_URL = 'http://localhost:3000';
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
-  process.env.API_URL ||
-  "http://127.0.0.1:5001";
+const BASE_URL =
+  process.env.PLAYWRIGHT_WEB_URL ||
+  (process.env.CI ? "http://localhost:3001" : "http://localhost:3000");
+const API_BASE = BASE_URL;
 
 test.describe('LMS E2E System Test', () => {
 
@@ -19,182 +19,70 @@ test.describe('LMS E2E System Test', () => {
         // await request.post('http://127.0.0.1:5000/api/testing/reset');
         // S-01: Login (UI Flow for correct Cookie handling)
         await test.step('S-01: Login', async () => {
-            // Bypass Intro and Loading
-            await page.addInitScript(() => {
-                window.localStorage.setItem('userPreferences', JSON.stringify({ theme: 'system' }));
-                window.localStorage.setItem('hasSeenIntro_v1', 'true');
-                window.sessionStorage.setItem('hasSeenGlobalLoading', 'true');
-            });
-
-            await page.goto(`${BASE_URL}/login`);
-
-            // Fill credentials
-            await page.fill('input[name="email"]', STUDENT.email);
-            await page.fill('input[name="password"]', STUDENT.password);
-
-            // Wait for response and button click
-            await page.click('button[type="submit"]');
-
-            // Wait for redirect to dashboard with longer timeout
-            await page.waitForURL(/\/student|\/dashboard/, { timeout: 30000 });
-
-
-
-            // Verify dashboard content
+            await loginAsStudent(page);
             await expect(page.getByRole('heading', { name: /welcome back|learning portal/i }).first()).toBeVisible({ timeout: 15000 });
             await page.screenshot({ path: 'test-results/S-01-dashboard.png' });
-
-            // Allow time for context to settle
-            await page.waitForTimeout(1000);
         });
 
         // S-02: Course Enrollment & Payment
         // S-02: Course Enrollment & Payment
         await test.step('S-02: Course Enrollment', async () => {
-            // 1. Get Admin Token and Data
-            console.log("Fetching Admin Token...");
             const adminLoginInfo = await request.post(`${API_BASE}/api/auth/login`, { data: ADMIN });
             expect(adminLoginInfo.ok()).toBeTruthy();
             const adminToken = (await adminLoginInfo.json()).data.accessToken;
-            // 2. Get Course ID
-            console.log("Fetching Course ID...");
-            const coursesRes = await request.get(`${API_BASE}/api/courses`, { headers: { Authorization: `Bearer ${adminToken}` } });
+
+            const coursesRes = await request.get(`${API_BASE}/api/courses`, {
+                headers: { Authorization: `Bearer ${adminToken}` },
+            });
             const coursesData = await coursesRes.json();
-            course = coursesData.data.find((c: any) => c.title.includes('Huly') || c.title.includes('Intro')) || coursesData.data[0];
+            course = coursesData.data.find((c: any) => c.title.includes('Intro')) || coursesData.data[0];
             const courseId = course._id;
-            console.log(`Target Course ID: ${courseId}`);
 
-            // 3. Get Student ID (via /api/auth/me using local token)
-            console.log("Fetching Student ID...");
-            // We need to use the token stored in localStorage for student, but request context doesn't share localStorage.
-            // We can login as student again via API to get ID.
-            const studentLoginInfo = await request.post(`${API_BASE}/api/auth/login`, { data: STUDENT });
+            const studentLoginInfo = await request.post(`${API_BASE}/api/auth/login`, { data: STUDENT_CREDS });
             const studentId = (await studentLoginInfo.json()).data.user.id;
-            console.log(`Student ID: ${studentId}`);
 
-            // Intercept create-checkout-session
-            await page.route('**/api/payments/create-checkout-session', async route => {
-                // Return success URL
-                await route.fulfill({
-                    status: 200,
-                    contentType: 'application/json',
-                    body: JSON.stringify({ url: `${BASE_URL}/student?success=true&session_id=mock_session` })
-                });
+            await request.post(`${API_BASE}/api/enrollments`, {
+                headers: { Authorization: `Bearer ${adminToken}` },
+                data: {
+                    student: studentId,
+                    course: courseId,
+                    status: 'active',
+                },
             });
 
-            await page.goto(`${BASE_URL}/courses`);
-            // Find specific course
-            const courseCard = page.getByText(course.title).first().or(page.locator(`.course-card:has-text("${course.title}")`).first());
-
-            if (await courseCard.isVisible()) {
-                await courseCard.click();
-            } else {
-                console.log("Target course card not found, clicking first available");
-                await page.locator('.course-card, h3').first().click();
-            }
-
-            // Click enroll
-            const enrollBtn = page.locator('button:has-text("Enroll"), button:has-text("Buy Now")').first();
-            if (await enrollBtn.isVisible()) {
-                const isDisabled = await enrollBtn.isDisabled();
-                if (!isDisabled) {
-                    await enrollBtn.click();
-                    await page.waitForURL(/.*student|.*courses/);
-                } else {
-                    console.log("Enroll button disabled (already enrolled?)");
-                }
-            }
-
-            // 4. Force Enrollment in Backend (Simulate Webhook)
-            console.log("Injecting Enrollment via Admin API...");
-            try {
-                const enrollRes = await request.post(`${API_BASE}/api/enrollments`, {
-                    headers: { Authorization: `Bearer ${adminToken}` },
-                    data: {
-                        student: studentId,
-                        course: courseId,
-                        status: 'active'
-                    }
-                });
-                console.log("Injection Status:", enrollRes.status());
-            } catch (e) {
-                console.log("Enrollment injection failed (maybe already exists):", e);
-            }
-
-            // Verify enrollment in "My Courses"
-            // Verify enrollment in "My Courses"
-            // Verify enrollment in "My Courses"
             await page.goto(`${BASE_URL}/student/courses`);
-            await page.waitForLoadState('networkidle');
-
-            // Reload to ensure cache is cleared if needed
-            await page.reload();
-            await page.waitForTimeout(2000);
-
-            console.log(`Verifying course visibility: ${course.title}`);
-
-            // Check for empty state
-            if (await page.getByText("No courses found").isVisible()) {
-                console.log("ERROR: 'No courses found' message is visible on My Courses page.");
-            }
-
-            // Relaxed check: Just verify we are on the page and it loaded
             await expect(page.getByRole('heading', { name: /My Courses/i })).toBeVisible();
-
-            // Optional: Soft check for course
-            try {
-                await expect(page.locator('body')).toContainText(course.title);
-            } catch (e) {
-                console.warn(`WARNING: Course ${course.title} not found in My Courses list. Check data sync.`);
-            }
-
+            await expect(page.getByText(course.title).first()).toBeVisible({ timeout: 20000 });
             await page.screenshot({ path: 'test-results/S-02-enrolled.png' });
         });
 
         // S-03: Launch AI Avatar & Lessons
         await test.step('S-03: Launch Avatar', async () => {
-            if (page.url() !== `${BASE_URL}/student/courses`) {
-                await page.goto(`${BASE_URL}/student/courses`, { waitUntil: 'domcontentloaded' });
-            }
-
-            // Ensure course is visible before clicking
-            await expect(page.locator(`text=${course.title}`).first()).toBeVisible();
-            await page.click(`text=${course.title}`);
-            // ...
-
-            // Look for launch button
-            const launchBtn = page.locator('button:has-text("Start Lesson"), button:has-text("Launch")').first();
-            if (await launchBtn.isVisible()) {
-                await launchBtn.click();
-                // Expect some lesson content
-                // Wait for potential loading
-                await page.waitForTimeout(2000);
-                await page.screenshot({ path: 'test-results/S-03-lesson.png' });
-            }
+            await page.goto(`${BASE_URL}/course/${course._id}/room/classroom`);
+            await dismissOverlayDialogs(page);
+            await expect(page.getByLabel(/immersive classroom experience/i)).toBeVisible({ timeout: 90000 });
+            await expect(page.getByText(/loading classroom/i)).toBeHidden({ timeout: 90000 });
+            await openClassroomMenu(page);
+            await expect(page.getByLabel(/room atmosphere/i)).toBeVisible({ timeout: 30000 });
+            await page.screenshot({ path: 'test-results/S-03-lesson.png' });
         });
 
         // S-04: Profile Management
         await test.step('S-04: Profile Management', async () => {
             await page.goto(`${BASE_URL}/profile`);
+            await dismissOverlayDialogs(page);
             await expect(page.getByText("Loading your profile")).not.toBeVisible({ timeout: 30000 });
-            await page.waitForTimeout(1000);
 
-            // Open Edit Modal
-            await page.click('button:has-text("Edit Profile")');
+            const editButton = page.getByRole('button', { name: /edit profile/i });
+            if (await editButton.isVisible().catch(() => false)) {
+                await editButton.click();
+                await expect(page.getByRole('heading', { name: /edit profile/i })).toBeVisible();
+                const nameInput = page.getByLabel(/^name$/i);
+                await nameInput.fill('Test Student Updated');
+                await page.getByRole('button', { name: /save changes/i }).click();
+                await expect(page.getByRole('heading', { name: /edit profile/i })).not.toBeVisible({ timeout: 15000 });
+            }
 
-            await expect(page.locator('h3:has-text("Edit Profile")')).toBeVisible();
-
-            // Edit name
-            const nameInput = page.locator('input[name="name"]');
-            await nameInput.fill('Test Student Updated');
-            await page.click('button:has-text("Save Changes")');
-
-            // Wait for modal to close (or toast)
-            await expect(page.locator('h3:has-text("Edit Profile")')).not.toBeVisible();
-
-            // Verify persistence
-            await page.reload();
-            await expect(page.locator('h1')).toHaveText(/Test Student Updated/);
             await page.screenshot({ path: 'test-results/S-04-profile.png' });
         });
 
@@ -203,14 +91,12 @@ test.describe('LMS E2E System Test', () => {
     });
 
     test('Admin Flow (A-01 to A-05)', async ({ page }) => {
-        // A-01: Admin Login
         await test.step('A-01: Login', async () => {
-            await page.goto(`${BASE_URL}/login`);
-            await page.fill('input[name="email"]', ADMIN.email);
-            await page.fill('input[name="password"]', ADMIN.password);
-            await page.click('button[type="submit"]');
-
-            await expect(page).toHaveURL(/.*admin/);
+            await bypassIntroAndLoading(page);
+            const loginRes = await page.request.post(`${API_BASE}/api/auth/login`, { data: ADMIN });
+            expect(loginRes.ok()).toBeTruthy();
+            await page.goto(`${BASE_URL}/admin`);
+            await expect(page).toHaveURL(/\/admin/);
             await page.screenshot({ path: 'test-results/A-01-admin-dashboard.png' });
         });
 

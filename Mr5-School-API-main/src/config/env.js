@@ -54,7 +54,10 @@ const envConfig = {
 };
 
 export function validateEnv() {
-	const requiredEnvVars = ["MONGO_URI", "JWT_SECRET", "NODE_ENV"];
+	const requiredEnvVars =
+		envConfig.NODE_ENV === "production"
+			? ["MONGO_URI", "JWT_SECRET", "NODE_ENV"]
+			: ["JWT_SECRET", "NODE_ENV"];
 	const missingVars = requiredEnvVars.filter((varName) => {
 		if (varName === "MONGO_URI") return !mongoUri;
 		return !process.env[varName];
@@ -66,6 +69,10 @@ export function validateEnv() {
 				`(MONGO_URI accepts MONGODB_URI as an alias)`,
 		);
 		process.exit(1);
+	}
+
+	if (!mongoUri && envConfig.NODE_ENV === "development") {
+		console.warn("MONGO_URI not set — API will use in-memory MongoDB for local development.");
 	}
 
 	if (!["development", "production", "test"].includes(envConfig.NODE_ENV)) {

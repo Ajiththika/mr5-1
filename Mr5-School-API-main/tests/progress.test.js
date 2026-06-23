@@ -18,7 +18,9 @@ beforeAll(async () => {
 	if (!mongoUri) return;
 
 	try {
-		await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 5000 });
+		if (mongoose.connection.readyState !== 1) {
+			await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 5000, bufferCommands: false });
+		}
 		mongoAvailable = true;
 		const loginRes = await request(app).post("/api/auth/login").send(STUDENT);
 		if (loginRes.statusCode === 200) {

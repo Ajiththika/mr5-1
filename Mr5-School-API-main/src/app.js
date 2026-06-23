@@ -16,6 +16,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import connectDB from "./config/db.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { ensureDbConnected } from "./middleware/dbMiddleware.js";
 import { securityHeaders, apiLimiter, authLimiter, sanitizeMongo } from "./middleware/security.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
@@ -167,6 +168,9 @@ if (process.env.NODE_ENV === 'development') {
     });
 }
 
+// Block API traffic until MongoDB is connected (prevents bufferCommands errors on login)
+app.use("/api", ensureDbConnected);
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
@@ -242,62 +246,56 @@ export default app;
 
 // Only start the server when not on Vercel (i.e., running locally)
 // Vercel will import the app directly without calling listen()
-if (!process.env.VERCEL && process.env.NODE_ENV !== 'test') {
-    // Connect to MongoDB
-    console.log("Connecting to MongoDB...");
-    connectDB().then((connection) => {
-        if (!connection) {
-            console.warn("⚠️  Running without database connection.");
-            // We still allow the server to start in dev mode as per connectDB logic
-        } else {
-            console.log("Connected to MongoDB successfully");
-        }
+if (!process.env.VERCEL && process.env.NODE_ENV !== "test") {
+	const startServer = async () => {
+		try {
+			console.log("Connecting to MongoDB...");
+			const connection = await connectDB();
 
-        const PORT = process.env.PORT || 5001;
+			if (!connection) {
+				if (process.env.NODE_ENV === "production") {
+					console.error("Cannot start production server without a database connection.");
+					process.exit(1);
+				}
+				console.warn("⚠️  Running without database connection. API requests will retry connect on demand.");
+			} else {
+				console.log("Connected to MongoDB successfully");
+			}
 
-        const server = app.listen(PORT, () => {
-            console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-        });
+			const PORT = process.env.PORT || 5001;
 
-        // Graceful shutdown with proper cleanup
-        const gracefulShutdown = (signal) => {
-            console.log(`${signal} received, shutting down gracefully`);
+			const server = app.listen(PORT, () => {
+				console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+			});
 
-            // Close HTTP server
-            server.close(() => {
-                console.log('HTTP server closed');
-            });
+			const gracefulShutdown = (signal) => {
+				console.log(`${signal} received, shutting down gracefully`);
 
-            // Close database connections
-            mongoose.connection.close(false).then(() => {
-                console.log('MongoDB connection closed');
-                process.exit(0);
-            }).catch(err => {
-                console.error('Error closing MongoDB connection:', err);
-                process.exit(1);
-            });
+				server.close(() => {
+					console.log("HTTP server closed");
+				});
 
-            // Force shutdown after 10 seconds
-            setTimeout(() => {
-                console.error('Could not close connections in time, forcefully shutting down');
-                process.exit(1);
-            }, 10000);
-        };
+				mongoose.connection.close(false).then(() => {
+					console.log("MongoDB connection closed");
+					process.exit(0);
+				}).catch((err) => {
+					console.error("Error closing MongoDB connection:", err);
+					process.exit(1);
+				});
 
-        process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-        process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-    }).catch((error) => {
-        console.error("Failed to connect to MongoDB:", error);
-        process.exit(1);
-    });
-} else if (process.env.VERCEL) {
-    // On Vercel, connect to MongoDB without starting a server
-    console.log("Running on Vercel, connecting to MongoDB...");
-    connectDB().then((connection) => {
-        if (connection) {
-            console.log("Connected to MongoDB successfully on Vercel");
-        }
-    }).catch((error) => {
-        console.error("Failed to connect to MongoDB on Vercel:", error);
-    });
+				setTimeout(() => {
+					console.error("Could not close connections in time, forcefully shutting down");
+					process.exit(1);
+				}, 10000);
+			};
+
+			process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+			process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+		} catch (error) {
+			console.error("Failed to connect to MongoDB:", error);
+			process.exit(1);
+		}
+	};
+
+	startServer();
 }

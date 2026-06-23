@@ -24,5 +24,11 @@ NEXT_PUBLIC_API_URL="https://api.example.com" NEXT_PUBLIC_SITE_URL="https://app.
 cd "$ROOT"
 
 echo ""
-echo "✅ Release verification passed — ready for AWS deployment"
-echo "   Next: see AWS_FINAL_DEPLOY.md"
+echo "==> Web: E2E (CI profile, in-memory API)"
+cd client-main
+CI=true npm run test:e2e
+cd "$ROOT"
+
+echo ""
+echo "✅ Release verification passed — enterprise deploy ready"
+echo "   Deploy guide: AWS_FINAL_DEPLOY.md"
