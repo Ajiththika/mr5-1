@@ -23,7 +23,7 @@ jobs:
       - run: npm test
         env:
           NODE_ENV: test
-          JWT_SECRET: test-jwt-secret-for-ci-only
+          JWT_SECRET: test-jwt-secret-for-ci-only-min-32-chars
           MONGO_URI: mongodb://127.0.0.1:27017/mr5-test
 
   client-tests:

@@ -4,33 +4,34 @@
 
 @layer base {
   :root {
-    /* Premium Antigravity Palette - Minimalist Base */
-    --bg-app: 98% 0.005 260;
-    --bg-surface: 100% 0 0;
-    --bg-surface-highlight: 95% 0.005 260;
+    /* Light — soft neutrals, grounded surfaces, education-friendly contrast */
+    --bg-app: 96.2% 0.009 250;
+    --bg-surface: 98% 0.006 250;
+    --bg-surface-highlight: 94.5% 0.012 250;
 
-    --foreground: 15% 0.01 260;
-    --card: 100% 0 0;
-    --card-foreground: 15% 0.01 260;
-    --popover: 100% 0 0;
-    --popover-foreground: 15% 0.01 260;
-    --primary: 60% 0.18 260;
-    --primary-foreground: 98% 0 0;
-    --secondary: 92% 0.01 260;
-    --secondary-foreground: 15% 0.01 260;
-    --muted: 92% 0.01 260;
-    --muted-foreground: 45% 0.01 260;
-    --accent: 92% 0.01 260;
-    --accent-foreground: 15% 0.01 260;
-    --destructive: 55% 0.16 20;
-    --destructive-foreground: 98% 0 0;
-    --border: 88% 0.01 260;
-    --input: 88% 0.01 260;
-    --ring: 60% 0.18 260;
+    --foreground: 14% 0.032 250;
+    --card: 99.2% 0.005 250;
+    --card-foreground: 14% 0.032 250;
+    --popover: 99.5% 0.004 250;
+    --popover-foreground: 14% 0.032 250;
+    --primary: 46% 0.2 250;
+    --primary-foreground: 99% 0 0;
+    --secondary: 92.5% 0.014 250;
+    --secondary-foreground: 18% 0.03 250;
+    --muted: 93.5% 0.012 250;
+    --muted-foreground: 34% 0.03 250;
+    --accent: 91.5% 0.016 250;
+    --accent-foreground: 16% 0.03 250;
+    --destructive: 52% 0.2 25;
+    --destructive-foreground: 99% 0 0;
+    --border: 76% 0.02 250;
+    --input: 88% 0.012 250;
+    --ring: 46% 0.2 250;
     --radius: 1rem;
 
-    --primary-channel: 88, 80, 236;
-    --border-channel: 255, 255, 255;
+    --primary-channel: 37, 99, 235;
+    --border-channel: 15, 23, 42;
+    --shadow-color: 14% 0.03 250;
   }
 
   .dark {
@@ -89,9 +90,13 @@
 
 @layer utilities {
   .glass {
-    @apply bg-black/40 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0, 0, 0, 0.37)];
+    @apply bg-card border border-border shadow-[0_1px_2px_oklch(var(--shadow-color)/0.06),0_8px_24px_oklch(var(--shadow-color)/0.05)];
     position: relative;
     overflow: hidden;
+  }
+
+  .dark .glass {
+    @apply bg-black/40 border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)];
   }
 
   .glass::before {
@@ -117,8 +122,13 @@
     height: 100%;
     pointer-events: none;
     z-index: 50;
-    opacity: 0.05;
+    opacity: 0.03;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    mix-blend-mode: multiply;
+  }
+
+  .dark .noise-bg {
+    opacity: 0.05;
     mix-blend-mode: soft-light;
   }
 
@@ -126,9 +136,14 @@
   .classroom-scene-viewport {
     position: relative;
     isolation: isolate;
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    overflow: hidden;
   }
 
-  .classroom-scene-viewport > .classroom-scene-canvas {
+  .classroom-scene-viewport > .classroom-scene-canvas,
+  .classroom-scene-viewport .classroom-scene-canvas > div {
     position: absolute !important;
     inset: 0 !important;
     width: 100% !important;
@@ -138,10 +153,37 @@
     touch-action: none;
   }
 
+  .classroom-scene-viewport > .classroom-scene-canvas {
+    z-index: 0;
+  }
+
   .classroom-scene-viewport canvas {
     display: block !important;
+    position: absolute !important;
+    inset: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
     width: 100% !important;
     height: 100% !important;
+    max-width: none !important;
+  }
+
+  .classroom-glass {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 0.75rem;
+  }
+
+  .classroom-side-dock {
+    will-change: transform;
+    background: rgba(15, 23, 42, 0.72);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
 
   /* Shared 3D preview surfaces (homepage, course page) */
@@ -185,20 +227,74 @@
     inset: 0;
     z-index: 5;
     background:
+      radial-gradient(ellipse 85% 70% at 50% 45%, transparent 40%, oklch(var(--foreground) / 0.08) 100%),
+      linear-gradient(to top, oklch(var(--foreground) / 0.12) 0%, transparent 28%),
+      linear-gradient(to bottom, oklch(var(--foreground) / 0.06) 0%, transparent 18%);
+  }
+
+  .dark .preview-cinematic-vignette {
+    background:
       radial-gradient(ellipse 85% 70% at 50% 45%, transparent 35%, rgba(2, 6, 23, 0.55) 100%),
       linear-gradient(to top, rgba(2, 6, 23, 0.65) 0%, transparent 28%),
       linear-gradient(to bottom, rgba(2, 6, 23, 0.35) 0%, transparent 18%);
   }
 
-  /* Antigravity Text Glow - Premium Gradient */
+  /* Auth & marketing surfaces — theme-safe */
+  .auth-page-shell {
+    @apply min-h-screen bg-background text-foreground relative overflow-hidden;
+  }
+
+  .auth-card {
+    @apply w-full max-w-md rounded-3xl border border-border bg-card/95 p-8 shadow-xl backdrop-blur-xl;
+  }
+
+  .surface-panel {
+    @apply rounded-2xl border border-border bg-card shadow-[0_1px_2px_oklch(var(--shadow-color)/0.06),0_6px_20px_oklch(var(--shadow-color)/0.04)];
+  }
+
+  .surface-muted {
+    @apply rounded-xl border border-border bg-muted/80;
+  }
+
+  .elevated-card {
+    @apply rounded-xl border border-border bg-card shadow-[0_1px_2px_oklch(var(--shadow-color)/0.07),0_4px_16px_oklch(var(--shadow-color)/0.05)];
+  }
+
+  .hero-band {
+    @apply relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-card via-card to-secondary/60 shadow-[0_1px_2px_oklch(var(--shadow-color)/0.06),0_10px_30px_oklch(var(--shadow-color)/0.04)];
+  }
+
+  .section-divider {
+    @apply border-t border-border;
+  }
+
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+
+  /* Headline glow — adapts to theme */
   .text-glow {
-    @apply bg-clip-text text-transparent bg-gradient-to-br from-white via-white/90 to-white/40;
-    filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.3));
+    @apply text-foreground;
     letter-spacing: -0.02em;
   }
 
+  .dark .text-glow {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(to bottom right, #fff, rgba(255, 255, 255, 0.4));
+    filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.3));
+  }
+
+  .heading-display {
+    @apply font-bold tracking-tight text-foreground;
+    letter-spacing: -0.025em;
+  }
+
   .spotlight-card {
-    @apply relative border border-white/5 bg-surface/50 backdrop-blur-sm transition-all duration-500 hover:border-primary/30;
+    @apply relative border border-border bg-card transition-all duration-300 shadow-[0_1px_2px_oklch(var(--shadow-color)/0.06),0_4px_14px_oklch(var(--shadow-color)/0.04)] hover:border-primary/25 hover:shadow-[0_2px_8px_oklch(var(--shadow-color)/0.08),0_12px_28px_oklch(var(--primary)/0.08)];
+  }
+
+  .dark .spotlight-card {
+    @apply border-white/5 bg-surface/50;
   }
 
   .spotlight-card:hover {
@@ -217,10 +313,22 @@
   html.high-contrast {
     --foreground: 0% 0 0;
     --background: 100% 0 0;
+    --bg-app: 100% 0 0;
+    --bg-surface: 100% 0 0;
+    --card: 100% 0 0;
+    --card-foreground: 0% 0 0;
+    --muted-foreground: 15% 0 0;
+    --border: 25% 0 0;
   }
 
   html.high-contrast.dark {
     --foreground: 100% 0 0;
     --background: 0% 0 0;
+    --bg-app: 0% 0 0;
+    --bg-surface: 5% 0 0;
+    --card: 5% 0 0;
+    --card-foreground: 100% 0 0;
+    --muted-foreground: 88% 0 0;
+    --border: 75% 0 0;
   }
 }

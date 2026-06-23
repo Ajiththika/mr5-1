@@ -99,17 +99,17 @@ export const COLOR_THEMES: ColorTheme[] = [
         },
     },
     {
-        id: "midnight",
-        name: "Midnight",
-        primaryH: 222,
-        primaryS: 47,
-        primaryL: 40,
-        primaryRGB: "rgb(55, 65, 81)",
-        gradientFrom: "#374151",
-        gradientTo: "#1F2937",
+        id: "mr5-cyan",
+        name: "MR5 Cyan",
+        primaryH: 199,
+        primaryS: 100,
+        primaryL: 42,
+        primaryRGB: "rgb(0, 184, 255)",
+        gradientFrom: "#00B8FF",
+        gradientTo: "#0284C7",
         preview: {
-            primary: "#374151",
-            secondary: "#4B5563",
+            primary: "#00B8FF",
+            secondary: "#0EA5E9",
         },
     },
     {
@@ -191,7 +191,16 @@ export function applyTheme(theme: ColorTheme): void {
     if (typeof document === "undefined") return;
 
     const root = document.documentElement;
-    root.style.setProperty("--primary", `${theme.primaryH} ${theme.primaryS}% ${theme.primaryL}%`);
+    const primary = `${theme.primaryH} ${theme.primaryS}% ${theme.primaryL}%`;
+
+    root.style.setProperty("--primary", primary);
+    root.style.setProperty("--ring", primary);
+
+    const rgbMatch = theme.primaryRGB.match(/\d+/g);
+    if (rgbMatch?.length === 3) {
+        root.style.setProperty("--primary-channel", rgbMatch.join(", "));
+    }
+
     root.setAttribute("data-theme-id", theme.id);
 }
 
@@ -202,7 +211,9 @@ export function applyCustomColor(h: number, s: number, l: number): void {
     if (typeof document === "undefined") return;
 
     const root = document.documentElement;
-    root.style.setProperty("--primary", `${h} ${s}% ${l}%`);
+    const primary = `${h} ${s}% ${l}%`;
+    root.style.setProperty("--primary", primary);
+    root.style.setProperty("--ring", primary);
     root.setAttribute("data-theme-id", "custom");
 }
 

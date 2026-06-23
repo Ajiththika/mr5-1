@@ -6,6 +6,9 @@ export type MessageKey =
   | "footer.courses"
   | "footer.pricing"
   | "footer.instructors"
+  | "footer.manifesto"
+  | "footer.connect"
+  | "footer.avatarStudio"
   | "footer.support"
   | "footer.demo"
   | "footer.language"
@@ -64,6 +67,9 @@ const en: MessageTable = {
   "footer.courses": "Courses",
   "footer.pricing": "Pricing",
   "footer.instructors": "Instructors",
+  "footer.manifesto": "Manifesto",
+  "footer.connect": "Connect",
+  "footer.avatarStudio": "Avatar Studio",
   "footer.support": "Support",
   "footer.demo": "Get a demo",
   "footer.language": "Language",
@@ -122,6 +128,9 @@ const si: MessageTable = {
   "footer.courses": "පාඨමාලා",
   "footer.pricing": "මිල",
   "footer.instructors": "ආචාර්යවරු",
+  "footer.manifesto": "ප්‍රකටිපත්‍රය",
+  "footer.connect": "සම්බන්ධ වන්න",
+  "footer.avatarStudio": "අවතාර ස්ටුඩියෝ",
   "footer.support": "සහාය",
   "footer.demo": "ඩෙමෝ ඉල්ලන්න",
   "footer.language": "භාෂාව",
@@ -180,6 +189,9 @@ const ta: MessageTable = {
   "footer.courses": "பாடநெறிகள்",
   "footer.pricing": "விலை",
   "footer.instructors": "ஆசிரியர்கள்",
+  "footer.manifesto": "கொள்கை",
+  "footer.connect": "தொடர்பு",
+  "footer.avatarStudio": "அவதார் ஸ்டுடியோ",
   "footer.support": "ஆதரவு",
   "footer.demo": "டெமோ கோருங்கள்",
   "footer.language": "மொழி",

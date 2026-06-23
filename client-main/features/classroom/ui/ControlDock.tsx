@@ -11,9 +11,11 @@ import { useAudio } from "@/hooks/useAudio";
 
 interface ControlDockProps {
   fanSpeed: number;
+  /** Render controls inline (e.g. inside mobile burger menu). */
+  embedded?: boolean;
 }
 
-export function ControlDock({ fanSpeed }: ControlDockProps) {
+export function ControlDock({ fanSpeed, embedded = false }: ControlDockProps) {
   const { controls, setFanEnabled, setFanMode, setLightsOn, setCurtainOpen } =
     useClassroomStore();
   const { t } = useTranslation();
@@ -56,8 +58,21 @@ export function ControlDock({ fanSpeed }: ControlDockProps) {
     </div>
   );
 
-  const panelShell =
-    "rounded-2xl border border-white/10 bg-slate-950/95 p-3 shadow-2xl backdrop-blur-md";
+  const panelShell = "classroom-glass p-3 shadow-2xl";
+
+  if (embedded) {
+    return (
+      <div className={panelShell}>
+        <div className="mb-2 flex items-center gap-2">
+          <SlidersHorizontal className="h-3.5 w-3.5 text-indigo-300" />
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-200">
+            {t("classroom.controls.title")}
+          </span>
+        </div>
+        {content}
+      </div>
+    );
+  }
 
   return (
     <>

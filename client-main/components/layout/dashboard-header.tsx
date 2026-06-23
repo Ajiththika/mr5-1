@@ -11,11 +11,12 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User, Settings, Menu, ShoppingCart, BookOpen, Bell, Search } from "lucide-react";
+import { LogOut, User, Settings, Menu, ShoppingCart, BookOpen, Search } from "lucide-react";
 import Link from "next/link";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DashboardSidebar } from "./dashboard-sidebar";
 import { ThemeCustomizer } from "@/components/theme-customizer";
+import { RealTimeNotifications } from "@/components/notifications/RealTimeNotifications";
 import { Input } from "@/components/ui/input";
 import { NavigationItem, NavigationSection } from "@/data/navigation";
 
@@ -82,9 +83,6 @@ export function DashboardHeader({ title, navigation }: DashboardHeaderProps) {
                                 My Courses
                             </Link>
                         </Button>
-                        <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
-                            <Bell className="h-4 w-4" />
-                        </Button>
                     </div>
                 )}
 
@@ -102,6 +100,7 @@ export function DashboardHeader({ title, navigation }: DashboardHeaderProps) {
                 {/* User Menu */}
                 <div className="flex items-center gap-2">
                     <ThemeCustomizer />
+                    <RealTimeNotifications />
                     {user && (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>

@@ -12,6 +12,7 @@ import {
 import { Canvas, useThree } from "@react-three/fiber";
 import { Environment, Html, useGLTF, useProgress } from "@react-three/drei";
 import * as THREE from "three";
+import { resolveStudentSeatedPose } from "@/lib/classroom-seat";
 
 const CLASSROOM_GLB = "/assets/3d/rooms/classroom.glb";
 const LOOK_SENSITIVITY = 0.0028;
@@ -40,20 +41,6 @@ function normalizeName(name: string) {
   return name.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
-function meshCenters(root: THREE.Object3D, matchers: string[]): THREE.Vector3[] {
-  const wanted = matchers.map(normalizeName);
-  const centers: THREE.Vector3[] = [];
-  root.traverse((child) => {
-    const key = normalizeName(child.name);
-    if (!wanted.some((w) => key.includes(w))) return;
-    if (!(child instanceof THREE.Mesh) && child.type !== "Mesh") return;
-    const box = new THREE.Box3().setFromObject(child);
-    if (!Number.isFinite(box.min.x)) return;
-    centers.push(box.getCenter(new THREE.Vector3()));
-  });
-  return centers;
-}
-
 function getMeshBounds(root: THREE.Object3D, matchers: string[]): THREE.Box3 | null {
   const wanted = matchers.map(normalizeName);
   const box = new THREE.Box3();
@@ -73,30 +60,6 @@ function getMeshBounds(root: THREE.Object3D, matchers: string[]): THREE.Box3 | n
   });
 
   return found ? box : null;
-}
-
-function pickStudentSeat(
-  chairCenters: THREE.Vector3[],
-  board: THREE.Vector3,
-): THREE.Vector3 {
-  if (!chairCenters.length) {
-    const fallback = board.clone();
-    fallback.y = 0.35;
-    fallback.z += board.z >= 0 ? -3.2 : 3.2;
-    return fallback;
-  }
-
-  const ranked = chairCenters
-    .map((chair) => ({ chair, distance: chair.distanceTo(board) }))
-    .sort((a, b) => b.distance - a.distance);
-  const backRow = ranked
-    .filter((entry) => entry.distance >= ranked[0].distance - 0.45)
-    .map((entry) => entry.chair);
-  const pool = backRow.length ? backRow : chairCenters;
-
-  return pool.reduce((best, point) =>
-    Math.abs(point.x) < Math.abs(best.x) ? point : best,
-  );
 }
 
 function centerModelAtOrigin(root: THREE.Object3D) {
@@ -123,11 +86,7 @@ function deriveMiniViewState(root: THREE.Object3D): MiniViewState {
     boardCenter.z,
   );
 
-  const chairCenter = pickStudentSeat(meshCenters(root, ["chair"]), board);
-  const eye = new THREE.Vector3(chairCenter.x, floorY + 1.32, chairCenter.z);
-  const lookAt = board.clone();
-  lookAt.y -= 0.22;
-
+  const { eye, lookAt } = resolveStudentSeatedPose(root, board, floorY);
   return { eye, lookAt };
 }
 

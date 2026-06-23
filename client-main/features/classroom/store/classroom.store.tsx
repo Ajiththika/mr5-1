@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import type { FanSpeedLevel } from "../environment/environment.types";
+import { touchDailyStreak, xpToLevel } from "@/lib/learning/progression";
 
 export interface ClassroomControls {
   fanEnabled: boolean;
@@ -19,9 +20,12 @@ export interface ClassroomControls {
 
 export interface PlaytimeProgress {
   xp: number;
+  level: number;
   stars: number;
   badges: string[];
   challengesCompleted: number;
+  streakDays: number;
+  lastActiveDate: string | null;
 }
 
 interface ClassroomState {
@@ -42,17 +46,30 @@ type Action =
 
 const STORAGE_KEY = "mr5-classroom-playtime";
 
+function normalizeProgress(raw: Partial<PlaytimeProgress>): PlaytimeProgress {
+  const xp = raw.xp ?? 0;
+  return {
+    xp,
+    level: raw.level ?? xpToLevel(xp),
+    stars: raw.stars ?? 0,
+    badges: raw.badges ?? [],
+    challengesCompleted: raw.challengesCompleted ?? 0,
+    streakDays: raw.streakDays ?? 0,
+    lastActiveDate: raw.lastActiveDate ?? null,
+  };
+}
+
 function loadProgress(): PlaytimeProgress {
   if (typeof window === "undefined") {
-    return { xp: 0, stars: 0, badges: [], challengesCompleted: 0 };
+    return normalizeProgress({});
   }
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw) as PlaytimeProgress;
+    if (raw) return touchDailyStreak(normalizeProgress(JSON.parse(raw)));
   } catch {
     /* ignore */
   }
-  return { xp: 0, stars: 0, badges: [], challengesCompleted: 0 };
+  return touchDailyStreak(normalizeProgress({}));
 }
 
 function saveProgress(progress: PlaytimeProgress) {
@@ -108,12 +125,15 @@ function reducer(state: ClassroomState, action: Action): ClassroomState {
       const badges = action.badge
         ? [...new Set([...state.playtime.badges, action.badge])]
         : state.playtime.badges;
-      const playtime: PlaytimeProgress = {
-        xp: state.playtime.xp + action.xp,
+      const xp = state.playtime.xp + action.xp;
+      const playtime: PlaytimeProgress = touchDailyStreak({
+        ...state.playtime,
+        xp,
+        level: xpToLevel(xp),
         stars: state.playtime.stars + action.stars,
         badges,
         challengesCompleted: state.playtime.challengesCompleted + 1,
-      };
+      });
       saveProgress(playtime);
       return { ...state, playtime };
     }

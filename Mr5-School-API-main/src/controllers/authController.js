@@ -10,6 +10,8 @@ import {
 	getMandatoryVersionIds,
 	getConsentStatus,
 } from "../services/legalConsentService.js";
+import { isGoogleOAuthEnabled } from "../config/passport.js";
+import { getTrialStatus } from "../services/trialService.js";
 
 // Cookie options
 const getAccessTokenCookieOptions = () => ({
@@ -54,6 +56,20 @@ const clearAuthCookies = (res) => {
 	res.cookie("access_token", "", { expires: new Date(0), httpOnly: true });
 	res.cookie("refresh_token", "", { expires: new Date(0), httpOnly: true });
 };
+
+const formatAuthUser = (user) => ({
+	id: user._id,
+	name: user.name,
+	email: user.email,
+	role: user.role,
+	language: user.language,
+	status: user.status,
+	avatarUrl: user.avatarUrl || user.profileImage,
+	avatarPreset: user.avatarPreset,
+	onboardingCompleted: Boolean(user.onboardingCompleted),
+	welcomeChatCompleted: Boolean(user.welcomeChatCompleted),
+	trial: getTrialStatus(user),
+});
 
 /**
  * @desc    Register user
@@ -103,13 +119,7 @@ export const register = asyncHandler(async (req, res) => {
 		res.status(201).json({
 			success: true,
 			data: {
-				user: {
-					id: user._id,
-					name: user.name,
-					email: user.email,
-					role: user.role,
-					status: user.status,
-				},
+				user: formatAuthUser(user),
 				accessToken,
 			},
 		});
@@ -157,15 +167,7 @@ export const login = asyncHandler(async (req, res) => {
 		res.status(200).json({
 			success: true,
 			data: {
-				user: {
-					id: user._id,
-					name: user.name,
-					email: user.email,
-					role: user.role,
-					language: user.language,
-					status: user.status,
-					avatarUrl: user.avatarUrl,
-				},
+				user: formatAuthUser(user),
 				accessToken,
 				consentSatisfied: consentStatus.satisfied,
 			},
@@ -293,9 +295,12 @@ export const getSessions = asyncHandler(async (req, res) => {
  */
 export const getMe = asyncHandler(async (req, res) => {
 	const user = await authService.getUserById(req.user.id);
+	if (!user) {
+		return res.status(404).json({ success: false, error: "User not found" });
+	}
 	res.status(200).json({
 		success: true,
-		data: user,
+		data: formatAuthUser(user),
 	});
 });
 
@@ -365,6 +370,20 @@ export const updatePassword = asyncHandler(async (req, res) => {
 		}
 		throw error;
 	}
+});
+
+/**
+ * @desc    Available auth providers (for frontend UI)
+ * @route   GET /api/auth/providers
+ * @access  Public
+ */
+export const getAuthProviders = asyncHandler(async (_req, res) => {
+	res.status(200).json({
+		success: true,
+		data: {
+			google: isGoogleOAuthEnabled,
+		},
+	});
 });
 
 /**

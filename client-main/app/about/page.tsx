@@ -12,6 +12,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ModelCreditNotice } from "@/components/3d/ModelCreditNotice";
+import { getModelStructuredData } from "@/lib/3d/model-registry";
+import { StructuredData } from "@/components/seo/StructuredData";
 import { Target, Users, Zap, Award, Heart, Globe } from "lucide-react";
 
 export default function AboutPage() {
@@ -150,6 +153,30 @@ export default function AboutPage() {
                   </div>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div
+          id="3d-attributions"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.7 }}
+          className="mt-20"
+        >
+          <StructuredData data={getModelStructuredData()} />
+          <Card className="border-border/50 shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-2xl">3D Model Attributions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground">
+                MR5 School uses licensed 3D assets with full attribution. We respect creators and open licenses.
+              </p>
+              <ModelCreditNotice />
+              <p className="text-sm text-muted-foreground">
+                The welcome guide statue appears in the 3D classroom as a cultural learning companion — warm, professional, and optimized for classroom performance.
+              </p>
             </CardContent>
           </Card>
         </motion.div>

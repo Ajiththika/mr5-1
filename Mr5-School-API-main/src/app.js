@@ -38,9 +38,11 @@ import registrationRequestRoutes from "./routes/registrationRequestRoutes.js";
 import contextRoutes from "./routes/contextRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import pricingRoutes from "./routes/pricingRoutes.js";
+import trialRoutes from "./routes/trialRoutes.js";
 import progressRoutes from "./routes/progressRoutes.js";
 import shopRoutes from "./routes/shopRoutes.js";
 import legalRoutes from "./routes/legalRoutes.js";
+import powerAdminRoutes from "./routes/powerAdminRoutes.js";
 import { handleStripeWebhook } from "./controllers/paymentController.js";
 import { validateEnv } from "./config/env.js";
 import aiService from "./services/ai.service.js"; // Import aiService instance
@@ -178,6 +180,7 @@ app.use("/api/assignments", assignmentRoutes);
 app.use("/api/ai-assistant-interactions", aiAssistantInteractionRoutes);
 app.use("/api/students/me", studentLearningRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/power-admin", powerAdminRoutes);
 app.use("/api/avatar", avatarRoutes);
 app.use("/api/livekit", livekitRoutes);
 app.use("/api/tts", ttsRoutes);
@@ -187,16 +190,35 @@ app.use("/api/requests", registrationRequestRoutes);
 app.use("/api/context", contextRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/pricing", pricingRoutes);
+app.use("/api/trial", trialRoutes);
 app.use("/api/progress", progressRoutes);
 app.use("/api/shop", shopRoutes);
 app.use("/api/legal", legalRoutes);
 
 // Health check endpoint
-app.get("/health", (req, res) => {
+app.get("/health", (_req, res) => {
+    const dbState = mongoose.connection.readyState;
+    const dbStatus = dbState === 1 ? "connected" : dbState === 2 ? "connecting" : "disconnected";
+
     res.status(200).json({
         status: "OK",
         timestamp: new Date().toISOString(),
-        service: "lms-api"
+        service: "mr5-school-api",
+        version: "2.0.0",
+        environment: process.env.NODE_ENV || "development",
+        database: dbStatus,
+    });
+});
+
+app.get("/ready", (_req, res) => {
+    const dbState = mongoose.connection.readyState;
+    const ready = dbState === 1;
+
+    res.status(ready ? 200 : 503).json({
+        status: ready ? "READY" : "NOT_READY",
+        timestamp: new Date().toISOString(),
+        service: "mr5-school-api",
+        database: dbState === 1 ? "connected" : dbState === 2 ? "connecting" : "disconnected",
     });
 });
 
@@ -231,7 +253,7 @@ if (!process.env.VERCEL && process.env.NODE_ENV !== 'test') {
             console.log("Connected to MongoDB successfully");
         }
 
-        const PORT = process.env.PORT || 5000;
+        const PORT = process.env.PORT || 5001;
 
         const server = app.listen(PORT, () => {
             console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);

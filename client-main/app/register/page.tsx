@@ -103,7 +103,7 @@ function RegisterForm() {
         <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-lg bg-slate-900/50 border border-white/10 rounded-3xl p-8 backdrop-blur-2xl shadow-2xl overflow-hidden relative"
+            className="auth-card max-w-lg overflow-hidden relative"
         >
             {/* Background Glow */}
             <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/10 blur-[80px] rounded-full pointer-events-none" />
@@ -114,8 +114,8 @@ function RegisterForm() {
                     <Sparkles className="w-3 h-3" />
                     New Era of Learning
                 </div>
-                <h1 className="text-3xl font-black text-white tracking-tight mb-2 uppercase italic">Join MR5 School</h1>
-                <p className="text-slate-400 text-sm">Create your futuristic learning account today</p>
+                <h1 className="text-3xl font-black text-foreground tracking-tight mb-2 uppercase italic">Join MR5 School</h1>
+                <p className="text-muted-foreground text-sm">Create your futuristic learning account today</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -132,9 +132,9 @@ function RegisterForm() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label htmlFor="name" className="text-xs uppercase tracking-widest text-slate-500 font-bold ml-1">Full Name</Label>
+                        <Label htmlFor="name" className="text-xs uppercase tracking-widest text-muted-foreground font-bold ml-1">Full Name</Label>
                         <div className="relative">
-                            <User className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+                            <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                             <Input
                                 id="name"
                                 name="name"
@@ -143,7 +143,7 @@ function RegisterForm() {
                                 value={formData.name}
                                 onChange={handleChange}
                                 required
-                                className="pl-10 h-11 bg-white/5 border-white/10 rounded-xl focus:border-primary/50 transition-all text-white"
+                                className="pl-10 h-11 bg-muted/50 border-border rounded-xl focus:border-primary/50 transition-all text-foreground"
                             />
                         </div>
                         {errors.name && (
@@ -152,9 +152,9 @@ function RegisterForm() {
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="email" className="text-xs uppercase tracking-widest text-slate-500 font-bold ml-1">Email</Label>
+                        <Label htmlFor="email" className="text-xs uppercase tracking-widest text-muted-foreground font-bold ml-1">Email</Label>
                         <div className="relative">
-                            <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+                            <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                             <Input
                                 id="email"
                                 name="email"
@@ -163,7 +163,7 @@ function RegisterForm() {
                                 value={formData.email}
                                 onChange={handleChange}
                                 required
-                                className="pl-10 h-11 bg-white/5 border-white/10 rounded-xl focus:border-primary/50 transition-all text-white"
+                                className="pl-10 h-11 bg-muted/50 border-border rounded-xl focus:border-primary/50 transition-all text-foreground"
                             />
                         </div>
                         {errors.email && (
@@ -174,9 +174,9 @@ function RegisterForm() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label htmlFor="password" className="text-xs uppercase tracking-widest text-slate-500 font-bold ml-1">Password</Label>
+                        <Label htmlFor="password" className="text-xs uppercase tracking-widest text-muted-foreground font-bold ml-1">Password</Label>
                         <div className="relative">
-                            <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+                            <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                             <Input
                                 id="password"
                                 name="password"
@@ -185,12 +185,12 @@ function RegisterForm() {
                                 value={formData.password}
                                 onChange={handleChange}
                                 required
-                                className="pl-10 h-11 bg-white/5 border-white/10 rounded-xl focus:border-primary/50 transition-all text-white pr-10"
+                                className="pl-10 h-11 bg-muted/50 border-border rounded-xl focus:border-primary/50 transition-all text-foreground pr-10"
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-3 text-slate-500 hover:text-white transition-colors"
+                                className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
                             >
                                 {showPassword ? (
                                     <EyeOff className="h-4 w-4" />
@@ -205,9 +205,9 @@ function RegisterForm() {
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="confirmPassword" className="text-xs uppercase tracking-widest text-slate-500 font-bold ml-1">Confirm</Label>
+                        <Label htmlFor="confirmPassword" className="text-xs uppercase tracking-widest text-muted-foreground font-bold ml-1">Confirm</Label>
                         <div className="relative">
-                            <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+                            <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                             <Input
                                 id="confirmPassword"
                                 name="confirmPassword"
@@ -216,12 +216,12 @@ function RegisterForm() {
                                 value={formData.confirmPassword}
                                 onChange={handleChange}
                                 required
-                                className="pl-10 h-11 bg-white/5 border-white/10 rounded-xl focus:border-primary/50 transition-all text-white pr-10"
+                                className="pl-10 h-11 bg-muted/50 border-border rounded-xl focus:border-primary/50 transition-all text-foreground pr-10"
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                className="absolute right-3 top-3 text-slate-500 hover:text-white transition-colors"
+                                className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
                             >
                                 {showConfirmPassword ? (
                                     <EyeOff className="h-4 w-4" />
@@ -237,12 +237,12 @@ function RegisterForm() {
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="role" className="text-xs uppercase tracking-widest text-slate-500 font-bold ml-1">Role</Label>
+                    <Label htmlFor="role" className="text-xs uppercase tracking-widest text-muted-foreground font-bold ml-1">Role</Label>
                     <Select value={formData.role} onValueChange={handleRoleChange}>
-                        <SelectTrigger className="h-11 bg-white/5 border-white/10 rounded-xl text-white">
+                        <SelectTrigger className="h-11 bg-muted/50 border-border rounded-xl text-foreground">
                             <SelectValue placeholder="Select role" />
                         </SelectTrigger>
-                        <SelectContent className="bg-slate-900 border-white/10 text-white">
+                        <SelectContent className="bg-slate-900 border-white/10 text-foreground">
                             <SelectItem value="student">Student</SelectItem>
                             <SelectItem value="AI-TEACHER">Instructor (AI Teacher)</SelectItem>
                         </SelectContent>
@@ -254,10 +254,10 @@ function RegisterForm() {
                         type="checkbox"
                         checked={acceptLegal}
                         onChange={(e) => setAcceptLegal(e.target.checked)}
-                        className="mt-0.5 h-4 w-4 rounded border-white/20 accent-primary"
+                        className="mt-0.5 h-4 w-4 rounded border-border accent-primary"
                         required
                     />
-                    <span className="text-[10px] text-slate-500 font-medium leading-relaxed">
+                    <span className="text-[10px] text-muted-foreground font-medium leading-relaxed">
                       I agree to the{" "}
                       <Link href="/terms" className="text-primary hover:underline" target="_blank">
                         Terms of Service
@@ -274,7 +274,7 @@ function RegisterForm() {
                     type="submit"
                     disabled={loading || !acceptLegal}
                     aria-label="Create Account"
-                    className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white font-bold h-12 rounded-2xl shadow-xl shadow-primary/20 transition-all hover:scale-[1.01] active:scale-95 group"
+                    className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-primary-foreground font-bold h-12 rounded-2xl shadow-xl shadow-primary/20 transition-all hover:scale-[1.01] active:scale-95 group"
                 >
                     {loading ? (
                         <div className="flex items-center gap-2">
@@ -290,7 +290,7 @@ function RegisterForm() {
                 </Button>
             </form>
 
-            <div className="mt-8 text-center text-xs text-slate-400">
+            <div className="mt-8 text-center text-xs text-muted-foreground">
                 Already an explorer?{" "}
                 <Link href="/login" className="text-primary hover:text-primary/80 font-bold uppercase tracking-wider ml-1 hover:underline underline-offset-4">
                     Login
@@ -302,12 +302,11 @@ function RegisterForm() {
 
 export default function RegisterPage() {
     return (
-        <div className="min-h-screen bg-[#020617] flex items-center justify-center p-4 relative overflow-hidden">
-            {/* Visual enhancements for a futuristic feel */}
-            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_30%_20%,_rgba(59,130,246,0.05)_0%,_transparent_50%)]" />
-            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_70%_80%,_rgba(147,51,234,0.05)_0%,_transparent_50%)]" />
+        <div className="auth-page-shell flex items-center justify-center p-4">
+            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_30%_20%,_oklch(var(--primary)/0.08)_0%,_transparent_50%)]" />
+            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_70%_80%,_oklch(0.55_0.2_300/0.06)_0%,_transparent_50%)]" />
 
-            <Suspense fallback={<div className="text-white">Loading...</div>}>
+            <Suspense fallback={<div className="text-muted-foreground">Loading...</div>}>
                 <RegisterForm />
             </Suspense>
         </div>

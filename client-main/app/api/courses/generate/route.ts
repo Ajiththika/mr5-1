@@ -4,7 +4,7 @@ function getApiBaseUrl(): string {
   return process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:5001";
 }
 
-function forwardCookies(request: NextRequest): HeadersInit {
+function forwardCookies(request: NextRequest): Record<string, string> {
   const cookie = request.headers.get("cookie");
   return cookie ? { cookie, "Content-Type": "application/json" } : { "Content-Type": "application/json" };
 }

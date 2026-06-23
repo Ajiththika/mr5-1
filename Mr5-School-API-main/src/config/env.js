@@ -33,7 +33,7 @@ const envConfig = {
 	GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || "",
 	GOOGLE_CALLBACK_URL:
 		process.env.GOOGLE_CALLBACK_URL ||
-		`http://localhost:${process.env.PORT || 5001}/api/auth/google/callback`,
+		`${process.env.CLIENT_URL || "http://localhost:3000"}/api/auth/google/callback`,
 	CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || "",
 	CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY || "",
 	CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || "",

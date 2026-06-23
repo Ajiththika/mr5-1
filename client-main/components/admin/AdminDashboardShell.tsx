@@ -8,7 +8,7 @@ import { LayoutDashboard, Menu, Shield, X } from "lucide-react";
 import { Navbar } from "@/components/layout/navbar";
 import { DashboardSidebar } from "@/components/layout/dashboard-sidebar";
 import { Button } from "@/components/ui/button";
-import { adminNavigation } from "@/data/navigation";
+import { powerAdminNavigation } from "@/data/navigation";
 import { useEnhancedUser } from "@/contexts/EnhancedUserContext";
 
 interface AdminDashboardShellProps {
@@ -81,8 +81,8 @@ export function AdminDashboardShell({ children }: AdminDashboardShellProps) {
               <Shield className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-sm font-bold leading-none">Control Center</p>
-              <p className="text-[10px] text-muted-foreground">MR5 Admin</p>
+              <p className="text-sm font-bold leading-none">Power Admin Hub</p>
+              <p className="text-[10px] text-muted-foreground">MR5 Learning OS</p>
             </div>
           </Link>
           <Button
@@ -98,7 +98,7 @@ export function AdminDashboardShell({ children }: AdminDashboardShellProps) {
 
         <div className="flex-1 overflow-y-auto p-3">
           <DashboardSidebar
-            navigation={adminNavigation}
+            navigation={powerAdminNavigation}
             variant="grouped"
             onNavigate={() => setSidebarOpen(false)}
           />

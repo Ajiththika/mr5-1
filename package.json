@@ -1,0 +1,23 @@
+{
+  "name": "mr5-school",
+  "version": "2.0.0",
+  "private": true,
+  "description": "MR5 School — enterprise 3D learning platform (monorepo)",
+  "scripts": {
+    "verify": "bash scripts/verify-release.sh",
+    "test": "npm run test:api && npm run test:web",
+    "test:api": "cd Mr5-School-API-main && npm test",
+    "test:web": "cd client-main && npm test -- --passWithNoTests",
+    "lint": "npm run lint:api && npm run lint:web",
+    "lint:api": "cd Mr5-School-API-main && npm run lint",
+    "lint:web": "cd client-main && npm run lint",
+    "build": "cd client-main && npm run build",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -24,6 +24,32 @@ const courseSchema = new mongoose.Schema(
 			default: "English",
 		},
 		isApproved: { type: Boolean, default: false },
+		publishStatus: {
+			type: String,
+			enum: [
+				"draft",
+				"pending_review",
+				"approved",
+				"published",
+				"rejected",
+				"archived",
+			],
+			default: "draft",
+		},
+		targetAudience: { type: String },
+		modules: [
+			{
+				title: String,
+				description: String,
+				order: Number,
+				lessonIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Lesson" }],
+			},
+		],
+		certificateRules: {
+			enabled: { type: Boolean, default: false },
+			minCompletionPercent: { type: Number, default: 80 },
+			requireQuizPass: { type: Boolean, default: true },
+		},
 		prerequisites: [{ type: String }],
 		tags: [{ type: String }],
 		learningOutcomes: [{ type: String }],
@@ -39,7 +65,7 @@ const courseSchema = new mongoose.Schema(
 courseSchema.index({ teacher: 1 });
 courseSchema.index({ level: 1 });
 courseSchema.index({ language: 1 });
-courseSchema.index({ isApproved: 1 });
+courseSchema.index({ publishStatus: 1 });
 courseSchema.index({ category: 1 });
 courseSchema.index({ createdAt: -1 });
 courseSchema.index({ title: "text", description: "text", category: "text" });

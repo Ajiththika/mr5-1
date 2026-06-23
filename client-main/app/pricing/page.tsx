@@ -5,7 +5,7 @@ import PricingPageClient from "@/components/pricing/PricingPageClient";
 export const metadata: Metadata = generateMetadata({
   title: "Pricing - Free & Premium 3D Learning Plans",
   description:
-    "Choose your MR5 School plan. Start free with AI tutoring and 3D classrooms, or upgrade to Premium for unlimited courses, certificates, and personalized learning.",
+    "Try MR5 School free for 5 hours with full access to all features. Then choose Starter, Pro, or Team plans for AI tutoring and 3D classrooms.",
   keywords: [
     "MR5 School pricing",
     "online learning subscription",

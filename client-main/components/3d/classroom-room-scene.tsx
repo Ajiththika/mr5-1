@@ -18,25 +18,17 @@ import {
   useGLTF,
   useProgress,
 } from "@react-three/drei";
-import {
-  ArrowLeft,
-  BookOpen,
-  DoorOpen,
-  Gamepad2,
-  Presentation,
-  UserRound,
-} from "lucide-react";
+import { useRouter } from "next/navigation";
 import * as THREE from "three";
 import TeachingAIModal from "@/components/ai/TeachingAIModal";
 import { useEnhancedUser } from "@/contexts/EnhancedUserContext";
-import { TeacherPlaytimePanel } from "@/components/classroom/teacher-playtime-panel";
 import { ClassroomStoreProvider, useClassroomStore } from "@/features/classroom/store/classroom.store";
 import { useWeatherSync } from "@/features/classroom/hooks/useWeatherSync";
-import { EnvironmentPanel } from "@/features/classroom/ui/EnvironmentPanel";
-import { ControlDock } from "@/features/classroom/ui/ControlDock";
-import { PlaytimePanel } from "@/features/classroom/ui/PlaytimePanel";
-import { TeacherChallengePanel } from "@/features/classroom/ui/TeacherChallengePanel";
-import { EnvironmentDevPanel } from "@/components/classroom/EnvironmentDevPanel";
+import { ClassroomImmersiveHud } from "@/features/classroom/ui/ClassroomImmersiveHud";
+import { ClassroomUiProvider } from "@/features/classroom/store/classroom-ui.store";
+import { TeacherAvatar } from "@/components/3d/classroom/TeacherAvatar";
+import { resolveTeacherAnchor } from "@/lib/classroom-teacher-placement";
+import type { TeacherAnchorState } from "@/lib/classroom-teacher-placement";
 import { ClassroomEnvironmentProvider, useClassroomEnvironment } from "@/contexts/ClassroomEnvironmentContext";
 import { ClassroomAtmosphere } from "@/components/3d/classroom/ClassroomAtmosphere";
 import { CeilingFan } from "@/components/3d/classroom/CeilingFan";
@@ -46,13 +38,16 @@ import { useAudio } from "@/hooks/useAudio";
 import { getBrandSoundManager } from "@/lib/audio";
 import { useTranslation } from "@/hooks/useTranslation";
 import type { EnvironmentLighting } from "@/lib/classroom-environment";
+import { resolveStudentSeatedPose } from "@/lib/classroom-seat";
+import { get3DPerformanceProfile } from "@/lib/3d/performance-profile";
+import { ModelCreditNotice } from "@/components/3d/ModelCreditNotice";
+import { getGaneshaModelUrl } from "@/lib/3d/aws-assets";
 
 const CLASSROOM_GLB = "/assets/3d/rooms/classroom.glb";
 const BOARD_LOGO_URL = "/assets/mr5-logo-neon.png";
 
 const LOOK_SENSITIVITY = 0.0021;
 const CAMERA_BLEND_SPEED = 5.5;
-const MIN_EYE_HEIGHT = 1.05;
 
 export type CameraMode = "student" | "teacher";
 
@@ -79,6 +74,7 @@ interface ClassroomViewState {
   classDirection: THREE.Vector3;
   teacherStand: THREE.Vector3;
   teacherLookAt: THREE.Vector3;
+  teacherAnchor: TeacherAnchorState;
   logoPosition: THREE.Vector3;
   logoLookAt: THREE.Vector3;
   studentPreset: CameraPreset;
@@ -88,6 +84,8 @@ interface ClassroomViewState {
   roomCenter: THREE.Vector3;
   fanSwitchPosition: THREE.Vector3;
   fanSwitchLookAt: THREE.Vector3;
+  welcomeGuidePosition: THREE.Vector3;
+  welcomeGuideLookAt: THREE.Vector3;
 }
 
 function Loader() {
@@ -104,6 +102,7 @@ function Loader() {
         <p className="font-mono text-xs text-indigo-100">
           Loading classroom… {progress.toFixed(0)}%
         </p>
+        <ModelCreditNotice variant="loading" />
       </div>
     </Html>
   );
@@ -156,34 +155,12 @@ function averageCenter(points: THREE.Vector3[]): THREE.Vector3 | null {
   return sum.multiplyScalar(1 / points.length);
 }
 
-function pickStudentSeat(
-  chairCenters: THREE.Vector3[],
-  board: THREE.Vector3,
-): THREE.Vector3 {
-  if (!chairCenters.length) {
-    const fallback = board.clone();
-    fallback.y = 0.35;
-    fallback.z += board.z >= 0 ? -3.2 : 3.2;
-    return fallback;
-  }
-
-  const ranked = chairCenters
-    .map((chair) => ({ chair, distance: chair.distanceTo(board) }))
-    .sort((a, b) => b.distance - a.distance);
-  const backRow = ranked
-    .filter((entry) => entry.distance >= ranked[0].distance - 0.45)
-    .map((entry) => entry.chair);
-  const pool = backRow.length ? backRow : chairCenters;
-
-  return pool.reduce((best, point) =>
-    Math.abs(point.x) < Math.abs(best.x) ? point : best,
-  );
-}
-
-function centerModelAtOrigin(root: THREE.Object3D) {
+function alignClassroomToFloor(root: THREE.Object3D) {
   const box = new THREE.Box3().setFromObject(root);
   const center = box.getCenter(new THREE.Vector3());
-  root.position.sub(center);
+  root.position.x -= center.x;
+  root.position.z -= center.z;
+  root.position.y -= box.min.y;
 }
 
 function clonePreset(
@@ -225,34 +202,23 @@ function deriveClassroomViewState(root: THREE.Object3D): ClassroomViewState {
     boardCenter.z,
   );
 
-  const chairCenter = pickStudentSeat(meshCenters(root, ["chair"]), board);
-  const seat = new THREE.Vector3(
-    chairCenter.x,
-    chairCenter.y + 0.35,
-    chairCenter.z,
-  );
-
-  const classDirection = seat.clone().sub(board);
-  classDirection.y = 0;
-  if (classDirection.lengthSq() < 0.01) {
-    classDirection.set(0, 0, 1);
-  }
-  classDirection.normalize();
+  const seated = resolveStudentSeatedPose(root, board, floorY);
+  const seat = seated.seat;
+  const classDirection = seated.classDirection;
 
   const wallNormal = classDirection.clone().multiplyScalar(-1);
   const boardSide = new THREE.Vector3()
     .crossVectors(new THREE.Vector3(0, 1, 0), classDirection)
     .normalize();
 
-  const teacherStand = board
-    .clone()
-    .add(boardSide.clone().multiplyScalar(1.85))
-    .add(classDirection.clone().multiplyScalar(0.95));
-  teacherStand.y = floorY;
-
-  const teacherLookAt = teacherStand
-    .clone()
-    .add(classDirection.clone().multiplyScalar(2.5));
+  const teacherAnchor = resolveTeacherAnchor(
+    boardBounds,
+    seat,
+    floorY,
+    classDirection,
+  );
+  const teacherStand = teacherAnchor.position.clone();
+  const teacherLookAt = teacherAnchor.lookAt.clone();
 
   const logoPosition = boardCenter
     .clone()
@@ -271,16 +237,11 @@ function deriveClassroomViewState(root: THREE.Object3D): ClassroomViewState {
     .clone()
     .add(classDirection.clone().multiplyScalar(-2));
 
-  const studentEye = new THREE.Vector3(
-    seat.x,
-    floorY + 1.32,
-    seat.z,
-  );
-  const studentLook = board.clone();
-  studentLook.y -= 0.22;
+  const studentEye = seated.eye.clone();
+  const studentLook = seated.lookAt.clone();
 
   const classFocus = seat.clone();
-  classFocus.y = floorY + 1.05;
+  classFocus.y = seat.y + 0.08;
 
   const teacherEye = teacherStand
     .clone()
@@ -291,10 +252,10 @@ function deriveClassroomViewState(root: THREE.Object3D): ClassroomViewState {
   const studentPreset = clonePreset(
     studentEye,
     studentLook,
-    -0.2,
-    0.16,
+    -0.06,
+    0.34,
     0.52,
-    50,
+    54,
   );
   const teacherPreset = clonePreset(
     teacherEye,
@@ -308,6 +269,13 @@ function deriveClassroomViewState(root: THREE.Object3D): ClassroomViewState {
   const doorCenter = averageCenter(meshCenters(root, ["door"]));
   const lessonCenter = averageCenter(meshCenters(root, ["desk", "chair"]));
 
+  const welcomeGuidePosition = doorCenter
+    ? doorCenter.clone().add(boardSide.clone().multiplyScalar(-1.35))
+    : roomCenter.clone().add(new THREE.Vector3(-2.4, 0, 2.2));
+  welcomeGuidePosition.y = floorY;
+  const welcomeGuideLookAt = seat.clone();
+  welcomeGuideLookAt.y += 1.15;
+
   const anchors: ClassroomAnchor[] = [
     {
       id: "board",
@@ -319,7 +287,7 @@ function deriveClassroomViewState(root: THREE.Object3D): ClassroomViewState {
       label: "AI Teacher",
       position: [
         teacherStand.x,
-        teacherStand.y + 1.55,
+        teacherStand.y + teacherAnchor.height * 0.92,
         teacherStand.z,
       ],
     },
@@ -347,6 +315,7 @@ function deriveClassroomViewState(root: THREE.Object3D): ClassroomViewState {
     classDirection,
     teacherStand,
     teacherLookAt,
+    teacherAnchor,
     logoPosition,
     logoLookAt,
     studentPreset,
@@ -356,7 +325,54 @@ function deriveClassroomViewState(root: THREE.Object3D): ClassroomViewState {
     roomCenter,
     fanSwitchPosition,
     fanSwitchLookAt,
+    welcomeGuidePosition,
+    welcomeGuideLookAt,
   };
+}
+
+function sanitizeClassroomMeshes(root: THREE.Object3D) {
+  root.traverse((child) => {
+    if (!(child instanceof THREE.Mesh)) return;
+    const key = normalizeName(child.name);
+
+    if (key.includes("plane") && key.includes("window")) {
+      child.visible = false;
+      return;
+    }
+
+    const box = new THREE.Box3().setFromObject(child);
+    const size = box.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const minDim = Math.min(size.x, size.y, size.z);
+
+    if (
+      maxDim > 6 &&
+      minDim < 0.18 &&
+      !key.includes("wall") &&
+      !key.includes("floor") &&
+      !key.includes("ground") &&
+      !key.includes("desk")
+    ) {
+      child.visible = false;
+      return;
+    }
+
+    const materials = Array.isArray(child.material) ? child.material : [child.material];
+    for (const mat of materials) {
+      if (!(mat instanceof THREE.MeshStandardMaterial)) continue;
+      if (key.includes("ceilling") || key.includes("ceiling")) {
+        mat.color.setHex(0xece7df);
+        mat.emissive.setHex(0x000000);
+        mat.roughness = 0.92;
+      }
+      const hsl = { h: 0, s: 0, l: 0 };
+      mat.color.getHSL(hsl);
+      if (hsl.h > 0.72 && hsl.h < 0.9 && hsl.s > 0.3 && maxDim > 2.5) {
+        mat.color.setHex(0xccc7c2);
+        mat.emissive.setHex(0x000000);
+      }
+    }
+  });
 }
 
 function tuneMaterials(root: THREE.Object3D) {
@@ -403,7 +419,7 @@ function tuneMaterials(root: THREE.Object3D) {
 }
 
 function SceneRendererSetup() {
-  const { gl } = useThree();
+  const { gl, size } = useThree();
 
   useEffect(() => {
     gl.shadowMap.enabled = true;
@@ -412,6 +428,24 @@ function SceneRendererSetup() {
     gl.toneMappingExposure = 1.08;
     gl.outputColorSpace = THREE.SRGBColorSpace;
   }, [gl]);
+
+  useLayoutEffect(() => {
+    const canvas = gl.domElement;
+    const lock = () => {
+      canvas.style.position = "absolute";
+      canvas.style.top = "0";
+      canvas.style.left = "0";
+      canvas.style.margin = "0";
+      canvas.style.padding = "0";
+      canvas.style.transform = "none";
+      canvas.style.width = "100%";
+      canvas.style.height = "100%";
+    };
+    lock();
+    const observer = new ResizeObserver(lock);
+    observer.observe(canvas.parentElement ?? canvas);
+    return () => observer.disconnect();
+  }, [gl, size.width, size.height]);
 
   return null;
 }
@@ -497,7 +531,7 @@ function ClassroomCameraRig({
 
     currentPos.current.y = Math.max(
       currentPos.current.y,
-      viewState.floorY + MIN_EYE_HEIGHT,
+      viewState.seat.y + 0.52,
     );
 
     camera.position.copy(currentPos.current);
@@ -574,8 +608,9 @@ function ClassroomModel({
 
   const model = useMemo(() => {
     const clone = scene.clone(true);
+    sanitizeClassroomMeshes(clone);
     tuneMaterials(clone);
-    centerModelAtOrigin(clone);
+    alignClassroomToFloor(clone);
     return clone;
   }, [scene]);
 
@@ -628,114 +663,6 @@ function BoardLogo({
         scale={[0.68, 0.68]}
         transparent
         toneMapped={false}
-      />
-    </group>
-  );
-}
-
-function TeacherCharacter({
-  position,
-  lookAt,
-}: {
-  position: THREE.Vector3;
-  lookAt: THREE.Vector3;
-}) {
-  const groupRef = useRef<THREE.Group>(null);
-
-  useLayoutEffect(() => {
-    if (!groupRef.current) return;
-    groupRef.current.position.copy(position);
-    groupRef.current.lookAt(lookAt);
-  }, [lookAt, position]);
-
-  const skin = useMemo(
-    () => new THREE.MeshStandardMaterial({ color: "#efd9c2", roughness: 0.82, metalness: 0 }),
-    [],
-  );
-  const blazer = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        color: "#1e2a5a",
-        roughness: 0.68,
-        metalness: 0.06,
-      }),
-    [],
-  );
-  const shirt = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        color: "#e2e8f0",
-        roughness: 0.78,
-        metalness: 0.02,
-      }),
-    [],
-  );
-  const pants = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        color: "#1f2937",
-        roughness: 0.86,
-        metalness: 0.03,
-      }),
-    [],
-  );
-  const shoe = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        color: "#0f172a",
-        roughness: 0.72,
-        metalness: 0.12,
-      }),
-    [],
-  );
-  const hair = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        color: "#2d1f14",
-        roughness: 0.92,
-        metalness: 0,
-      }),
-    [],
-  );
-
-  return (
-    <group ref={groupRef}>
-      <mesh position={[-0.09, 0.36, 0.04]} castShadow receiveShadow material={pants}>
-        <capsuleGeometry args={[0.075, 0.42, 6, 12]} />
-      </mesh>
-      <mesh position={[0.09, 0.36, 0.04]} castShadow receiveShadow material={pants}>
-        <capsuleGeometry args={[0.075, 0.42, 6, 12]} />
-      </mesh>
-      <mesh position={[-0.09, 0.07, 0.1]} castShadow material={shoe}>
-        <boxGeometry args={[0.11, 0.06, 0.2]} />
-      </mesh>
-      <mesh position={[0.09, 0.07, 0.1]} castShadow material={shoe}>
-        <boxGeometry args={[0.11, 0.06, 0.2]} />
-      </mesh>
-      <mesh position={[0, 0.98, 0]} castShadow receiveShadow material={blazer}>
-        <capsuleGeometry args={[0.24, 0.58, 10, 18]} />
-      </mesh>
-      <mesh position={[0, 1.02, 0.11]} castShadow material={shirt}>
-        <boxGeometry args={[0.1, 0.22, 0.04]} />
-      </mesh>
-      <mesh position={[0, 1.56, 0.02]} castShadow receiveShadow material={skin}>
-        <sphereGeometry args={[0.155, 24, 24]} />
-      </mesh>
-      <mesh position={[0, 1.72, -0.02]} castShadow material={hair}>
-        <sphereGeometry args={[0.158, 20, 20, 0, Math.PI * 2, 0, Math.PI * 0.55]} />
-      </mesh>
-      <mesh position={[-0.2, 1.02, 0.02]} castShadow material={blazer}>
-        <capsuleGeometry args={[0.07, 0.34, 6, 10]} />
-      </mesh>
-      <mesh position={[0.2, 1.02, 0.02]} castShadow material={blazer}>
-        <capsuleGeometry args={[0.07, 0.34, 6, 10]} />
-      </mesh>
-      <ContactShadows
-        position={[0, 0.01, 0.08]}
-        opacity={0.42}
-        scale={1.1}
-        blur={2.2}
-        far={1.2}
       />
     </group>
   );
@@ -997,10 +924,7 @@ function ClassroomContent({
             onStudent={onWallStudent}
             labels={wallLabels}
           />
-          <TeacherCharacter
-            position={viewState.teacherStand}
-            lookAt={viewState.teacherLookAt}
-          />
+          <TeacherAvatar anchor={viewState.teacherAnchor} />
           <ContactShadows
             position={[0, viewState.floorY + 0.01, 0]}
             opacity={lighting.effects.rain ? 0.5 : 0.38}
@@ -1015,43 +939,6 @@ function ClassroomContent({
   );
 }
 
-interface ActionButtonProps {
-  label: string;
-  icon: React.ReactNode;
-  tone: "indigo" | "emerald" | "amber" | "slate" | "violet";
-  onClick: () => void;
-  active?: boolean;
-}
-
-function ActionButton({
-  label,
-  icon,
-  tone,
-  onClick,
-  active = false,
-}: ActionButtonProps) {
-  const tones = {
-    indigo: "bg-indigo-600/90 hover:bg-indigo-500 border-indigo-400/30",
-    emerald: "bg-emerald-600/90 hover:bg-emerald-500 border-emerald-400/30",
-    amber: "bg-amber-600/90 hover:bg-amber-500 border-amber-400/30",
-    slate: "bg-slate-700/90 hover:bg-slate-600 border-slate-400/30",
-    violet: "bg-violet-600/90 hover:bg-violet-500 border-violet-400/30",
-  };
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold text-white shadow-lg backdrop-blur-sm transition-colors sm:min-w-[8.5rem] sm:text-sm ${
-        active ? "ring-2 ring-white/40 " : ""
-      }${tones[tone]}`}
-    >
-      {icon}
-      <span>{label}</span>
-    </button>
-  );
-}
-
 export interface ClassroomRoomSceneProps {
   courseId?: string;
   onExit?: () => void;
@@ -1061,13 +948,16 @@ export function ClassroomRoomScene({ courseId, onExit }: ClassroomRoomSceneProps
   return (
     <ClassroomEnvironmentProvider>
       <ClassroomStoreProvider>
-        <ClassroomRoomSceneInner courseId={courseId} onExit={onExit} />
+        <ClassroomUiProvider>
+          <ClassroomRoomSceneInner courseId={courseId} onExit={onExit} />
+        </ClassroomUiProvider>
       </ClassroomStoreProvider>
     </ClassroomEnvironmentProvider>
   );
 }
 
 function ClassroomRoomSceneInner({ courseId, onExit }: ClassroomRoomSceneProps) {
+  const router = useRouter();
   const { user } = useEnhancedUser();
   const { t } = useTranslation();
   const { togglePlaytime, toggleChallenge } = useClassroomStore();
@@ -1078,6 +968,12 @@ function ClassroomRoomSceneInner({ courseId, onExit }: ClassroomRoomSceneProps) 
 
   const cameraMode: CameraMode =
     user?.role === "admin" || user?.role === "AI-TEACHER" ? "teacher" : "student";
+
+  const perf3d = useMemo(() => get3DPerformanceProfile(), []);
+
+  useEffect(() => {
+    useGLTF.preload(getGaneshaModelUrl());
+  }, []);
 
   const wallLabels = useMemo(
     () => ({
@@ -1117,12 +1013,12 @@ function ClassroomRoomSceneInner({ courseId, onExit }: ClassroomRoomSceneProps) 
 
   const handleAction = useCallback(
     (id: ClassroomAnchor["id"]) => {
-      if (!courseId) return;
       if (id === "exit") {
         if (onExit) onExit();
         else window.history.back();
         return;
       }
+      if (!courseId) return;
       if (id === "teacher") {
         playChatOpen();
         setAiChatOpen(true);
@@ -1130,48 +1026,36 @@ function ClassroomRoomSceneInner({ courseId, onExit }: ClassroomRoomSceneProps) 
       }
       if (id === "board" || id === "lesson") {
         playBell();
-        window.location.href = `/course/${courseId}/lesson/start`;
+        router.push(`/course/${courseId}/lesson/start`);
+        return;
       }
     },
-    [courseId, onExit, playBell, playChatOpen],
+    [courseId, onExit, playBell, playChatOpen, router],
   );
 
   const modeLabel =
     cameraMode === "student" ? t("classroom.studentView") : t("classroom.teacherView");
 
   return (
-    <div className="flex h-full w-full flex-col bg-slate-950">
-      <header className="z-20 flex shrink-0 items-center justify-between gap-3 border-b border-white/10 bg-slate-900/95 px-3 py-2.5 sm:px-4 sm:py-3">
-        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-          {onExit && (
-            <button
-              type="button"
-              onClick={onExit}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-white/15 bg-white/10 px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-white/20 sm:px-3 sm:text-sm"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">{t("classroom.back")}</span>
-              <span className="sm:hidden">{t("classroom.backShort")}</span>
-            </button>
-          )}
-          <div className="min-w-0">
-            <h1 className="truncate text-base font-bold tracking-tight text-white sm:text-lg">
-              {t("classroom.title")}
-            </h1>
-            <p className="truncate text-[10px] text-slate-400 sm:text-[11px]">
-              MR5 School · {modeLabel}
-            </p>
-          </div>
-        </div>
-      </header>
-
-      <div className="classroom-scene-viewport relative min-h-0 flex-1 overflow-hidden">
+    <div className="flex h-full min-w-0 w-full flex-col bg-slate-950">
+      <div className="classroom-scene-viewport relative min-h-0 min-w-0 w-full flex-1 overflow-hidden">
         <Canvas
           className="classroom-scene-canvas"
-          dpr={[1, 1.5]}
-          shadows
-          gl={{ antialias: true, powerPreference: "high-performance" }}
-          style={{ touchAction: "none" }}
+          dpr={perf3d.dpr}
+          shadows={perf3d.shadows}
+          resize={{ scroll: false, debounce: { scroll: 0, resize: 0 } }}
+          gl={{
+            antialias: perf3d.antialias,
+            powerPreference: "high-performance",
+          }}
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            display: "block",
+            touchAction: "none",
+          }}
         >
           <Suspense fallback={<Loader />}>
             <ClassroomContent
@@ -1186,86 +1070,13 @@ function ClassroomRoomSceneInner({ courseId, onExit }: ClassroomRoomSceneProps) 
           </Suspense>
         </Canvas>
 
-        <div className="pointer-events-none absolute inset-0 z-10 flex flex-col justify-between p-3 sm:p-4">
-          <div className="pointer-events-none flex items-start justify-between gap-3">
-            <EnvironmentPanel />
-            <EnvironmentDevPanel />
-          </div>
-
-          <div className="pointer-events-none flex flex-1 items-end justify-between gap-3 pt-2">
-            <div className="flex max-w-[min(100%,280px)] flex-col justify-end gap-2">
-              {cameraMode === "student" && <PlaytimePanel />}
-              {cameraMode === "teacher" && (
-                <>
-                  <TeacherChallengePanel />
-                  <div className="pointer-events-auto hidden lg:block">
-                    <TeacherPlaytimePanel />
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-
-          <div className="pointer-events-auto absolute bottom-[5.75rem] right-3 z-20 sm:bottom-[6.25rem] sm:right-4">
-            <ControlDock fanSpeed={fanSpeed} />
-          </div>
-
-          <div className="flex flex-col justify-end">
-          <div className="pointer-events-none mb-3 flex justify-center">
-            <div className="h-6 w-6 rounded-full border border-white/25 bg-white/5" />
-          </div>
-
-          <div className="pointer-events-auto rounded-2xl border border-white/10 bg-slate-950/80 p-3 shadow-2xl backdrop-blur-md sm:p-4">
-            <p className="mb-3 text-[11px] text-slate-300 sm:text-xs">
-              {cameraMode === "student"
-                ? t("classroom.studentHint")
-                : t("classroom.teacherHint")}
-            </p>
-            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end">
-              <ActionButton
-                label={t("classroom.whiteboard")}
-                icon={<Presentation className="h-4 w-4" />}
-                tone="indigo"
-                onClick={() => handleAction("board")}
-              />
-              <ActionButton
-                label={t("classroom.startLesson")}
-                icon={<BookOpen className="h-4 w-4" />}
-                tone="emerald"
-                onClick={() => handleAction("lesson")}
-              />
-              <ActionButton
-                label={t("classroom.aiTeacher")}
-                icon={<UserRound className="h-4 w-4" />}
-                tone="slate"
-                onClick={() => handleAction("teacher")}
-              />
-              {cameraMode === "student" && (
-                <ActionButton
-                  label={t("classroom.playtime")}
-                  icon={<Gamepad2 className="h-4 w-4" />}
-                  tone="violet"
-                  onClick={togglePlaytime}
-                />
-              )}
-              {cameraMode === "teacher" && (
-                <ActionButton
-                  label={t("classroom.challenges")}
-                  icon={<Gamepad2 className="h-4 w-4" />}
-                  tone="violet"
-                  onClick={toggleChallenge}
-                />
-              )}
-              <ActionButton
-                label={t("classroom.exit")}
-                icon={<DoorOpen className="h-4 w-4" />}
-                tone="amber"
-                onClick={() => handleAction("exit")}
-              />
-            </div>
-          </div>
-          </div>
-        </div>
+        <ClassroomImmersiveHud
+          cameraMode={cameraMode}
+          fanSpeed={fanSpeed}
+          modeLabel={`MR5 School · ${modeLabel}`}
+          onBack={onExit}
+          onAction={handleAction}
+        />
       </div>
 
       <TeachingAIModal

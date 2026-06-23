@@ -7,11 +7,8 @@ import Image from "next/image";
 
 export default function NotFound() {
 	return (
-		<div className="min-h-screen w-full bg-[#030712] overflow-hidden relative selection:bg-cyan-500/30 font-sans flex flex-col">
-			{/* Nebula Background */}
-			<div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop')] bg-cover bg-center opacity-20" />
-			<div className="absolute inset-0 bg-gradient-to-t from-[#030712] via-[#030712]/80 to-transparent" />
-			<div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-900/20 via-[#030712]/50 to-[#030712]" />
+		<div className="min-h-screen w-full bg-background overflow-hidden relative selection:bg-primary/30 font-sans flex flex-col">
+			<div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background opacity-80" />
 
 			<main className="relative z-10 flex-1 flex flex-col items-center justify-center p-6 sm:p-10">
 				<div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
@@ -32,11 +29,11 @@ export default function NotFound() {
 								ERROR 404: SECTOR NOT FOUND
 							</div>
 
-							<h1 className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-500 tracking-tighter drop-shadow-2xl">
+							<h1 className="text-6xl md:text-8xl font-black text-foreground tracking-tighter drop-shadow-sm">
 								LOST IN <br /> SPACE?
 							</h1>
 
-							<p className="text-lg md:text-xl text-gray-400 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+							<p className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0 leading-relaxed">
 								The coordinates you entered led us to a black hole. Don&apos;t worry, even the best explorers get lost sometimes. Let&apos;s recalibrate your trajectory.
 							</p>
 						</div>
@@ -44,32 +41,32 @@ export default function NotFound() {
 						{/* Action Cards */}
 						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto lg:mx-0">
 							<Link href="/dashboard" className="group">
-								<div className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-cyan-500/30 transition-all duration-300 flex items-center gap-4 group-hover:translate-x-1">
-									<div className="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+								<div className="p-4 rounded-2xl bg-card border border-border hover:bg-muted hover:border-primary/30 transition-all duration-300 flex items-center gap-4 group-hover:translate-x-1">
+									<div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
 										<Rocket className="w-6 h-6" />
 									</div>
 									<div className="text-left">
-										<h3 className="text-white font-semibold">Mission Control</h3>
-										<p className="text-xs text-gray-400">Return to Dashboard</p>
+										<h3 className="text-foreground font-semibold">Mission Control</h3>
+										<p className="text-xs text-muted-foreground">Return to Dashboard</p>
 									</div>
 								</div>
 							</Link>
 
 							<Link href="/courses" className="group">
-								<div className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-purple-500/30 transition-all duration-300 flex items-center gap-4 group-hover:translate-x-1">
-									<div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
+								<div className="p-4 rounded-2xl bg-card border border-border hover:bg-muted hover:border-primary/30 transition-all duration-300 flex items-center gap-4 group-hover:translate-x-1">
+									<div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
 										<Compass className="w-6 h-6" />
 									</div>
 									<div className="text-left">
-										<h3 className="text-white font-semibold">Explore</h3>
-										<p className="text-xs text-gray-400">Browse Courses</p>
+										<h3 className="text-foreground font-semibold">Explore</h3>
+										<p className="text-xs text-muted-foreground">Browse Courses</p>
 									</div>
 								</div>
 							</Link>
 						</div>
 
 						<div className="pt-4 flex justify-center lg:justify-start">
-							<Link href="/" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-white transition-colors">
+							<Link href="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
 								<ArrowLeft className="w-4 h-4" />
 								Back to Home Base
 							</Link>

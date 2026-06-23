@@ -64,11 +64,11 @@ function WindowBackdrop({
   return (
     <group ref={groupRef}>
       <mesh>
-        <planeGeometry args={[14, 5]} />
-        <meshBasicMaterial map={texture} toneMapped={false} />
+        <planeGeometry args={[4.5, 1.8]} />
+        <meshBasicMaterial map={texture} toneMapped={false} depthWrite={false} />
       </mesh>
       <mesh position={[0, 0, -0.02]}>
-        <planeGeometry args={[12, 4.2]} />
+        <planeGeometry args={[4, 1.55]} />
         <meshBasicMaterial
           color="#fef3c7"
           transparent

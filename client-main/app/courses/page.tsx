@@ -404,7 +404,7 @@ function CoursesPageContent() {
             transition={{ duration: 0.6 }}
             className="max-w-2xl"
           >
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-white/90 to-white/70 bg-clip-text text-transparent">
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 text-foreground text-glow">
               Explore The Library
             </h1>
             <p className="text-lg text-muted-foreground leading-relaxed">
@@ -423,7 +423,7 @@ function CoursesPageContent() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="mb-12 sticky top-20 z-40"
         >
-          <div className="bg-surface/80 backdrop-blur-xl border border-white/5 shadow-2xl rounded-2xl p-4 flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
+          <div className="surface-panel shadow-2xl p-4 flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
             <div className="relative flex-1 min-w-0">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -431,7 +431,7 @@ function CoursesPageContent() {
                 onChange={(event) => setSearchInput(event.target.value)}
                 placeholder="Search any topic — JavaScript, AI agents, UI design…"
                 aria-label="Search courses"
-                className="h-11 rounded-xl border-white/10 bg-white/5 pl-10 pr-10"
+                className="h-11 rounded-xl border-border bg-muted/50 pl-10 pr-10"
               />
               {searchInput && (
                 <button
@@ -452,7 +452,7 @@ function CoursesPageContent() {
                     key={suggestion}
                     type="button"
                     onClick={() => setSearchInput(suggestion)}
-                    className="text-xs rounded-full border border-white/10 bg-white/5 px-3 py-1 hover:border-primary/50 transition-colors"
+                    className="text-xs rounded-full border border-border bg-muted/50 px-3 py-1 hover:border-primary/50 transition-colors"
                   >
                     {suggestion}
                   </button>
@@ -462,7 +462,7 @@ function CoursesPageContent() {
 
             <div className="flex gap-2 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0 no-scrollbar">
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-[160px] bg-white/5 border-white/10 h-11 rounded-xl">
+                <SelectTrigger className="w-[160px] bg-muted/50 border-border h-11 rounded-xl">
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -475,7 +475,7 @@ function CoursesPageContent() {
               </Select>
 
               <Select value={selectedLevel} onValueChange={setSelectedLevel}>
-                <SelectTrigger className="w-[140px] bg-white/5 border-white/10 h-11 rounded-xl">
+                <SelectTrigger className="w-[140px] bg-muted/50 border-border h-11 rounded-xl">
                   <SelectValue placeholder="Level" />
                 </SelectTrigger>
                 <SelectContent>
@@ -488,7 +488,7 @@ function CoursesPageContent() {
               </Select>
 
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-[160px] bg-white/5 border-white/10 h-11 rounded-xl">
+                <SelectTrigger className="w-[160px] bg-muted/50 border-border h-11 rounded-xl">
                   <SelectValue placeholder="Sort By" />
                 </SelectTrigger>
                 <SelectContent>
@@ -545,7 +545,7 @@ function CoursesPageContent() {
             Library Index <span className="text-primary mx-2">{"//"}</span>{" "}
             {loading ? "…" : total} Items Found
             {urlSearch ? (
-              <span className="normal-case tracking-normal text-slate-400">
+              <span className="normal-case tracking-normal text-muted-foreground">
                 {" "}
                 for &ldquo;{urlSearch}&rdquo;
               </span>
@@ -589,12 +589,12 @@ function CoursesPageContent() {
               {sortedCourses.map((course, index) => (
                 <motion.div key={course._id} variants={itemVariants} layout className="h-full">
                   <Link href={`/course/${course._id}`} className="block h-full">
-                  <div className="group relative h-full border border-white/5 bg-surface overflow-hidden rounded-2xl hover:border-primary/50 transition-colors duration-500">
+                  <div className="group relative h-full border border-border bg-surface overflow-hidden rounded-2xl hover:border-primary/50 transition-colors duration-500">
                     <div className="relative aspect-[4/3] overflow-hidden">
                       <CourseCardImage course={course} index={index} />
                       <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/20 to-transparent opacity-80" />
                       <div className="absolute top-4 left-4">
-                        <Badge className="bg-black/50 backdrop-blur-md border border-white/10 hover:bg-black/70 text-white">
+                        <Badge className="bg-foreground/70 backdrop-blur-md border border-border hover:bg-foreground/80 text-background">
                           {course.category || "Course"}
                         </Badge>
                       </div>
@@ -609,13 +609,13 @@ function CoursesPageContent() {
                           {course.description}
                         </p>
                         {course.teacher?.name && (
-                          <p className="text-xs text-slate-400">
+                          <p className="text-xs text-muted-foreground">
                             Instructor: {course.teacher.name}
                           </p>
                         )}
                       </div>
 
-                      <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between">
+                      <div className="mt-6 pt-4 border-t border-border flex items-center justify-between">
                         <div className="flex flex-col">
                           <span className="text-xs text-muted-foreground uppercase tracking-wider">
                             Price
@@ -632,7 +632,7 @@ function CoursesPageContent() {
                           }}
                           disabled={enrollingCourseId === course._id}
                           size="sm"
-                          className="bg-white/5 hover:bg-primary hover:text-white text-foreground border border-white/10 transition-all duration-300"
+                          className="bg-muted/50 hover:bg-primary hover:text-primary-foreground text-foreground border border-border transition-all duration-300"
                         >
                           {enrollingCourseId === course._id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -658,7 +658,7 @@ function CoursesPageContent() {
               exit={{ opacity: 0, y: -20 }}
               className="text-center py-24"
             >
-              <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-6 border border-white/10">
+              <div className="w-20 h-20 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-6 border border-border">
                 <BookOpen className="h-10 w-10 text-muted-foreground" />
               </div>
               <h3 className="text-2xl font-bold mb-3">No matching courses</h3>
@@ -680,7 +680,7 @@ function CoursesPageContent() {
               <Button
                 onClick={clearFilters}
                 variant="outline"
-                className="border-white/10 bg-white/5 hover:bg-white/10"
+                className="border-border bg-muted/50 hover:bg-muted"
               >
                 Clear Filters
               </Button>

@@ -22,10 +22,10 @@ export function HomePricingSection() {
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm font-medium text-primary backdrop-blur-sm"
+          className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-sm font-semibold text-primary shadow-sm"
         >
           <ShieldCheck className="h-4 w-4" />
-          <span>Risk-free 14-day trial</span>
+          <span>5-hour free trial — full access</span>
         </motion.div>
 
         <motion.h2
@@ -33,22 +33,19 @@ export function HomePricingSection() {
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-3xl font-bold tracking-tight text-white md:text-4xl"
+          className="heading-display text-3xl md:text-4xl"
         >
           Simple, Transparent{" "}
-          <span className="bg-gradient-to-r from-primary via-purple-400 to-pink-400 bg-clip-text text-transparent">
-            Pricing
-          </span>
+          <span className="text-primary">Pricing</span>
         </motion.h2>
         <motion.p
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.05 }}
-          className="mx-auto mt-3 max-w-2xl text-muted-foreground"
+          className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-muted-foreground"
         >
-          Start free with AI tutoring and 3D classrooms, or upgrade for unlimited
-          courses and certificates.
+          Start with a 5-hour full-access trial, then stay free or upgrade for unlimited courses and certificates.
         </motion.p>
       </div>
 

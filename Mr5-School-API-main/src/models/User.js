@@ -34,6 +34,18 @@ const userSchema = new mongoose.Schema(
 			enum: ["student", "AI-TEACHER", "admin"],
 			default: "student",
 		},
+		adminRole: {
+			type: String,
+			enum: [
+				"super_admin",
+				"power_leader",
+				"content_admin",
+				"teacher_manager",
+				"course_creator",
+				"reviewer",
+				"analytics_viewer",
+			],
+		},
 		status: {
 			type: String,
 			enum: ["pending", "approved", "rejected"],
@@ -107,6 +119,12 @@ const userSchema = new mongoose.Schema(
 		},
 		resetPasswordToken: String,
 		resetPasswordExpire: Date,
+		trialUsed: {
+			type: Boolean,
+			default: false,
+		},
+		trialStartedAt: Date,
+		trialExpiresAt: Date,
 	},
 	{ timestamps: true },
 );

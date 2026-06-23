@@ -18,6 +18,21 @@ const lessonSchema = new mongoose.Schema(
 		example: String,
 		practiceTask: String,
 		quiz: [{ type: mongoose.Schema.Types.Mixed }],
+		subtopics: [{ type: String }],
+		recap: String,
+		realLifeScenario: String,
+		publishStatus: {
+			type: String,
+			enum: [
+				"draft",
+				"pending_review",
+				"approved",
+				"published",
+				"rejected",
+				"archived",
+			],
+			default: "draft",
+		},
 	},
 	{ timestamps: true },
 );

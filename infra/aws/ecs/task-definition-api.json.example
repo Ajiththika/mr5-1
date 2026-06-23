@@ -20,6 +20,8 @@
       "secrets": [
         { "name": "MONGO_URI", "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:mr5/production/api:MONGO_URI::" },
         { "name": "JWT_SECRET", "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:mr5/production/api:JWT_SECRET::" },
+        { "name": "CORS_ORIGIN", "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:mr5/production/api:CORS_ORIGIN::" },
+        { "name": "CLIENT_URL", "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:mr5/production/api:CLIENT_URL::" },
         { "name": "GEMINI_API_KEY", "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:mr5/production/api:GEMINI_API_KEY::" },
         { "name": "STRIPE_SECRET_KEY", "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:mr5/production/api:STRIPE_SECRET_KEY::" },
         { "name": "STRIPE_WEBHOOK_SECRET", "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:mr5/production/api:STRIPE_WEBHOOK_SECRET::" },
@@ -34,7 +36,7 @@
         }
       },
       "healthCheck": {
-        "command": ["CMD-SHELL", "wget -qO- http://127.0.0.1:5001/health || exit 1"],
+        "command": ["CMD-SHELL", "wget -qO- http://127.0.0.1:5001/ready || exit 1"],
         "interval": 30,
         "timeout": 5,
         "retries": 3,

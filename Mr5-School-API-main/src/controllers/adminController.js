@@ -3,6 +3,9 @@ import RegistrationRequest from "../models/RegistrationRequest.js";
 import Course from "../models/Course.js";
 import Enrollment from "../models/Enrollment.js";
 import Payment from "../models/Payment.js";
+import Teacher from "../models/Teacher.js";
+import Classroom from "../models/Classroom.js";
+import ContentApproval from "../models/ContentApproval.js";
 import { asyncHandler } from "../middleware/errorHandler.js";
 
 // @desc    Get pending registrations
@@ -142,6 +145,12 @@ export const getPlatformStats = asyncHandler(async (req, res) => {
 		totalEnrollments,
 		recentEnrollments,
 		totalUsers,
+		totalAITeachers,
+		totalTeachers,
+		totalClassrooms,
+		pendingApprovals,
+		publishedCourses,
+		draftCourses,
 		completedPayments,
 		recentRevenue,
 	] = await Promise.all([
@@ -150,6 +159,12 @@ export const getPlatformStats = asyncHandler(async (req, res) => {
 		Enrollment.countDocuments(),
 		Enrollment.countDocuments({ enrolledAt: { $gte: thirtyDaysAgo } }),
 		User.countDocuments({ status: "approved" }),
+		User.countDocuments({ role: "AI-TEACHER", status: "approved" }),
+		Teacher.countDocuments({ status: { $ne: "archived" } }),
+		Classroom.countDocuments(),
+		ContentApproval.countDocuments({ status: "pending_review" }),
+		Course.countDocuments({ publishStatus: "published" }),
+		Course.countDocuments({ publishStatus: "draft" }),
 		Payment.aggregate([
 			{ $match: { status: "completed" } },
 			{ $group: { _id: null, total: { $sum: "$amount" } } },
@@ -171,12 +186,19 @@ export const getPlatformStats = asyncHandler(async (req, res) => {
 		success: true,
 		data: {
 			totalStudents,
+			totalAITeachers,
+			totalTeachers,
+			totalClassrooms,
 			totalCourses,
 			totalEnrollments,
 			recentEnrollments,
 			totalUsers,
+			pendingApprovals,
+			publishedContent: publishedCourses,
+			draftContent: draftCourses,
 			totalRevenue,
 			monthlyRevenue,
+			revenue: totalRevenue,
 			engagementRate,
 		},
 	});

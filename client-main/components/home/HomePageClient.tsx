@@ -148,17 +148,17 @@ export default function HomePageClient() {
       <Navbar />
 
       <main className="flex-1 container mx-auto px-4 py-8 pb-20">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+        <div className="hero-band mb-8 flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between md:p-8">
           <div className="flex flex-col">
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-white/80 to-white/50 tracking-tight">
+              <h1 className="heading-display text-4xl md:text-5xl">
                 {t("homepage.title")}
               </h1>
-              <p className="text-xl md:text-2xl text-muted-foreground font-light mt-1">
+              <p className="mt-2 text-xl font-medium text-foreground/85 md:text-2xl">
                 {t("homepage.subtitle")}
               </p>
             </motion.div>
@@ -166,7 +166,7 @@ export default function HomePageClient() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2, duration: 0.5 }}
-              className="text-muted-foreground text-sm mt-2 font-medium"
+              className="mt-2 text-sm font-medium text-muted-foreground"
             >
               {new Date().toLocaleDateString("en-US", {
                 weekday: "long",
@@ -188,9 +188,9 @@ export default function HomePageClient() {
                 event.preventDefault();
                 handleSearch();
               }}
-              className="relative flex items-center bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-foreground/70 shadow-2xl backdrop-blur-md transition-transform duration-300 group-hover:scale-[1.02] group-hover:border-white/20"
+              className="relative flex w-full items-center rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground shadow-[0_1px_2px_oklch(var(--shadow-color)/0.06),0_6px_18px_oklch(var(--shadow-color)/0.05)] transition-all duration-300 group-hover:border-primary/25 md:w-96"
             >
-              <Search className="w-5 h-5 mr-3 text-muted-foreground group-hover:text-primary transition-colors" />
+              <Search className="mr-3 h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary" />
               <input
                 ref={searchInputRef}
                 value={searchQuery}
@@ -198,9 +198,9 @@ export default function HomePageClient() {
                 type="text"
                 placeholder={t("homepage.searchPlaceholder")}
                 aria-label="Search courses"
-                className="bg-transparent border-none outline-none flex-1 placeholder:text-muted-foreground/50 text-foreground w-full"
+                className="w-full flex-1 border-none bg-transparent text-foreground outline-none placeholder:text-muted-foreground"
               />
-              <span className="ml-auto text-[10px] font-bold bg-black/20 border border-white/5 px-2 py-1 rounded text-muted-foreground/70 tracking-widest hidden md:inline-block">
+              <span className="ml-auto hidden rounded border border-border bg-muted px-2 py-1 text-[10px] font-bold tracking-widest text-muted-foreground md:inline-block">
                 ⌘K
               </span>
             </form>
@@ -220,13 +220,13 @@ export default function HomePageClient() {
             <div className="relative z-10 flex flex-col md:flex-row h-full">
               <div className="flex-1 p-5 md:p-8 flex flex-col justify-center space-y-6">
                 <div className="flex flex-wrap items-center gap-3">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
-                    <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                    <span className="text-xs font-medium text-primary-foreground">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1">
+                    <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
+                    <span className="text-xs font-semibold text-primary">
                       System Online
                     </span>
                   </div>
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/30 border border-white/10">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1">
                     <div
                       className={`w-2 h-2 rounded-full ${voiceInteraction.isSpeaking ? "bg-green-500 animate-ping" : "bg-slate-500"}`}
                     />
@@ -237,25 +237,22 @@ export default function HomePageClient() {
                 </div>
 
                 <div>
-                  <h2 className="text-5xl font-bold leading-tight mb-2">
+                  <h2 className="mb-2 text-5xl font-bold leading-tight text-foreground">
                     {greeting?.transliteration ||
                       greeting?.english ||
                       "Vanakkam"}
                   </h2>
-                  <p className="text-2xl text-muted-foreground font-light mb-4 text-glow">
+                  <p className="mb-4 text-2xl font-semibold text-primary">
                     The Future of Digital Education
                   </p>
-                  <p className="text-foreground/80 max-w-md leading-relaxed">
+                  <p className="max-w-md leading-relaxed text-foreground/80">
                     Step into our live 3D classroom, meet your AI teacher, and
                     learn through immersive lessons built for real students.
                   </p>
                 </div>
 
                 <div className="flex gap-4 pt-4">
-                  <Button
-                    asChild
-                    className="bg-primary hover:bg-primary/90 text-white rounded-lg shadow-[0_0_20px_rgba(120,110,255,0.3)] border border-white/10"
-                  >
+                  <Button asChild size="lg">
                     <Link
                       href={user ? "/dashboard" : "/register"}
                       onClick={() =>
@@ -269,11 +266,7 @@ export default function HomePageClient() {
                       {user ? "Go to Dashboard" : "Get Started"}
                     </Link>
                   </Button>
-                  <Button
-                    variant="outline"
-                    className="border-white/10 bg-white/5 hover:bg-white/10"
-                    asChild
-                  >
+                  <Button variant="outline" size="lg" asChild>
                     <Link
                       href={user ? "/courses" : "/login"}
                       onClick={() =>
@@ -310,7 +303,7 @@ export default function HomePageClient() {
               <span className="text-6xl font-bold text-foreground">12</span>
               <span className="text-xl text-muted-foreground mb-2">days</span>
             </div>
-            <div className="w-full bg-white/5 h-2 rounded-full mt-4 overflow-hidden">
+            <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-muted">
               <div className="h-full bg-gradient-to-r from-primary to-purple-500 w-[65%]" />
             </div>
           </BentoItem>
@@ -325,7 +318,7 @@ export default function HomePageClient() {
               {[40, 70, 45, 90, 60].map((h, i) => (
                 <div
                   key={i}
-                  className="bg-white/10 hover:bg-primary/50 transition-colors rounded-sm"
+                  className="rounded-sm bg-primary/25 transition-colors hover:bg-primary/50"
                   style={{ height: `${h}%` }}
                 />
               ))}
@@ -341,9 +334,9 @@ export default function HomePageClient() {
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition cursor-pointer group/item"
+                  className="group/item flex cursor-pointer items-center gap-3 rounded-lg p-2 transition hover:bg-muted"
                 >
-                  <div className="w-10 h-10 rounded-md bg-gradient-to-br from-gray-800 to-black border border-white/10 flex items-center justify-center">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-md border border-border bg-muted">
                     <span className="text-xs font-mono text-muted-foreground">
                       0{i}
                     </span>
@@ -375,7 +368,7 @@ export default function HomePageClient() {
                 <span className="text-muted-foreground">Global Rank</span>
                 <span className="font-mono text-green-400">#42</span>
               </div>
-              <div className="p-3 bg-white/5 rounded-lg border border-white/5">
+              <div className="rounded-lg border border-border bg-muted/60 p-3">
                 <p className="text-xs text-muted-foreground">
                   &quot;The AI tutor helped me solve the recursion problem in
                   minutes!&quot;
@@ -392,7 +385,7 @@ export default function HomePageClient() {
             title="Upcoming"
             icon={<Calendar className="w-5 h-5" />}
           >
-            <div className="relative pl-4 border-l border-white/10 space-y-6 mt-2">
+            <div className="relative mt-2 space-y-6 border-l border-border pl-4">
               {[
                 { time: "10:00 AM", event: "Live Session: Next.js 14" },
                 { time: "02:00 PM", event: "Code Review with AI" },

@@ -5,7 +5,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useClassroomEnvironment } from "@/contexts/ClassroomEnvironmentContext";
 import { useWeatherSync } from "../hooks/useWeatherSync";
 
-export function EnvironmentPanel() {
+export function EnvironmentPanel({ className = "" }: { className?: string }) {
   const { computed, weather, environment, loading, error } = useWeatherSync();
   const { locationLabel } = useClassroomEnvironment();
   const { t } = useTranslation();
@@ -15,7 +15,7 @@ export function EnvironmentPanel() {
 
   return (
     <aside
-      className="pointer-events-auto w-[min(100%,220px)] rounded-xl border border-white/10 bg-slate-950/85 p-2.5 text-xs text-slate-200 shadow-xl backdrop-blur-md"
+      className={`classroom-glass pointer-events-auto w-[min(100%,220px)] p-2.5 text-xs text-slate-200 shadow-xl ${className}`}
       aria-label={t("env.roomAtmosphere")}
     >
       <p className="mb-2 text-[9px] font-semibold uppercase tracking-widest text-indigo-200/90">

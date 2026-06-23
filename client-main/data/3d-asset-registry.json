@@ -1,0 +1,45 @@
+{
+  "version": "1.0.0",
+  "updatedAt": "2026-06-22",
+  "assets": [
+    {
+      "id": "ganesha-welcome-guide",
+      "name": "Indigo Ganesha - Avatar",
+      "author": "ultranique",
+      "sourceUrl": "https://skfb.ly/6FRHv",
+      "license": "CC BY 4.0",
+      "licenseUrl": "http://creativecommons.org/licenses/by/4.0/",
+      "licenseFile": "/licenses/ganesha.txt",
+      "attribution": "Indigo Ganesha - Avatar by ultranique (https://skfb.ly/6FRHv) is licensed under CC BY 4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "localPath": "/models/ganesha.glb",
+      "cdnPathEnv": "NEXT_PUBLIC_CDN_GANESHA_MODEL",
+      "format": "glb",
+      "estimatedSizeMb": 26,
+      "textureTargetPx": 1024,
+      "usage": ["classroom-welcome-guide"],
+      "lazyLoad": true,
+      "dracoCompressed": false,
+      "commercialUse": true,
+      "modificationAllowed": true,
+      "attributionRequired": true,
+      "status": "active"
+    },
+    {
+      "id": "classroom-room",
+      "name": "MR5 Classroom Room",
+      "author": "MR5 School",
+      "sourceUrl": null,
+      "license": "Proprietary",
+      "licenseUrl": null,
+      "licenseFile": null,
+      "attribution": null,
+      "localPath": "/assets/3d/rooms/classroom.glb",
+      "cdnPathEnv": "NEXT_PUBLIC_CDN_CLASSROOM_MODEL",
+      "format": "glb",
+      "estimatedSizeMb": 2,
+      "usage": ["classroom-environment"],
+      "lazyLoad": true,
+      "status": "active"
+    }
+  ]
+}

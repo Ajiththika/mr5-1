@@ -1,11 +1,16 @@
 "use client";
+
 import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
 import Image from "next/image";
+import { motion } from "framer-motion";
+
+const LOGO_SRC = "/images/mr5-logo.png";
 
 export default function LoadingScreen({
 	onComplete,
-}: { onComplete?: () => void }) {
+}: {
+	onComplete?: () => void;
+}) {
 	const [progress, setProgress] = useState(0);
 
 	useEffect(() => {
@@ -13,54 +18,82 @@ export default function LoadingScreen({
 			setProgress((prev) => {
 				if (prev >= 100) {
 					clearInterval(interval);
-					if (onComplete) setTimeout(onComplete, 500);
+					if (onComplete) setTimeout(onComplete, 400);
 					return 100;
 				}
-				return prev + 5;
+				return prev + 4;
 			});
-		}, 100);
+		}, 90);
 
 		return () => clearInterval(interval);
 	}, [onComplete]);
 
 	return (
-		<div className="fixed inset-0 bg-background flex flex-col items-center justify-center z-[100]">
-			{/* Global Noise Overlay for Loading */}
-			<div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[url('data:image/svg+xml,%3Csvg%20viewBox=%220%200%20200%20200%22%20xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter%20id=%22n%22%3E%3CfeTurbulence%20type=%22fractalNoise%22%20baseFrequency=%220.65%22%20numOctaves=%223%22%20stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect%20width=%22100%25%22%20height=%22100%25%22%20filter=%22url(%23n)%22/%3E%3C/svg%3E')] opacity-20" />
+		<div className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden bg-background">
+			{/* Ambient background */}
+			<div
+				className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_40%,hsl(var(--primary)/0.12),transparent_65%)]"
+				aria-hidden
+			/>
+			<div
+				className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_100%,hsl(var(--primary)/0.08),transparent_50%)]"
+				aria-hidden
+			/>
+			<div className="noise-bg pointer-events-none absolute inset-0 opacity-40" aria-hidden />
 
-			{/* Logo */}
-			<div className="mb-8 relative w-24 h-24">
-				<Image
-					src="/images/mr5-logo.png"
-					alt="MR5 School Logo"
-					fill
-					sizes="96px"
-					className="object-contain drop-shadow-[0_0_15px_rgba(var(--primary-channel),0.5)]"
-					priority
-				/>
-			</div>
+			<motion.div
+				initial={{ opacity: 0, y: 16 }}
+				animate={{ opacity: 1, y: 0 }}
+				transition={{ duration: 0.55, ease: "easeOut" }}
+				className="relative z-10 flex w-full max-w-lg flex-col items-center px-6 text-center"
+			>
+				{/* Logo — wide crest; use full aspect ratio so it reads large */}
+				<div className="relative mb-8 w-[min(88vw,20rem)] sm:w-[min(85vw,24rem)] md:w-[28rem]">
+					<div
+						className="absolute -inset-6 rounded-full bg-primary/20 blur-3xl sm:-inset-10"
+						aria-hidden
+					/>
+					<motion.div
+						animate={{ scale: [1, 1.02, 1] }}
+						transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+						className="relative aspect-[612/408] w-full"
+					>
+						<Image
+							src={LOGO_SRC}
+							alt="MR5 School"
+							fill
+							priority
+							sizes="(max-width: 640px) 88vw, (max-width: 768px) 384px, 448px"
+							className="object-contain drop-shadow-[0_0_40px_hsl(var(--primary)/0.45)]"
+						/>
+					</motion.div>
+				</div>
 
-			{/* School Name */}
-			<h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
-				MR5 SCHOOL
-			</h1>
-			<p className="text-lg text-muted-foreground mb-8 italic">
-				The Smart Way to Grow
-			</p>
+				<motion.p
+					initial={{ opacity: 0 }}
+					animate={{ opacity: 1 }}
+					transition={{ delay: 0.15 }}
+					className="mb-10 text-lg font-medium italic tracking-wide text-muted-foreground sm:text-xl"
+				>
+					The Smart Way to Grow
+				</motion.p>
 
-			{/* Loading Spinner */}
-			<Loader2 className="h-8 w-8 text-primary animate-spin mb-6" />
-
-			{/* Progress Bar */}
-			<div className="w-64 h-1 bg-white/10 rounded-full overflow-hidden">
-				<div
-					className="h-full bg-primary transition-all duration-300 ease-out shadow-[0_0_10px_rgba(var(--primary-channel),0.8)]"
-					style={{ width: `${progress}%` }}
-				></div>
-			</div>
-			<p className="text-muted-foreground mt-4 text-xs font-mono uppercase tracking-widest">
-				Initializing System... {progress}%
-			</p>
+				{/* Progress */}
+				<div className="w-full max-w-xs sm:max-w-sm">
+					<div className="h-1.5 overflow-hidden rounded-full bg-muted/80 ring-1 ring-border/50">
+						<motion.div
+							className="h-full rounded-full bg-gradient-to-r from-primary via-primary/90 to-violet-500 shadow-[0_0_12px_hsl(var(--primary)/0.5)]"
+							style={{ width: `${progress}%` }}
+							transition={{ duration: 0.2 }}
+						/>
+					</div>
+					<p className="mt-5 font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground sm:text-xs">
+						Initializing system
+						<span className="mx-2 text-border">·</span>
+						<span className="tabular-nums text-foreground/80">{progress}%</span>
+					</p>
+				</div>
+			</motion.div>
 		</div>
 	);
 }

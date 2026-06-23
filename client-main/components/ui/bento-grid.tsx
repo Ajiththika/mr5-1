@@ -47,7 +47,7 @@ export const SpotlightCard = ({
     return (
         <div
             className={cn(
-                "group relative border border-white/5 bg-surface overflow-hidden rounded-xl",
+                "group relative border border-border bg-card overflow-hidden rounded-xl shadow-[0_1px_2px_oklch(var(--shadow-color)/0.06),0_4px_14px_oklch(var(--shadow-color)/0.04)]",
                 className
             )}
             onMouseMove={handleMouseMove}
@@ -125,7 +125,7 @@ export const BentoItem = ({
                     <div className="group-hover/bento:translate-x-1.5 transition duration-500 ease-in-out h-full flex flex-col">
                         <div className="flex items-center gap-3 mb-2 md:mb-3">
                             {icon && <div className="text-primary drop-shadow-[0_0_8px_rgba(139,92,246,0.4)]">{icon}</div>}
-                            {title && <h3 className="font-bold text-neutral-100 tracking-tight text-lg">{title}</h3>}
+                            {title && <h3 className="font-bold text-foreground tracking-tight text-lg">{title}</h3>}
                         </div>
                         {subtitle && (
                             <p className="text-muted-foreground/80 text-sm leading-relaxed font-light mb-4">

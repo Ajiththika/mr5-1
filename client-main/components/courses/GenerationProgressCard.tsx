@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Loader2, Sparkles, BookOpen, GitMerge, ArrowRight } from "lucide-react";
+import { Loader2, Sparkles, BookOpen } from "lucide-react";
 import type { GenerationJobStatus } from "@/services/courseDiscovery.service";
 
 const STATUS_LABELS: Record<string, string> = {

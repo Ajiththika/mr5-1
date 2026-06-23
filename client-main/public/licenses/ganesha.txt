@@ -1,0 +1,30 @@
+MR5 School — Third-Party 3D Asset License Record
+================================================
+
+Asset ID:       ganesha-welcome-guide
+File:           /models/ganesha.glb
+Format:         GLB (glTF Binary)
+
+Model Name:     Indigo Ganesha - Avatar
+Author:         ultranique
+Source URL:     https://skfb.ly/6FRHv
+Sketchfab:      https://sketchfab.com/3d-models/indigo-ganesha-avatar
+
+License:        Creative Commons Attribution 4.0 International (CC BY 4.0)
+License URL:    http://creativecommons.org/licenses/by/4.0/
+
+MANDATORY ATTRIBUTION (must appear in product UI):
+Indigo Ganesha - Avatar by ultranique (https://skfb.ly/6FRHv) is licensed under CC BY 4.0 (http://creativecommons.org/licenses/by/4.0/)
+
+License Permissions:
+- Commercial use:     ALLOWED (with attribution)
+- Modification:       ALLOWED (with attribution)
+- Redistribution:     ALLOWED (with attribution)
+- Attribution:        REQUIRED — do not remove credit from UI
+
+MR5 Usage:
+- Welcome guide statue in 3D classroom (non-replacing AI teacher)
+- Lazy-loaded; performance-tier gated on mobile
+
+Integrated:     2026-06-22
+Maintained by:    MR5 School Platform Team

@@ -1,3 +1,14 @@
+export interface TrialStatus {
+    active: boolean;
+    used: boolean;
+    expiresAt: string | null;
+    startedAt: string | null;
+    remainingMs: number;
+    canStart: boolean;
+    hasProAccess: boolean;
+    durationHours: number;
+}
+
 export interface User {
     id: string;
     name: string;
@@ -8,6 +19,7 @@ export interface User {
     avatarPreset?: string;
     onboardingCompleted?: boolean;
     welcomeChatCompleted?: boolean;
+    trial?: TrialStatus;
     age?: number;
     educationLevel?: string;
     language?: string;

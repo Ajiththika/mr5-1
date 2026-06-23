@@ -31,7 +31,7 @@ export function Navbar() {
 
 	return (
 		<>
-			<nav className="border-b border-white/5 bg-background/60 backdrop-blur-xl sticky top-0 z-50 transition-all duration-300">
+			<nav className="sticky top-0 z-50 border-b border-border bg-card/95 shadow-[0_1px_0_oklch(var(--border)),0_4px_16px_oklch(var(--shadow-color)/0.04)] backdrop-blur-md transition-all duration-300">
 				<div className="container mx-auto px-4 py-3 flex items-center justify-between">
 					{/* Logo with Animation */}
 					<Link href="/" className="flex items-center gap-3 group relative ml-1">
@@ -47,7 +47,7 @@ export function Navbar() {
 							/>
 						</div>
 						<div className="flex flex-col relative">
-							<span className="text-xl font-bold text-white tracking-tight">
+							<span className="text-xl font-bold text-foreground tracking-tight">
 								MR5 School
 							</span>
 							<span className="text-[10px] text-muted-foreground/80 tracking-widest font-mono uppercase">
@@ -57,35 +57,35 @@ export function Navbar() {
 					</Link>
 
 					{/* Navigation Links */}
-					<div className="hidden md:flex items-center gap-1 bg-white/5 rounded-full p-1 border border-white/5 shadow-inner">
+					<div className="hidden md:flex items-center gap-1 rounded-full border border-border bg-muted/80 p-1 shadow-inner">
 						<Link
 							href="/courses"
-							className="px-4 py-1.5 text-sm text-muted-foreground hover:text-white hover:bg-white/10 rounded-full transition-all duration-300"
+							className="rounded-full px-4 py-1.5 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-card hover:text-foreground hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 						>
 							{t("nav.library")}
 						</Link>
 						<Link
 							href="/pricing"
-							className="px-4 py-1.5 text-sm text-muted-foreground hover:text-white hover:bg-white/10 rounded-full transition-all duration-300"
+							className="rounded-full px-4 py-1.5 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-card hover:text-foreground hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 						>
 							{t("nav.pricing")}
 						</Link>
 						<Link
 							href="/about"
-							className="px-4 py-1.5 text-sm text-muted-foreground hover:text-white hover:bg-white/10 rounded-full transition-all duration-300"
+							className="rounded-full px-4 py-1.5 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-card hover:text-foreground hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 						>
 							{t("nav.manifesto")}
 						</Link>
 						<Link
 							href="/contact"
-							className="px-4 py-1.5 text-sm text-muted-foreground hover:text-white hover:bg-white/10 rounded-full transition-all duration-300"
+							className="rounded-full px-4 py-1.5 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-card hover:text-foreground hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 						>
 							{t("nav.connect")}
 						</Link>
 						{user?.role === 'student' && (
 							<Link
 								href="/apps/avatar-creator"
-								className="px-4 py-1.5 text-sm text-primary font-bold hover:text-white hover:bg-primary/20 rounded-full transition-all duration-300 flex items-center gap-1.5 group"
+								className="px-4 py-1.5 text-sm text-primary font-bold hover:text-primary-foreground hover:bg-primary rounded-full transition-all duration-300 flex items-center gap-1.5 group"
 							>
 								<Sparkles className="w-3.5 h-3.5 group-hover:rotate-12 transition-transform" />
 								{t("nav.avatarStudio")}
@@ -105,18 +105,18 @@ export function Navbar() {
 								<DropdownMenuTrigger asChild>
 									<Button
 										variant="ghost"
-										className="relative h-9 w-9 rounded-full ring-2 ring-white/10 hover:ring-primary/50 transition-all duration-300 p-0 overflow-hidden"
+										className="relative h-9 w-9 rounded-full ring-2 ring-border hover:ring-primary/50 transition-all duration-300 p-0 overflow-hidden"
 									>
-										<div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-purple-500/20 opacity-50" />
-										<div className="flex h-full w-full items-center justify-center bg-black/50 backdrop-blur-sm">
+										<div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-primary/5 opacity-60" />
+										<div className="flex h-full w-full items-center justify-center bg-muted/80 backdrop-blur-sm">
 											<span className="text-sm font-bold text-primary">{user.name?.[0]?.toUpperCase() || "U"}</span>
 										</div>
 									</Button>
 								</DropdownMenuTrigger>
-								<DropdownMenuContent className="w-56 bg-surface/90 backdrop-blur-xl border border-white/10 text-foreground" align="end" forceMount>
+								<DropdownMenuContent className="w-56 bg-popover/95 backdrop-blur-xl border border-border text-foreground" align="end" forceMount>
 									<DropdownMenuLabel className="font-normal">
 										<div className="flex flex-col space-y-1">
-											<p className="text-sm font-medium leading-none text-white">
+											<p className="text-sm font-medium leading-none text-foreground">
 												{user.name}
 											</p>
 											<p className="text-xs leading-none text-muted-foreground">
@@ -124,14 +124,14 @@ export function Navbar() {
 											</p>
 										</div>
 									</DropdownMenuLabel>
-									<DropdownMenuSeparator className="bg-white/10" />
-									<DropdownMenuItem asChild className="focus:bg-primary/20 focus:text-white cursor-pointer">
+									<DropdownMenuSeparator className="bg-border" />
+									<DropdownMenuItem asChild className="focus:bg-primary/10 focus:text-foreground cursor-pointer">
 										<Link href={`/${user.role}`}>{user.role}</Link>
 									</DropdownMenuItem>
-									<DropdownMenuItem asChild className="focus:bg-primary/20 focus:text-white cursor-pointer">
+									<DropdownMenuItem asChild className="focus:bg-primary/10 focus:text-foreground cursor-pointer">
 										<Link href="/profile">{t("nav.profile")}</Link>
 									</DropdownMenuItem>
-									<DropdownMenuSeparator className="bg-white/10" />
+									<DropdownMenuSeparator className="bg-border" />
 									<DropdownMenuItem onClick={logout} className="text-red-400 focus:bg-red-500/10 focus:text-red-300 cursor-pointer">
 										<LogOut className="mr-2 h-4 w-4" />
 										{t("nav.logout")}
@@ -143,7 +143,7 @@ export function Navbar() {
 								<Button
 									variant="ghost"
 									onClick={() => setShowLogin(true)}
-									className="text-muted-foreground hover:text-white hover:bg-white/5"
+									className="text-muted-foreground hover:text-foreground"
 								>
 									{t("nav.signIn")}
 								</Button>
@@ -161,11 +161,11 @@ export function Navbar() {
 					<div className="md:hidden flex items-center ml-2">
 						<Sheet>
 							<SheetTrigger asChild>
-								<Button variant="ghost" size="icon" className="text-muted-foreground hover:text-white">
+								<Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
 									<Menu className="w-6 h-6" />
 								</Button>
 							</SheetTrigger>
-							<SheetContent side="right" className="bg-background/95 backdrop-blur-xl border-white/10 w-[300px]">
+							<SheetContent side="right" className="bg-background/95 backdrop-blur-xl border-border w-[300px]">
 								<SheetHeader>
 									<SheetTitle className="text-left text-lg font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">{t("nav.menu")}</SheetTitle>
 								</SheetHeader>
@@ -177,37 +177,44 @@ export function Navbar() {
 										<h3 className="text-sm font-medium text-muted-foreground mb-2 px-2 uppercase tracking-wider">{t("nav.menu")}</h3>
 										<Link
 											href="/"
-											className="px-4 py-3 text-lg font-medium hover:bg-white/5 rounded-lg transition-colors flex items-center justify-between group"
+											className="px-4 py-3 text-lg font-medium hover:bg-muted rounded-lg transition-colors flex items-center justify-between group"
 										>
 											{t("nav.home")}
 											<span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
 										</Link>
 										<Link
 											href="/courses"
-											className="px-4 py-3 text-lg font-medium hover:bg-white/5 rounded-lg transition-colors flex items-center justify-between group"
+											className="px-4 py-3 text-lg font-medium hover:bg-muted rounded-lg transition-colors flex items-center justify-between group"
 										>
 											{t("nav.library")}
 											<span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
 										</Link>
 										<Link
 											href="/pricing"
-											className="px-4 py-3 text-lg font-medium hover:bg-white/5 rounded-lg transition-colors flex items-center justify-between group"
+											className="px-4 py-3 text-lg font-medium hover:bg-muted rounded-lg transition-colors flex items-center justify-between group"
 										>
 											{t("nav.pricing")}
 											<span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
 										</Link>
 										<Link
 											href="/about"
-											className="px-4 py-3 text-lg font-medium hover:bg-white/5 rounded-lg transition-colors flex items-center justify-between group"
+											className="px-4 py-3 text-lg font-medium hover:bg-muted rounded-lg transition-colors flex items-center justify-between group"
 										>
 											{t("nav.manifesto")}
 											<span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
 										</Link>
 										<Link
 											href="/contact"
-											className="px-4 py-3 text-lg font-medium hover:bg-white/5 rounded-lg transition-colors flex items-center justify-between group"
+											className="px-4 py-3 text-lg font-medium hover:bg-muted rounded-lg transition-colors flex items-center justify-between group"
 										>
 											{t("nav.connect")}
+											<span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+										</Link>
+										<Link
+											href="/apps/avatar-creator"
+											className="px-4 py-3 text-lg font-medium text-primary hover:bg-muted rounded-lg transition-colors flex items-center justify-between group"
+										>
+											{t("nav.avatarStudio")}
 											<span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
 										</Link>
 									</div>

@@ -1,22 +1,23 @@
-# MR5 School
+# MR5 School v2.0.0
 
-Immersive 3D learning platform with AI teachers, live weather classrooms, and student dashboard.
+Immersive 3D learning platform with AI teachers, live weather classrooms, and student dashboard. **Enterprise release — AWS-ready.**
 
 ## Monorepo layout
 
 | Directory | Description |
 |-----------|-------------|
-| [`client-main/`](client-main/) | Next.js 15 frontend |
-| [`Mr5-School-API-main/`](Mr5-School-API-main/) | Express API + MongoDB |
+| [`client-main/`](client-main/) | Next.js 15 frontend (`mr5-school-web`) |
+| [`Mr5-School-API-main/`](Mr5-School-API-main/) | Express API + MongoDB (`mr5-school-api`) |
+| [`infra/aws/`](infra/aws/) | ECS task definition templates |
 | [`docs/`](docs/) | Product documentation |
 
-## Quick start
+## Quick start (development)
 
 ```bash
 # 1. API
 cd Mr5-School-API-main
 cp .env.local.example .env
-# Set MONGO_URI and JWT_SECRET
+# Set MONGO_URI and JWT_SECRET (32+ chars)
 PORT=5001 NODE_ENV=development node src/app.js
 
 # 2. Frontend
@@ -27,20 +28,30 @@ npm install && npm run dev
 
 Open http://localhost:3000
 
+## Production verify (before AWS deploy)
+
+```bash
+npm run verify          # lint + test + build (all packages)
+# or
+docker compose up --build
+```
+
+## AWS deployment
+
+**Start here:** [AWS_FINAL_DEPLOY.md](AWS_FINAL_DEPLOY.md)
+
+Push to `main` → GitHub Actions runs tests, builds Docker images, pushes to ECR, rolls ECS services.
+
 ## Documentation
 
 | Document | Purpose |
 |----------|---------|
-| [ENV_AUDIT_REPORT.md](ENV_AUDIT_REPORT.md) | Complete environment variable inventory |
-| [PROJECT_AUDIT.md](PROJECT_AUDIT.md) | Stack, structure, integrations |
-| [AWS_PROJECT_AUDIT.md](AWS_PROJECT_AUDIT.md) | AWS deployment discovery |
+| [AWS_FINAL_DEPLOY.md](AWS_FINAL_DEPLOY.md) | **AWS go-live guide (start here)** |
+| [FINAL_RELEASE_REPORT.md](FINAL_RELEASE_REPORT.md) | v2.0.0 release validation |
+| [ENV_AUDIT_REPORT.md](ENV_AUDIT_REPORT.md) | Environment variable inventory |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | General deployment options |
 | [AWS_ARCHITECTURE.md](AWS_ARCHITECTURE.md) | AWS service design |
-| [AWS_DEPLOYMENT_CHECKLIST.md](AWS_DEPLOYMENT_CHECKLIST.md) | Go-live checklist |
-| [DEPLOYMENT.md](DEPLOYMENT.md) | Deployment steps (incl. AWS) |
-| [TEST_REPORT.md](TEST_REPORT.md) | Test validation results |
-| [FINAL_RELEASE_REPORT.md](FINAL_RELEASE_REPORT.md) | AWS release candidate summary |
 | [ROLLBACK.md](ROLLBACK.md) | Rollback procedures |
-| [RELEASE_NOTES.md](RELEASE_NOTES.md) | Release notes |
 
 ## Environment setup
 
@@ -48,20 +59,15 @@ Copy example files — **never commit real secrets**:
 
 - `client-main/.env.local.example` → `.env.local`
 - `Mr5-School-API-main/.env.local.example` → `.env`
-
-See [ENV_AUDIT_REPORT.md](ENV_AUDIT_REPORT.md) for every variable, required vs optional, and safe placeholders.
+- `.env.production.example` → AWS Secrets Manager reference
 
 ## Scripts
 
 ```bash
-# Frontend
-cd client-main && npm run build && npm test
-
-# API
-cd Mr5-School-API-main && npm test
-
-# E2E (with dev server running)
-cd client-main && npx playwright test
+npm run verify          # Full release check (recommended before deploy)
+npm run test            # API + web tests
+npm run build           # Production web build
+npm run docker:up       # Docker Compose stack
 ```
 
 ## License

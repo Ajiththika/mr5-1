@@ -1,6 +1,7 @@
 import Enrollment from "../models/Enrollment.js";
 import { asyncHandler } from "../middleware/errorHandler.js";
 import { paginate } from "../utils/pagination.js";
+import { hasProAccess } from "../services/trialService.js";
 
 // @desc    Get all enrollments with pagination
 // @route   GET /api/enrollments
@@ -165,6 +166,10 @@ const checkEnrollmentAccess = asyncHandler(async (req, res) => {
 
 	if (req.user.role === "admin" || req.user.role === "AI-TEACHER") {
 		return res.json({ access: true });
+	}
+
+	if (hasProAccess(req.user)) {
+		return res.json({ access: true, trial: true });
 	}
 
 	const enrollment = await Enrollment.findOne({

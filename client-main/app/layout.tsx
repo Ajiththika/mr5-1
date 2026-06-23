@@ -16,7 +16,10 @@ import { AccessibilityPreferencesSync } from "@/components/accessibility/Accessi
 import { ConsentFeaturesBootstrap } from "@/components/legal/ConsentFeaturesBootstrap";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AudioProvider } from "@/contexts/AudioContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
+import { ThemeMetaSync } from "@/components/theme/ThemeMetaSync";
 import type { ReactNode } from "react";
+import { LicenseAttributionBar } from "@/components/legal/LicenseAttributionBar";
 
 export const metadata: Metadata = genMeta({
 	title: "3D Virtual Classroom & AI Teachers",
@@ -56,7 +59,7 @@ export default function RootLayout({
 	const educationalData = generateStructuredData("EducationalOrganization");
 
 	return (
-		<html lang="en" suppressHydrationWarning className="dark">
+		<html lang="en" suppressHydrationWarning>
 			<head>
 				<StructuredData data={[organizationData, websiteData, educationalData]} />
 				<link rel="canonical" href={process.env.NEXT_PUBLIC_SITE_URL || "https://mr5school.com"} />
@@ -82,23 +85,14 @@ export default function RootLayout({
 							(function() {
 								if ('serviceWorker' in navigator) {
 									navigator.serviceWorker.getRegistrations().then(function(registrations) {
-										if (registrations.length > 0) {
-											for(let registration of registrations) {
-												console.log('Antigravity: Killing Service Worker', registration.scope);
-												registration.unregister();
-											}
-											// Clear caches as well
-											if ('caches' in window) {
-												caches.keys().then(function(names) {
-													for (let name of names) caches.delete(name);
-												});
-											}
-											// Force a clean reload to bypass the intercept
-											if (!sessionStorage.getItem('sw_killed')) {
-												sessionStorage.setItem('sw_killed', 'true');
-												window.location.reload();
-											}
+										for (var i = 0; i < registrations.length; i++) {
+											registrations[i].unregister();
 										}
+									});
+								}
+								if ('caches' in window) {
+									caches.keys().then(function(names) {
+										names.forEach(function(name) { caches.delete(name); });
 									});
 								}
 							})();
@@ -112,8 +106,8 @@ export default function RootLayout({
 				<LanguageProvider>
 				<ThemeProvider
 					attribute="class"
-					defaultTheme="dark"
-					enableSystem={false}
+					defaultTheme="system"
+					enableSystem
 					disableTransitionOnChange
 				>
 					<ThemeColorProvider>
@@ -121,15 +115,19 @@ export default function RootLayout({
 							<RegionalSettingsProvider>
 								<ErrorBoundary>
 									<EnhancedUserProvider>
+										<NotificationProvider>
+										<ThemeMetaSync />
 										<AccessibilityPreferencesSync />
 										<ConsentFeaturesBootstrap />
 										<DashboardContextProvider>
 											<AudioProvider>
 												{children}
+												<LicenseAttributionBar />
 												<Toaster />
 												<PerformanceMonitor />
 											</AudioProvider>
 										</DashboardContextProvider>
+										</NotificationProvider>
 									</EnhancedUserProvider>
 								</ErrorBoundary>
 							</RegionalSettingsProvider>

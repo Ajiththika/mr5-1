@@ -3,7 +3,7 @@ import type { PricingTier } from "@/components/pricing/PricingCard";
 export const PRICING_TIERS: PricingTier[] = [
   {
     name: "Starter",
-    description: "Perfect for exploring AI-powered learning.",
+    description: "Basic access after your trial ends.",
     price: { monthly: 0, annual: 0 },
     ctaText: "Start Learning Free",
     features: [
@@ -11,17 +11,17 @@ export const PRICING_TIERS: PricingTier[] = [
       { text: "5 AI Tutor queries / day", included: true },
       { text: "Community support", included: true },
       { text: "Basic progress tracking", included: true },
-      { text: "Personalized learning path", included: false },
+      { text: "5-hour full-access trial (once)", included: true },
       { text: "Unlimited AI interactions", included: false },
       { text: "Certificate of completion", included: false },
     ],
   },
   {
     name: "Pro Learner",
-    description: "Unlock your full potential with unlimited AI.",
+    description: "Everything unlocked — start with a 5-hour free trial.",
     price: { monthly: 19, annual: 190 },
     popular: true,
-    ctaText: "Upgrade to Pro",
+    ctaText: "Start 5-Hour Trial",
     features: [
       { text: "Access to all courses", included: true },
       { text: "Unlimited AI Tutor queries", included: true },

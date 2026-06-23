@@ -1,20 +1,18 @@
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import User from '../models/User.js';
-import dotenv from 'dotenv';
-
-dotenv.config();
+import envConfig from './env.js';
 
 export const isGoogleOAuthEnabled = Boolean(
-    process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+    envConfig.GOOGLE_CLIENT_ID && envConfig.GOOGLE_CLIENT_SECRET
 );
 
 export default function (passport) {
     // Only register Google OAuth strategy if credentials are configured
     if (isGoogleOAuthEnabled) {
         passport.use(new GoogleStrategy({
-            clientID: process.env.GOOGLE_CLIENT_ID,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-            callbackURL: process.env.GOOGLE_CALLBACK_URL || "http://localhost:5001/api/auth/google/callback"
+            clientID: envConfig.GOOGLE_CLIENT_ID,
+            clientSecret: envConfig.GOOGLE_CLIENT_SECRET,
+            callbackURL: envConfig.GOOGLE_CALLBACK_URL,
         },
             async (accessToken, refreshToken, profile, done) => {
                 try {

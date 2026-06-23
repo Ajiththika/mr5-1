@@ -12,6 +12,7 @@ import {
 	googleCallback,
 	forgotPassword,
 	resetPassword,
+	getAuthProviders,
 } from "../controllers/authController.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 import { authLimiter } from "../middleware/security.js";
@@ -33,6 +34,7 @@ router.post("/login", authLimiter, login);
 router.post("/refresh", refreshToken);
 router.post("/forgotpassword", forgotPassword);
 router.put("/resetpassword/:resettoken", resetPassword);
+router.get("/providers", getAuthProviders);
 
 // Google Auth Routes (only when OAuth credentials are set)
 if (isGoogleOAuthEnabled) {

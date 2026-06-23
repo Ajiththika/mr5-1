@@ -3,20 +3,31 @@
 export const dynamic = "force-dynamic";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
 import { PricingToggle } from "@/components/pricing/PricingToggle";
 import { PricingCard, PricingTier } from "@/components/pricing/PricingCard";
+import { TrialPromoBanner } from "@/components/pricing/TrialPromoBanner";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, HelpCircle, ShieldCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PRICING_TIERS } from "@/lib/pricing-tiers";
 import { Footer } from "@/components/layout/footer";
+import { useEnhancedUser } from "@/contexts/EnhancedUserContext";
+import { trialService } from "@/services/trial.service";
 
 const FAQS = [
   {
+    question: "How does the 5-hour free trial work?",
+    answer:
+      "Sign up once and start your trial to unlock every Pro feature for 5 hours — all courses, unlimited AI tutoring, certificates, and more. No credit card required. After it ends, you can continue on the free Starter plan or upgrade to Pro.",
+  },
+  {
     question: "Can I cancel my subscription anytime?",
     answer:
-      "Yes, absolutely. You can cancel your subscription at any time from your account settings. You'll retain access until the end of your current billing period.",
+      "Yes. You can cancel from your account settings at any time. You keep access until the end of your current billing period.",
   },
   {
     question: "Is there a student discount available?",
@@ -31,88 +42,134 @@ const FAQS = [
   {
     question: "Do you offer team licenses?",
     answer:
-      "Yes! Our Team plan supports bulk enrollment and centralized billing. Contact sales for organizations larger than 50 members.",
+      "Yes. Our Team plan supports bulk enrollment and centralized billing. Contact sales for organizations larger than 50 members.",
   },
 ];
 
 export default function PricingPageClient() {
   const [isAnnual, setIsAnnual] = useState(true);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [startingTrial, setStartingTrial] = useState(false);
+  const router = useRouter();
+  const { isAuthenticated, user, refreshUser } = useEnhancedUser();
 
   const tiers: PricingTier[] = PRICING_TIERS;
 
+  const handleProCta = async () => {
+    if (!isAuthenticated) {
+      router.push("/register");
+      return;
+    }
+
+    if (user?.trial?.active) {
+      router.push("/courses");
+      return;
+    }
+
+    if (!user?.trial?.canStart) {
+      router.push("/courses");
+      return;
+    }
+
+    setStartingTrial(true);
+    try {
+      await trialService.startTrial();
+      await refreshUser();
+      router.push("/courses");
+    } catch {
+      router.push("/courses");
+    } finally {
+      setStartingTrial(false);
+    }
+  };
+
+  const handleStarterCta = () => {
+    router.push(isAuthenticated ? "/courses" : "/register");
+  };
+
+  const handleTeamCta = () => {
+    router.push("/contact");
+  };
+
+  const tierHandlers = [handleStarterCta, handleProCta, handleTeamCta];
+
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-primary/30 flex flex-col font-sans">
+    <div className="flex min-h-screen flex-col bg-background font-sans text-foreground selection:bg-primary/30">
       <Navbar />
 
-      <main className="relative flex-1 overflow-hidden px-4 pb-20 pt-24">
+      <main className="relative flex-1 overflow-hidden px-4 pb-16 pt-20 sm:px-6">
         <div className="pointer-events-none fixed inset-0 z-0">
-          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay" />
-          <div className="absolute right-[-10%] top-[-20%] h-[600px] w-[600px] animate-pulse-slow rounded-full bg-purple-600/20 blur-[120px] mix-blend-screen" />
-          <div className="absolute bottom-[-10%] left-[-10%] h-[500px] w-[500px] rounded-full bg-primary/10 blur-[100px] mix-blend-screen" />
+          <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.04] via-background to-background" />
+          <div className="absolute right-[-10%] top-[-20%] h-[480px] w-[480px] rounded-full bg-primary/10 blur-[120px]" />
+          <div className="absolute bottom-[-10%] left-[-10%] h-[400px] w-[400px] rounded-full bg-purple-500/8 blur-[100px]" />
         </div>
 
-        <div className="relative z-10 mx-auto max-w-7xl">
-          <div className="mx-auto mb-16 max-w-4xl space-y-6 text-center">
+        <div className="relative z-10 mx-auto max-w-6xl">
+          <header className="hero-band mx-auto mb-8 max-w-3xl space-y-4 p-6 text-center sm:p-8">
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm font-medium text-primary backdrop-blur-sm"
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-1 text-sm font-semibold text-primary shadow-sm"
             >
               <ShieldCheck className="h-4 w-4" />
-              <span>Risk-free 14-day trial</span>
+              <span>5-hour free trial — full access</span>
             </motion.div>
 
             <motion.h1
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-5xl font-extrabold tracking-tight text-white md:text-7xl"
+              className="heading-display text-4xl sm:text-5xl"
             >
-              Invest in your <br />
-              <span className="bg-gradient-to-r from-primary via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                Future Self
-              </span>
+              Simple pricing for{" "}
+              <span className="text-primary">every learner</span>
             </motion.h1>
 
             <motion.p
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="mx-auto max-w-2xl text-xl leading-relaxed text-muted-foreground"
+              transition={{ delay: 0.05 }}
+              className="mx-auto max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg"
             >
-              Unlock the full power of AI-driven education. Simple pricing, no hidden fees.
+              Try every feature free for 5 hours, then choose the plan that fits you. No hidden fees.
             </motion.p>
-          </div>
+          </header>
 
-          <PricingToggle isAnnual={isAnnual} onToggle={setIsAnnual} />
+          <TrialPromoBanner />
 
-          <div className="mx-auto mb-32 grid max-w-6xl grid-cols-1 gap-8 md:grid-cols-3">
+          <PricingToggle isAnnual={isAnnual} onToggle={setIsAnnual} compact />
+
+          <div className="mx-auto mb-16 grid max-w-5xl grid-cols-1 items-center gap-5 pt-4 md:grid-cols-3 md:gap-6 md:pt-5">
             {tiers.map((tier, index) => (
-              <PricingCard key={tier.name} tier={tier} isAnnual={isAnnual} index={index} />
+              <PricingCard
+                key={tier.name}
+                tier={tier}
+                isAnnual={isAnnual}
+                index={index}
+                compact
+                onCtaClick={tierHandlers[index]}
+                ctaLoading={index === 1 && startingTrial}
+              />
             ))}
           </div>
 
-          <div className="mx-auto max-w-3xl">
-            <div className="mb-12 text-center">
-              <h2 className="mb-4 text-3xl font-bold">Frequently Asked Questions</h2>
-              <p className="text-muted-foreground">Have questions? We&apos;re here to help.</p>
+          <section className="mx-auto max-w-2xl">
+            <div className="mb-6 text-center">
+              <h2 className="heading-display mb-2 text-2xl sm:text-3xl">Frequently asked questions</h2>
+              <p className="text-sm text-muted-foreground sm:text-base">Quick answers about trials and billing.</p>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {FAQS.map((faq, i) => (
-                <div
-                  key={faq.question}
-                  className="overflow-hidden rounded-2xl border border-white/10 bg-white/5"
-                >
+                <div key={faq.question} className="elevated-card overflow-hidden">
                   <button
                     type="button"
                     onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                    className="flex w-full items-center justify-between p-6 text-left transition-colors hover:bg-white/5 focus:outline-none"
+                    className="flex w-full items-center justify-between gap-4 p-4 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset sm:p-5"
                   >
-                    <span className="pr-8 text-lg font-medium">{faq.question}</span>
+                    <span className="text-sm font-semibold text-foreground sm:text-base">{faq.question}</span>
                     <ChevronDown
                       className={cn(
-                        "h-5 w-5 transition-transform duration-300",
+                        "h-4 w-4 shrink-0 transition-transform duration-300",
                         openFaq === i && "rotate-180",
                       )}
                     />
@@ -123,9 +180,9 @@ export default function PricingPageClient() {
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3 }}
+                        transition={{ duration: 0.25 }}
                       >
-                        <div className="px-6 pb-6 leading-relaxed text-muted-foreground">
+                        <div className="px-4 pb-4 text-sm leading-relaxed text-muted-foreground sm:px-5 sm:pb-5">
                           {faq.answer}
                         </div>
                       </motion.div>
@@ -134,20 +191,17 @@ export default function PricingPageClient() {
                 </div>
               ))}
             </div>
-          </div>
+          </section>
 
-          <div className="mt-24 border-t border-white/10 pb-8 pt-16 text-center">
-            <div className="mb-6 inline-flex items-center justify-center rounded-full bg-primary/10 p-4">
-              <HelpCircle className="h-8 w-8 text-primary" />
+          <div className="section-divider mt-14 pt-10 text-center">
+            <div className="mb-4 inline-flex items-center justify-center rounded-full border border-primary/20 bg-primary/10 p-3">
+              <HelpCircle className="h-6 w-6 text-primary" />
             </div>
-            <h3 className="mb-2 text-2xl font-bold">Still have questions?</h3>
-            <p className="mb-6 text-muted-foreground">Our support team is ready to assist you.</p>
-            <button
-              type="button"
-              className="rounded-full bg-white px-8 py-3 font-semibold text-black transition-colors hover:bg-gray-200"
-            >
-              Contact Support
-            </button>
+            <h3 className="heading-display mb-2 text-xl sm:text-2xl">Still have questions?</h3>
+            <p className="mb-5 text-sm text-muted-foreground sm:text-base">Our support team is ready to help.</p>
+            <Button size="lg" asChild>
+              <Link href="/contact">Contact support</Link>
+            </Button>
           </div>
         </div>
       </main>

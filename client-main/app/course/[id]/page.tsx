@@ -26,6 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
 import type { SchoolCampusSceneProps } from "@/components/3d/school-campus-scene";
+import { CAMPUS_ROOMS } from "@/lib/campus-rooms";
 
 const ClassroomMiniPreview = dynamic(
     () =>
@@ -120,7 +121,7 @@ export default function CoursePage() {
 
     if (authLoading || verifying) {
         return (
-            <div className="min-h-screen bg-[#020617] flex items-center justify-center">
+            <div className="min-h-screen bg-background flex items-center justify-center">
                 <div className="relative">
                     <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full animate-pulse" />
                     <Loader2 className="h-12 w-12 text-primary animate-spin relative z-10" />
@@ -131,11 +132,11 @@ export default function CoursePage() {
 
     if (courseError || !courseData) {
         return (
-            <div className="min-h-screen bg-[#020617] text-white flex flex-col">
+            <div className="min-h-screen bg-background text-foreground flex flex-col">
                 <Navbar />
                 <main className="flex-1 flex flex-col items-center justify-center px-4 text-center space-y-4">
                     <h1 className="text-2xl font-bold">Course not found</h1>
-                    <p className="text-slate-400">This course could not be loaded. It may have been removed or the link is invalid.</p>
+                    <p className="text-muted-foreground">This course could not be loaded. It may have been removed or the link is invalid.</p>
                     <Button asChild>
                         <Link href="/courses">Browse courses</Link>
                     </Button>
@@ -145,7 +146,7 @@ export default function CoursePage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#020617] text-white selection:bg-primary/30">
+        <div className="min-h-screen bg-background text-foreground selection:bg-primary/30">
             <Navbar />
 
             {/* Background Atmosphere */}
@@ -170,35 +171,35 @@ export default function CoursePage() {
                                 <Badge className="bg-primary/20 text-primary border-primary/30 uppercase tracking-widest text-[10px] py-1 px-3">
                                     {courseData?.category || "Academy"}
                                 </Badge>
-                                <Badge variant="outline" className="border-white/10 text-white/50 uppercase tracking-widest text-[10px] py-1 px-3">
+                                <Badge variant="outline" className="border-border text-foreground/50 uppercase tracking-widest text-[10px] py-1 px-3">
                                     {courseData?.level || "All Levels"}
                                 </Badge>
                             </div>
 
-                            <h1 className="text-5xl md:text-7xl font-black tracking-tighter leading-tight italic bg-gradient-to-br from-white via-white to-white/40 bg-clip-text text-transparent">
+                            <h1 className="text-5xl md:text-7xl font-black tracking-tighter leading-tight italic text-foreground text-glow">
                                 {courseData?.title}
                             </h1>
 
-                            <p className="text-xl text-slate-400 leading-relaxed font-light max-w-xl">
+                            <p className="text-xl text-muted-foreground leading-relaxed font-light max-w-xl">
                                 {courseData?.description}
                             </p>
                         </div>
 
                         {/* Interactive Stats */}
-                        <div className="grid grid-cols-3 gap-6 py-8 border-y border-white/5">
+                        <div className="grid grid-cols-3 gap-6 py-8 border-y border-border">
                             <div className="space-y-1">
-                                <p className="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Duration</p>
-                                <p className="text-lg font-bold text-white uppercase italic">{courseData?.duration || "Lifetime"}</p>
+                                <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Duration</p>
+                                <p className="text-lg font-bold text-foreground uppercase italic">{courseData?.duration || "Lifetime"}</p>
                             </div>
                             <div className="space-y-1">
-                                <p className="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Students</p>
-                                <p className="text-lg font-bold text-white uppercase italic">1.2K+</p>
+                                <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Students</p>
+                                <p className="text-lg font-bold text-foreground uppercase italic">1.2K+</p>
                             </div>
                             <div className="space-y-1">
-                                <p className="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Rating</p>
+                                <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Rating</p>
                                 <div className="flex items-center gap-1">
                                     <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                                    <p className="text-lg font-bold text-white">4.9</p>
+                                    <p className="text-lg font-bold text-foreground">4.9</p>
                                 </div>
                             </div>
                         </div>
@@ -213,9 +214,9 @@ export default function CoursePage() {
                                     { icon: Zap, text: "Hands-on Projects" },
                                     { icon: ShieldCheck, text: "Industry Certification" }
                                 ].map((feature, i) => (
-                                    <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 group hover:bg-white/10 transition-colors">
+                                    <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-border group hover:bg-muted transition-colors">
                                         <feature.icon className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
-                                        <span className="text-sm font-medium text-slate-300">{feature.text}</span>
+                                        <span className="text-sm font-medium text-muted-foreground">{feature.text}</span>
                                     </div>
                                 ))}
                             </div>
@@ -233,10 +234,10 @@ export default function CoursePage() {
                             {/* Visual Glow */}
                             <div className="absolute -inset-1 bg-gradient-to-r from-primary/30 to-purple-600/30 rounded-[2.5rem] blur-2xl opacity-50 group-hover:opacity-100 transition duration-1000" />
 
-                            <div className="relative bg-[#020617]/80 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] overflow-hidden shadow-2xl">
+                            <div className="relative bg-background/80 backdrop-blur-3xl border border-border rounded-[2.5rem] overflow-hidden shadow-2xl">
 
                                 {/* 3D Cinematic Preview — always visible */}
-                                <div className="preview-3d-root relative min-h-[360px] h-[min(52vw,440px)] w-full bg-slate-950">
+                                <div className="preview-3d-root relative min-h-[280px] h-[min(70vw,360px)] w-full bg-slate-950 sm:min-h-[360px] sm:h-[min(52vw,440px)]">
                                     {previewMode === "classroom" ? (
                                         <ClassroomMiniPreview className="h-full w-full" />
                                     ) : SchoolScene ? (
@@ -257,8 +258,8 @@ export default function CoursePage() {
                                             onClick={() => setPreviewMode("classroom")}
                                             className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-wider backdrop-blur-md transition-colors ${
                                                 previewMode === "classroom"
-                                                    ? "border-indigo-400/50 bg-indigo-600/80 text-white"
-                                                    : "border-white/15 bg-black/45 text-white/70 hover:bg-black/60"
+                                                    ? "border-indigo-400/50 bg-indigo-600/80 text-foreground"
+                                                    : "border-white/15 bg-black/45 text-foreground/70 hover:bg-black/60"
                                             }`}
                                         >
                                             Classroom
@@ -269,8 +270,8 @@ export default function CoursePage() {
                                                 onClick={() => setPreviewMode("campus")}
                                                 className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-wider backdrop-blur-md transition-colors ${
                                                     previewMode === "campus"
-                                                        ? "border-sky-400/50 bg-sky-600/80 text-white"
-                                                        : "border-white/15 bg-black/45 text-white/70 hover:bg-black/60"
+                                                        ? "border-sky-400/50 bg-sky-600/80 text-foreground"
+                                                        : "border-white/15 bg-black/45 text-foreground/70 hover:bg-black/60"
                                                 }`}
                                             >
                                                 Campus
@@ -289,16 +290,16 @@ export default function CoursePage() {
                                 </div>
 
                                 {/* Conversion Area */}
-                                <div className="p-10 space-y-8">
+                                <div className="p-5 space-y-6 sm:p-8 lg:p-10 lg:space-y-8">
                                     {!user ? (
                                         <div className="space-y-6">
                                             <div className="space-y-2">
                                                 <h3 className="text-2xl font-black uppercase italic italic">Initialize Membership</h3>
-                                                <p className="text-slate-400 text-sm">Sign in to sync your progress and unlock the full experience.</p>
+                                                <p className="text-muted-foreground text-sm">Sign in to sync your progress and unlock the full experience.</p>
                                             </div>
                                             <Button
                                                 asChild
-                                                className="w-full h-16 bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-[0.2em] italic text-lg"
+                                                className="w-full h-16 bg-primary hover:bg-primary/90 text-foreground font-black uppercase tracking-[0.2em] italic text-lg"
                                             >
                                                 <Link href={`/login?redirect=/course/${courseId}`}>
                                                     <LogIn className="mr-3 w-5 h-5" /> Login to Enroll
@@ -309,10 +310,10 @@ export default function CoursePage() {
                                         <div className="space-y-8">
                                             <div className="flex items-end justify-between">
                                                 <div className="space-y-1">
-                                                    <p className="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Global Access Fee</p>
+                                                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Global Access Fee</p>
                                                     <div className="flex items-baseline gap-2">
-                                                        <span className="text-5xl font-black text-white italic tracking-tighter">${courseData?.price || "99.00"}</span>
-                                                        <span className="text-slate-500 text-sm font-bold uppercase tracking-widest">USD</span>
+                                                        <span className="text-5xl font-black text-foreground italic tracking-tighter">${courseData?.price || "99.00"}</span>
+                                                        <span className="text-muted-foreground text-sm font-bold uppercase tracking-widest">USD</span>
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
@@ -322,7 +323,7 @@ export default function CoursePage() {
 
                                             <Button
                                                 onClick={handleEnroll}
-                                                className="w-full h-20 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white font-black uppercase tracking-[0.2em] italic text-xl shadow-[0_0_40px_rgba(120,110,255,0.4)] group"
+                                                className="w-full h-20 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-foreground font-black uppercase tracking-[0.2em] italic text-xl shadow-[0_0_40px_rgba(120,110,255,0.4)] group"
                                             >
                                                 <div className="flex flex-col items-center">
                                                     <div className="flex items-center gap-3">
@@ -333,7 +334,7 @@ export default function CoursePage() {
                                                 </div>
                                             </Button>
 
-                                            <p className="text-center text-[10px] text-slate-500 uppercase font-bold tracking-widest">
+                                            <p className="text-center text-[10px] text-muted-foreground uppercase font-bold tracking-widest">
                                                 Secure Payment Gateway // SSL Encrypted // Verified
                                             </p>
                                         </div>
@@ -342,37 +343,37 @@ export default function CoursePage() {
                                             <div className="space-y-2">
                                                 <Badge className="bg-green-500/20 text-green-500 border-green-500/30">MEMBERSHIP: ACTIVE</Badge>
                                                 <h3 className="text-3xl font-black uppercase italic">Welcome Back, Cadet</h3>
-                                                <p className="text-slate-400 text-sm">Your learning modules are primed and ready for interaction.</p>
+                                                <p className="text-muted-foreground text-sm">Your learning modules are primed and ready for interaction.</p>
                                             </div>
 
                                             <div className="grid grid-cols-1 gap-4">
                                                 <Button
                                                     asChild
-                                                    className="w-full h-16 bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-[0.2em] italic text-lg"
+                                                    className="w-full h-16 bg-primary hover:bg-primary/90 text-foreground font-black uppercase tracking-[0.2em] italic text-lg"
                                                 >
                                                     <Link href={`/course/${courseId}/lesson/start`}>
                                                         <PlayCircle className="mr-3 w-6 h-6" /> Enter Classroom
                                                     </Link>
                                                 </Button>
 
-                                                <div className="grid grid-cols-2 gap-3">
-                                                    {[
-                                                        { label: "Mensa", path: "mensa" },
-                                                        { label: "Principal", path: "principal" },
-                                                        { label: "Gallery", path: "bathroom" },
-                                                        { label: "Lab", path: "classroom" }
-                                                    ].map((room, i) => (
+                                                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
+                                                    {CAMPUS_ROOMS.map((room) => {
+                                                        const Icon = room.icon;
+                                                        return (
                                                         <Button
-                                                            key={i}
+                                                            key={room.id}
                                                             variant="outline"
-                                                            className="border-white/10 hover:bg-white/5 h-12 uppercase tracking-widest text-[10px] font-bold"
+                                                            className="border-border hover:bg-muted/50 h-12 justify-start gap-2 px-4 text-xs font-bold uppercase tracking-wide sm:text-[10px] sm:tracking-widest"
                                                             asChild
                                                         >
                                                             <Link href={`/course/${courseId}/room/${room.path}`}>
-                                                                {room.label} <ChevronRight className="ml-auto w-3 h-3 text-primary" />
+                                                                <Icon className="h-4 w-4 shrink-0 text-primary" />
+                                                                <span className="truncate">{room.label}</span>
+                                                                <ChevronRight className="ml-auto h-3 w-3 shrink-0 text-primary" />
                                                             </Link>
                                                         </Button>
-                                                    ))}
+                                                        );
+                                                    })}
                                                 </div>
                                             </div>
                                         </div>
@@ -386,10 +387,10 @@ export default function CoursePage() {
 
             {/* Call to Action Footer (for visitor) */}
             {!hasAccess && (
-                <div className="border-t border-white/5 bg-black/40 backdrop-blur-xl py-12">
+                <div className="border-t border-border bg-black/40 backdrop-blur-xl py-12">
                     <div className="container mx-auto px-4 text-center space-y-6">
                         <h2 className="text-3xl font-bold italic uppercase tracking-widest">Not Convinced?</h2>
-                        <p className="text-slate-400 max-w-lg mx-auto">
+                        <p className="text-muted-foreground max-w-lg mx-auto">
                             Join over 12,000 students already building the future of AI. Our curriculum is constantly updated with the latest breakthroughs.
                         </p>
                         <div className="flex items-center justify-center gap-12 pt-4 opacity-50">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useAudioContext } from "@/contexts/AudioContext";
-import type { SoundCategory, VoiceEvent } from "@/lib/audio";
+import type { SoundCategory } from "@/lib/audio";
 
 export function useAudio() {
   const { settings, updateSettings, resetSettings, play, playNotification, speak, unlock, isUnlocked } =
