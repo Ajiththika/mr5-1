@@ -14,6 +14,8 @@ export interface User {
     name: string;
     email: string;
     role: "student" | "AI-TEACHER" | "admin";
+    mr5Uid?: string;
+    coverImageUrl?: string;
     status: string;
     avatarUrl?: string;
     avatarPreset?: string;

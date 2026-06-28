@@ -2,6 +2,10 @@ import LessonProgress from "../models/LessonProgress.js";
 import Lesson from "../models/Lesson.js";
 import Enrollment from "../models/Enrollment.js";
 import { asyncHandler } from "../middleware/errorHandler.js";
+import {
+	recordLessonActivity,
+	recordCourseCompletion,
+} from "../services/identityGamificationService.js";
 
 const recalculateEnrollmentProgress = async (userId, courseId) => {
 	const [totalLessons, completedLessons] = await Promise.all([
@@ -56,10 +60,24 @@ export const completeLesson = asyncHandler(async (req, res) => {
 		{ upsert: true, new: true },
 	);
 
+	const priorEnrollment = await Enrollment.findOne({
+		student: req.user.id,
+		course: lesson.course,
+	}).select("progress status");
+
 	const enrollmentStats = await recalculateEnrollmentProgress(
 		req.user.id,
 		lesson.course,
 	);
+
+	const wasComplete =
+		(priorEnrollment?.progress || 0) >= 100 || priorEnrollment?.status === "completed";
+	const isNowComplete = enrollmentStats.progress >= 100;
+
+	void recordLessonActivity(req.user.id).catch(() => {});
+	if (!wasComplete && isNowComplete) {
+		void recordCourseCompletion(req.user.id, lesson.course).catch(() => {});
+	}
 
 	res.status(200).json({
 		success: true,

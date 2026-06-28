@@ -8,7 +8,7 @@ import { SignupModal } from "@/components/auth/signup-modal";
 import Image from "next/image";
 import { useEnhancedUser } from "@/contexts/EnhancedUserContext";
 import { RealTimeNotifications } from "@/components/notifications/RealTimeNotifications";
-import { LogOut, Sparkles } from "lucide-react";
+import { LogOut } from "lucide-react";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -22,6 +22,8 @@ import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/co
 import { Menu } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { LanguageSelector } from "@/components/i18n/LanguageSelector";
+import { GlobalSearchTrigger } from "@/components/identity/GlobalSearchTrigger";
+import { GlobalAcademicSearch } from "@/components/identity/GlobalAcademicSearch";
 
 export function Navbar() {
 	const { user, logout } = useEnhancedUser();
@@ -31,10 +33,12 @@ export function Navbar() {
 
 	return (
 		<>
-			<nav className="sticky top-0 z-50 border-b border-border bg-card/95 shadow-[0_1px_0_oklch(var(--border)),0_4px_16px_oklch(var(--shadow-color)/0.04)] backdrop-blur-md transition-all duration-300">
-				<div className="container mx-auto px-4 py-3 flex items-center justify-between">
-					{/* Logo with Animation */}
-					<Link href="/" className="group relative ml-1 flex -translate-y-0.5 items-center gap-2.5">
+			<nav
+				className="sticky top-0 z-50 mr5-safe-top border-b border-border bg-card/95 shadow-[0_1px_0_oklch(var(--border)),0_4px_16px_oklch(var(--shadow-color)/0.04)] backdrop-blur-md transition-all duration-300"
+				aria-label="Main navigation"
+			>
+				<div className="container mx-auto flex h-[var(--nav-height)] min-h-[var(--touch-target)] items-center justify-between gap-2 px-[max(1rem,var(--safe-left))] pr-[max(1rem,var(--safe-right))] sm:gap-3">
+					<Link href="/" className="group relative ml-1 flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
 						<div className="absolute -inset-2 rounded-xl bg-primary/15 opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-100" />
 						<div className="relative h-11 w-11 shrink-0 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 sm:h-12 sm:w-12">
 							<Image
@@ -46,56 +50,50 @@ export function Navbar() {
 								priority
 							/>
 						</div>
-						<div className="flex flex-col relative">
-							<span className="text-xl font-bold text-foreground tracking-tight">
+						<div className="flex min-w-0 flex-col">
+							<span className="truncate text-base font-bold tracking-tight text-foreground sm:text-xl">
 								MR5 School
 							</span>
-							<span className="text-[10px] text-muted-foreground/80 tracking-widest font-mono uppercase">
+							<span className="watch-hide truncate text-[10px] font-mono uppercase tracking-widest text-muted-foreground/80">
 								{t("nav.tagline")}
 							</span>
 						</div>
 					</Link>
 
-					{/* Navigation Links */}
-					<div className="hidden md:flex items-center gap-1 rounded-full border border-border bg-muted/80 p-1 shadow-inner">
+					<GlobalSearchTrigger className="hidden min-w-0 flex-1 px-2 sm:flex md:max-w-none" />
+
+					<div className="tv-enhance-nav hidden min-w-0 shrink-0 justify-center lg:flex">
+						<div className="flex max-w-full flex-nowrap items-center gap-0.5 overflow-x-auto rounded-full border border-border bg-muted/80 p-1 shadow-inner scrollbar-none lg:gap-1">
 						<Link
 							href="/courses"
-							className="rounded-full px-4 py-1.5 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-card hover:text-foreground hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+							className="touch-target-inline inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-2.5 py-1 text-fluid-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-card hover:text-foreground hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:px-3 lg:py-1.5"
 						>
 							{t("nav.library")}
 						</Link>
 						<Link
 							href="/pricing"
-							className="rounded-full px-4 py-1.5 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-card hover:text-foreground hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+							className="touch-target-inline inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-2.5 py-1 text-fluid-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-card hover:text-foreground hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:px-3 lg:py-1.5"
 						>
 							{t("nav.pricing")}
 						</Link>
 						<Link
 							href="/about"
-							className="rounded-full px-4 py-1.5 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-card hover:text-foreground hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+							className="touch-target-inline inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-2.5 py-1 text-fluid-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-card hover:text-foreground hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:px-3 lg:py-1.5"
 						>
 							{t("nav.manifesto")}
 						</Link>
 						<Link
 							href="/contact"
-							className="rounded-full px-4 py-1.5 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-card hover:text-foreground hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+							className="touch-target-inline inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-2.5 py-1 text-fluid-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-card hover:text-foreground hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:px-3 lg:py-1.5"
 						>
 							{t("nav.connect")}
 						</Link>
-						{user?.role === 'student' && (
-							<Link
-								href="/apps/avatar-creator"
-								className="px-4 py-1.5 text-sm text-primary font-bold hover:text-primary-foreground hover:bg-primary rounded-full transition-all duration-300 flex items-center gap-1.5 group"
-							>
-								<Sparkles className="w-3.5 h-3.5 group-hover:rotate-12 transition-transform" />
-								{t("nav.avatarStudio")}
-							</Link>
-						)}
+						</div>
 					</div>
 
-					{/* Auth Buttons */}
-					<div className="flex items-center gap-3">
-						<div className="hidden sm:block">
+					<div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2 lg:gap-3">
+						<GlobalSearchTrigger className="flex shrink-0 sm:hidden" />
+						<div className="watch-hide hidden sm:block">
 							<LanguageSelector compact />
 						</div>
 						<ThemeCustomizer />
@@ -105,7 +103,9 @@ export function Navbar() {
 								<DropdownMenuTrigger asChild>
 									<Button
 										variant="ghost"
-										className="relative h-9 w-9 rounded-full ring-2 ring-border hover:ring-primary/50 transition-all duration-300 p-0 overflow-hidden"
+										size="icon"
+										className="touch-target relative overflow-hidden rounded-full p-0 ring-2 ring-border transition-all duration-300 hover:ring-primary/50"
+										aria-label="Account menu"
 									>
 										<div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-primary/5 opacity-60" />
 										<div className="flex h-full w-full items-center justify-center bg-muted/80 backdrop-blur-sm">
@@ -167,11 +167,19 @@ export function Navbar() {
 									<Menu className="w-6 h-6" />
 								</Button>
 							</SheetTrigger>
-							<SheetContent side="right" className="bg-background/95 backdrop-blur-xl border-border w-[300px]">
+							<SheetContent
+								side="right"
+								className="w-[min(88vw,300px)] border-border bg-background/95 pb-[max(1rem,var(--safe-bottom))] backdrop-blur-xl"
+							>
 								<SheetHeader>
 									<SheetTitle className="text-left text-lg font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">{t("nav.menu")}</SheetTitle>
 								</SheetHeader>
 								<div className="flex flex-col gap-6 mt-10">
+									<GlobalAcademicSearch
+										showShortcut={false}
+										onNavigate={() => {}}
+										placeholder="Search courses, names, MR5 UIDs…"
+									/>
 									<div className="sm:hidden px-2">
 										<LanguageSelector />
 									</div>
@@ -207,17 +215,10 @@ export function Navbar() {
 										</Link>
 										<Link
 											href="/contact"
-											className="px-4 py-3 text-lg font-medium hover:bg-muted rounded-lg transition-colors flex items-center justify-between group"
+											className="touch-target-inline flex items-center justify-between rounded-lg px-4 py-3 text-fluid-lg font-medium transition-colors hover:bg-muted"
 										>
 											{t("nav.connect")}
-											<span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
-										</Link>
-										<Link
-											href="/apps/avatar-creator"
-											className="px-4 py-3 text-lg font-medium text-primary hover:bg-muted rounded-lg transition-colors flex items-center justify-between group"
-										>
-											{t("nav.avatarStudio")}
-											<span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+											<span className="opacity-0 transition-opacity group-hover:opacity-100">→</span>
 										</Link>
 									</div>
 

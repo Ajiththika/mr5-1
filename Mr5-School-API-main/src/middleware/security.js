@@ -34,7 +34,6 @@ export const apiLimiter = rateLimit({
 	legacyHeaders: false,
 });
 
-// Stricter rate limiting for auth endpoints
 export const authLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000, // 15 minutes
 	max: isDevelopment ? 10000 : 10, // 10 failed auth attempts per 15min in production
@@ -45,6 +44,28 @@ export const authLimiter = rateLimit({
 	standardHeaders: true,
 	legacyHeaders: false,
 	skipSuccessfulRequests: true,
+});
+
+export const identitySearchLimiter = rateLimit({
+	windowMs: 60 * 1000,
+	max: isDevelopment ? 1000 : 60,
+	message: {
+		success: false,
+		error: "Too many search requests. Please wait a moment.",
+	},
+	standardHeaders: true,
+	legacyHeaders: false,
+});
+
+export const identityFriendLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000,
+	max: isDevelopment ? 500 : 30,
+	message: {
+		success: false,
+		error: "Too many friend requests. Please try again later.",
+	},
+	standardHeaders: true,
+	legacyHeaders: false,
 });
 
 // MongoDB injection prevention

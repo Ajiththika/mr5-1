@@ -9,6 +9,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import sendEmail from "../utils/sendEmail.js";
+import { ensureIdentityForUser } from "./identityService.js";
 
 // Token configuration
 const ACCESS_TOKEN_EXPIRE = process.env.JWT_EXPIRE || "15m";
@@ -65,6 +66,8 @@ export const registerUser = async (userData, ipAddress = null, userAgent = null)
         role: role || "student",
         status,
     });
+
+    await ensureIdentityForUser(user);
 
     const accessToken = generateAccessToken(user._id);
     const refreshToken = await generateRefreshToken(user._id, ipAddress, userAgent);

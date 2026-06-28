@@ -20,15 +20,17 @@ const FOOTER_LINK_KEYS = [
   { key: "footer.instructors", href: "/instructors" },
   { key: "footer.manifesto", href: "/about" },
   { key: "footer.connect", href: "/contact" },
-  { key: "footer.avatarStudio", href: "/apps/avatar-creator" },
 ] as const;
 
 export function Footer({ year = 2025 }: { year?: number }) {
   const { t } = useTranslation();
 
   return (
-    <footer role="contentinfo" className="relative z-50 mt-20 w-full px-6 py-8">
-      <div className="mx-auto max-w-7xl rounded-2xl border border-border bg-card/90 p-6 shadow-lg backdrop-blur-md transition-shadow hover:shadow-xl dark:bg-card/40 dark:shadow-[0_10px_24px_rgba(2,6,23,0.6)]">
+    <footer
+      role="contentinfo"
+      className="relative z-50 mt-[var(--space-section)] w-full px-[max(1rem,var(--safe-left))] py-8 pr-[max(1rem,var(--safe-right))] pb-[max(2rem,var(--safe-bottom))]"
+    >
+      <div className="mx-auto w-full max-w-[var(--content-wide)] rounded-2xl border border-border bg-card/90 p-[clamp(1rem,3vw,1.5rem)] shadow-lg backdrop-blur-md transition-shadow hover:shadow-xl dark:bg-card/40 dark:shadow-[0_10px_24px_rgba(2,6,23,0.6)]">
         <div className="flex flex-col gap-6">
           <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
             <Link href="/" className="group flex items-center gap-4">

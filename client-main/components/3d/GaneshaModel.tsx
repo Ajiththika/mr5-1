@@ -7,6 +7,10 @@ import * as THREE from "three";
 import { SkeletonUtils } from "three-stdlib";
 import { getGaneshaModelUrl } from "@/lib/3d/aws-assets";
 import { GANESHA_METADATA } from "@/lib/3d/ganesha-loader";
+import { clampTeacherRootScale } from "@/lib/classroom-teacher-placement";
+
+const MAX_SCALE = 2.2;
+const MIN_SCALE = 0.12;
 
 function stripNonCharacterMeshes(root: THREE.Object3D) {
   const remove: THREE.Object3D[] = [];
@@ -20,7 +24,7 @@ function stripNonCharacterMeshes(root: THREE.Object3D) {
     }
     const box = new THREE.Box3().setFromObject(child);
     const size = box.getSize(new THREE.Vector3());
-    if (Math.max(size.x, size.y, size.z) > 30) remove.push(child);
+    if (Math.max(size.x, size.y, size.z) > 8) remove.push(child);
   });
   for (const node of remove) node.parent?.remove(node);
 }
@@ -59,17 +63,36 @@ function measureSkinnedHeight(root: THREE.Object3D): number {
     box.union(new THREE.Box3().setFromObject(child));
     found = true;
   });
-  if (!found) return Math.max(new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3()).y, 0.001);
+  if (!found) {
+    return Math.max(new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3()).y, 0.001);
+  }
   return Math.max(box.getSize(new THREE.Vector3()).y, 0.001);
+}
+
+function normalizeBodyHeightMeters(raw: number): number {
+  if (!Number.isFinite(raw) || raw <= 0) return 1.7;
+  if (raw > 20) return raw / 100;
+  if (raw > 3.5) return raw / 100;
+  return raw;
+}
+
+function resetLocalTransform(node: THREE.Object3D) {
+  node.position.set(0, 0, 0);
+  node.rotation.set(0, 0, 0);
+  node.scale.set(1, 1, 1);
+  node.updateMatrix();
 }
 
 function prepareTeacherModel(scene: THREE.Object3D, targetHeight: number): THREE.Object3D {
   const clone = SkeletonUtils.clone(scene) as THREE.Object3D;
+  resetLocalTransform(clone);
   stripNonCharacterMeshes(clone);
   tuneMaterials(clone);
 
-  const bodyHeight = measureSkinnedHeight(clone);
-  const scale = targetHeight / bodyHeight;
+  let bodyHeight = normalizeBodyHeightMeters(measureSkinnedHeight(clone));
+  bodyHeight = THREE.MathUtils.clamp(bodyHeight, 0.45, 2.8);
+
+  const scale = THREE.MathUtils.clamp(targetHeight / bodyHeight, MIN_SCALE, MAX_SCALE);
   clone.scale.setScalar(scale);
   clone.updateMatrixWorld(true);
 
@@ -80,13 +103,17 @@ function prepareTeacherModel(scene: THREE.Object3D, targetHeight: number): THREE
     }
   });
 
-  const footCenter = feetBox.getCenter(new THREE.Vector3());
-  clone.position.set(-footCenter.x, -feetBox.min.y, -footCenter.z);
+  if (Number.isFinite(feetBox.min.y)) {
+    const footCenter = feetBox.getCenter(new THREE.Vector3());
+    clone.position.set(-footCenter.x, -feetBox.min.y, -footCenter.z);
+  }
   clone.updateMatrixWorld(true);
 
   const rig = new THREE.Group();
   rig.name = "teacher_rig";
+  rig.scale.set(1, 1, 1);
   rig.add(clone);
+  clampTeacherRootScale(rig, targetHeight);
   return rig;
 }
 
@@ -148,6 +175,7 @@ export function GaneshaModel({
     <group
       ref={rootRef}
       name={isTeacher ? "ganesha_teacher" : "ganesha_guide"}
+      scale={[1, 1, 1]}
       userData={{ role: isTeacher ? "ai-teacher" : "welcome-guide" }}
     >
       <primitive object={model} />

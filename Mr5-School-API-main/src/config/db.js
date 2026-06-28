@@ -94,6 +94,14 @@ const seedDevelopmentData = async () => {
 		}
 	}
 
+	const { ensureIdentityForUser } = await import("../services/identityService.js");
+	const seededUsers = await User.find({
+		email: { $in: users.map((u) => u.email) },
+	}).exec();
+	for (const devUser of seededUsers) {
+		await ensureIdentityForUser(devUser);
+	}
+
 	const admin = await User.findOne({ email: "admin@mr5school.com" }).exec();
 	const student = await User.findOne({ email: "student@mr5school.com" }).exec();
 

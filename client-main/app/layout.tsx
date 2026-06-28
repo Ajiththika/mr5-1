@@ -20,6 +20,7 @@ import { NotificationProvider } from "@/contexts/NotificationContext";
 import { ThemeMetaSync } from "@/components/theme/ThemeMetaSync";
 import type { ReactNode } from "react";
 import { LicenseAttributionBar } from "@/components/legal/LicenseAttributionBar";
+import { UniversalDeviceProvider } from "@/components/responsive/UniversalDeviceProvider";
 
 export const metadata: Metadata = genMeta({
 	title: "3D Virtual Classroom & AI Teachers",
@@ -63,7 +64,7 @@ export default function RootLayout({
 			<head>
 				<StructuredData data={[organizationData, websiteData, educationalData]} />
 				<link rel="canonical" href={process.env.NEXT_PUBLIC_SITE_URL || "https://mr5school.com"} />
-				<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+				<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
 				<meta name="theme-color" content="#18181b" />
 				<meta name="mobile-web-app-capable" content="yes" />
 				<meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -100,9 +101,13 @@ export default function RootLayout({
 					}}
 				/>
 			</head>
-			<body className={`${inter.className} bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary`} suppressHydrationWarning>
-				<div className="noise-bg" />
+			<body className={`${inter.className} mr5-app-shell bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary`} suppressHydrationWarning>
+				<a href="#main-content" className="skip-to-content">
+					Skip to main content
+				</a>
+				<div className="noise-bg watch-hide" aria-hidden />
 
+				<UniversalDeviceProvider>
 				<LanguageProvider>
 				<ThemeProvider
 					attribute="class"
@@ -135,6 +140,7 @@ export default function RootLayout({
 					</ThemeColorProvider>
 				</ThemeProvider>
 				</LanguageProvider>
+				</UniversalDeviceProvider>
 			</body>
 		</html>
 	);

@@ -12,10 +12,31 @@ const config = {
     theme: {
         container: {
             center: true,
-            padding: "2rem",
-            screens: {
-                "2xl": "1400px",
+            padding: {
+                DEFAULT: "clamp(0.75rem, 2.5vw, 2rem)",
+                sm: "clamp(1rem, 3vw, 2rem)",
+                lg: "clamp(1.25rem, 3.5vw, 2.5rem)",
             },
+            screens: {
+                sm: "480px",
+                md: "768px",
+                lg: "1024px",
+                xl: "1440px",
+                "2xl": "1920px",
+                "3xl": "2560px",
+            },
+        },
+        screens: {
+            xs: "320px",
+            watch: "400px",
+            sm: "480px",
+            md: "768px",
+            lg: "1024px",
+            xl: "1440px",
+            "2xl": "1920px",
+            "3xl": "2560px",
+            tv: "1920px",
+            ultrawide: "2560px",
         },
         extend: {
             colors: {

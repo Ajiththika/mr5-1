@@ -23,6 +23,8 @@ const PUBLIC_PATHS = [
     "/sitemap.xml",
     "/robots.txt",
     "/legal/accept",
+    "/u",
+    "/certificate",
 ];
 
 const CONSENT_PROTECTED_PREFIXES = [

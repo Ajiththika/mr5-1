@@ -27,7 +27,7 @@ import Image from 'next/image';
 import { toast } from 'sonner';
 import { useEnhancedUser } from '@/contexts/EnhancedUserContext';
 import { studentLearningService } from '@/services/studentLearning.service';
-import { buildStudentAiSystemPrompt } from '@/lib/build-student-ai-prompt';
+import { buildStudentAiSystemPrompt, type ClassroomAiContext } from '@/lib/build-student-ai-prompt';
 
 interface Message {
     role: 'user' | 'ai';
@@ -42,6 +42,7 @@ interface TeachingAIModalProps {
     lessonId?: string;
     courseTitle?: string;
     lessonTitle?: string;
+    classroomContext?: ClassroomAiContext;
     voiceInteraction?: {
         transcript: string;
         listening: boolean;
@@ -54,7 +55,7 @@ interface TeachingAIModalProps {
     };
 }
 
-export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTitle, lessonTitle, voiceInteraction }: TeachingAIModalProps) {
+export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTitle, lessonTitle, classroomContext, voiceInteraction }: TeachingAIModalProps) {
     const { user } = useEnhancedUser();
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputMessage, setInputMessage] = useState('');
@@ -163,6 +164,16 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
         browserSupportsSpeechRecognition = false,
     } = voiceInteraction || {};
 
+    useEffect(() => {
+        if (!isOpen) stopListening();
+    }, [isOpen, stopListening]);
+
+    useEffect(() => {
+        if (listening && response && !isProcessing && !isSpeaking) {
+            stopListening();
+        }
+    }, [listening, response, isProcessing, isSpeaking, stopListening]);
+
     // Auto-scroll to bottom
     // Scroll tracking
     const scrollToBottom = () => {
@@ -261,6 +272,7 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
                 lessonTitle,
                 courseId,
                 lessonId,
+                classroom: classroomContext,
             });
 
             const apiMessages = [

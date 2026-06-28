@@ -1,7 +1,11 @@
 import * as THREE from "three";
+import {
+  buildClassroomSeatGrid,
+  resolveSeatSlot,
+} from "@/lib/classroom/seat-grid";
 
-const SEATED_EYE_ABOVE_SEAT = 0.58;
-const SEAT_FORWARD_OFFSET = 0.12;
+const SEATED_EYE_HEIGHT_M = 1.25;
+const SEAT_FORWARD_OFFSET = 0.14;
 const SEAT_HEIGHT_RATIO = 0.56;
 
 export interface ChairSeat {
@@ -101,12 +105,12 @@ export function computeSeatedViewPose(
   facingBoard.normalize();
 
   const seat = chairSeat.clone();
-  seat.y = Math.max(seat.y, floorY + 0.38);
+  seat.y = Math.max(seat.y, floorY + SEATED_EYE_HEIGHT_M - 0.52);
 
   const eye = seat.clone().add(
     facingBoard.clone().multiplyScalar(SEAT_FORWARD_OFFSET),
   );
-  eye.y = seat.y + SEATED_EYE_ABOVE_SEAT;
+  eye.y = floorY + SEATED_EYE_HEIGHT_M;
 
   const lookAt = board.clone();
   lookAt.y = board.y + 0.12;
@@ -130,4 +134,19 @@ export function resolveStudentSeatedPose(
   fallbackSeat.y = floorY + 0.42;
   fallbackSeat.z += board.z >= 0 ? -3.2 : 3.2;
   return computeSeatedViewPose(fallbackSeat, board, floorY);
+}
+
+export function resolveStudentSeatedPoseBySeatId(
+  root: THREE.Object3D,
+  board: THREE.Vector3,
+  floorY: number,
+  seatId: number,
+): SeatedViewPose {
+  const chairs = collectChairSeats(root);
+  const grid = buildClassroomSeatGrid(chairs, board, floorY);
+  const slot = resolveSeatSlot(grid, seatId);
+  if (slot) {
+    return computeSeatedViewPose(slot.surface, board, floorY);
+  }
+  return resolveStudentSeatedPose(root, board, floorY);
 }

@@ -24,6 +24,7 @@ import {
   type WeatherSnapshot,
   type WeatherTheme,
 } from "@/lib/classroom-environment";
+import { DEFAULT_SCHOOL_TIMEZONE, resolveTimezoneFromCountry, resolveClockTimezone } from "@/lib/classroom/school-schedule";
 
 export type EnvironmentOverride = {
   theme?: WeatherTheme | null;
@@ -35,6 +36,7 @@ interface ClassroomEnvironmentState {
   error: string | null;
   weather: WeatherSnapshot;
   locationLabel: string;
+  timezone: string;
   environment: DerivedEnvironment;
   override: EnvironmentOverride;
   setOverride: (patch: EnvironmentOverride) => void;
@@ -59,7 +61,8 @@ export function ClassroomEnvironmentProvider({ children }: { children: ReactNode
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [weather, setWeather] = useState<WeatherSnapshot>(getDefaultWeather());
-  const [locationLabel, setLocationLabel] = useState("Detecting location…");
+  const [locationLabel, setLocationLabel] = useState("Colombo, Sri Lanka");
+  const [timezone, setTimezone] = useState(DEFAULT_SCHOOL_TIMEZONE);
   const [override, setOverrideState] = useState<EnvironmentOverride>({});
   const [now, setNow] = useState(() => new Date());
   const [blendedLighting, setBlendedLighting] = useState<DerivedEnvironment | null>(
@@ -90,10 +93,20 @@ export function ClassroomEnvironmentProvider({ children }: { children: ReactNode
           [ctx.hometown?.city, ctx.hometown?.country].filter(Boolean).join(", ") ||
             "Your location",
         );
+        setTimezone(
+          resolveTimezoneFromCountry(ctx.hometown?.country, ctx.hometown?.timezone),
+        );
         return;
       }
 
       const loc = await LocationService.getLocation();
+      setTimezone(
+        resolveClockTimezone(
+          loc?.country,
+          loc?.timezone,
+          typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : undefined,
+        ),
+      );
       if (loc?.city) {
         setLocationLabel(
           [loc.city, loc.state || loc.country].filter(Boolean).join(", "),
@@ -114,6 +127,12 @@ export function ClassroomEnvironmentProvider({ children }: { children: ReactNode
                 windSpeed: synced.data.weather.windSpeed,
                 city: synced.data.hometown?.city,
               });
+              setTimezone(
+                resolveTimezoneFromCountry(
+                  synced.data.hometown?.country,
+                  synced.data.hometown?.timezone,
+                ),
+              );
               return;
             }
           }
@@ -126,7 +145,9 @@ export function ClassroomEnvironmentProvider({ children }: { children: ReactNode
         }
       } else {
         setWeather(getDefaultWeather());
-        setError("Location unavailable — using default weather");
+        setLocationLabel("Colombo, Sri Lanka");
+        setTimezone(DEFAULT_SCHOOL_TIMEZONE);
+        setError("Location unavailable — using Sri Lanka time");
       }
     } catch (err) {
       setWeather(getDefaultWeather());
@@ -146,7 +167,6 @@ export function ClassroomEnvironmentProvider({ children }: { children: ReactNode
     };
   }, [refresh]);
 
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const hour = getLocalHour(now, timezone);
 
   const environment = useMemo(
@@ -181,6 +201,7 @@ export function ClassroomEnvironmentProvider({ children }: { children: ReactNode
     error,
     weather,
     locationLabel,
+    timezone,
     environment: blendedLighting ?? environment,
     override,
     setOverride,

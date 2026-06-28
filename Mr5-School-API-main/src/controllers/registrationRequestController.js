@@ -2,6 +2,7 @@ import { asyncHandler } from "../middleware/errorHandler.js";
 import RegistrationRequest from "../models/RegistrationRequest.js";
 import User from "../models/User.js";
 import { randomBytes } from "crypto";
+import { ensureIdentityForUser } from "../services/identityService.js";
 
 // @desc    Create a new registration request
 // @route   POST /api/requests
@@ -28,6 +29,7 @@ export const createRegistrationRequest = asyncHandler(async (req, res) => {
 			role: "student", // Default role
 		});
 		await user.save();
+		await ensureIdentityForUser(user);
 	}
 
 	const requestData = {

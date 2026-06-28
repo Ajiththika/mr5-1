@@ -2,28 +2,23 @@
 
 import type { ReactNode } from "react";
 import {
+  Armchair,
   BookOpen,
   DoorOpen,
-  Eye,
-  EyeOff,
-  Gamepad2,
   Menu,
-  Maximize2,
-  Minimize2,
-  Presentation,
   SlidersHorizontal,
   UserRound,
+  Volume2,
+  VolumeX,
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { EnvironmentPanel } from "./EnvironmentPanel";
-import { EnvironmentDevPanel } from "@/components/classroom/EnvironmentDevPanel";
 import { ControlDock } from "./ControlDock";
 import { PlaytimePanel } from "./PlaytimePanel";
 import { TeacherChallengePanel } from "./TeacherChallengePanel";
 import { TeacherPlaytimePanel } from "@/components/classroom/teacher-playtime-panel";
 import { GlassIconButton, GlassPanel } from "./GlassPanel";
-import { ModelCreditNotice } from "@/components/3d/ModelCreditNotice";
 import { useClassroomUILayout } from "./ClassroomUILayout";
 import { useClassroomStore } from "../store/classroom.store";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -61,6 +56,8 @@ export interface ClassroomImmersiveHudProps {
   fanSpeed: number;
   courseTitle?: string;
   modeLabel: string;
+  selectedSeatId?: number;
+  onChangeSeat?: () => void;
   onBack?: () => void;
   onAction: (id: ActionId) => void;
 }
@@ -70,25 +67,25 @@ export function ClassroomImmersiveHud({
   fanSpeed,
   courseTitle,
   modeLabel,
+  selectedSeatId,
+  onChangeSeat,
   onBack,
   onAction,
 }: ClassroomImmersiveHudProps) {
   const { t } = useTranslation();
-  const { togglePlaytime, toggleChallenge } = useClassroomStore();
+  const { playtimeOpen, challengeOpen } = useClassroomStore();
   const {
     menuOpen,
-    focusMode,
     controlsOpen,
     closeMenu,
     toggleMenu,
-    toggleFocusMode,
     setControlsOpen,
     setLessonMode,
     runMenuAction,
     retractForImmersion,
   } = useClassroomUILayout();
 
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [audioMuted, setAudioMuted] = useState(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -98,60 +95,52 @@ export function ClassroomImmersiveHud({
     return () => window.removeEventListener("keydown", onKey);
   }, [retractForImmersion]);
 
-  const toggleFullscreen = async () => {
-    const root = document.querySelector(".classroom-scene-viewport");
-    if (!root) return;
-    if (!document.fullscreenElement) {
-      await root.requestFullscreen();
-      setIsFullscreen(true);
-    } else {
-      await document.exitFullscreen();
-      setIsFullscreen(false);
-    }
+  const toggleAudio = () => {
+    setAudioMuted((m) => !m);
+    document.querySelectorAll("audio").forEach((el) => {
+      el.muted = !audioMuted;
+    });
   };
 
   return (
     <div className="pointer-events-none absolute inset-0 z-20">
-      {/* Floating top dock */}
       <div className="flex items-start justify-between gap-2 p-3 sm:p-4">
-        {focusMode && !menuOpen && (
-          <GlassPanel className="max-w-[min(100%,220px)] px-3 py-2">
-            <p className="truncate text-[11px] font-semibold text-white">
-              {courseTitle ?? t("classroom.title")}
-            </p>
-            <p className="truncate text-[10px] text-white/55">{modeLabel}</p>
-          </GlassPanel>
-        )}
+        <GlassPanel className="max-w-[min(100%,260px)] px-3 py-2">
+          <p className="truncate text-xs font-semibold text-white sm:text-sm">
+            {courseTitle ?? t("classroom.title")}
+          </p>
+          <p className="truncate text-[10px] text-white/60 sm:text-xs">{modeLabel}</p>
+        </GlassPanel>
 
         <div className="pointer-events-auto ml-auto flex items-center gap-2">
+          {cameraMode === "student" && onChangeSeat && (
+            <GlassIconButton
+              label={`Seat ${selectedSeatId ?? 3}`}
+              onClick={onChangeSeat}
+            >
+              <Armchair className="h-4 w-4" />
+            </GlassIconButton>
+          )}
           <GlassIconButton
-            label={menuOpen ? "Close menu" : "Open menu"}
-            onClick={toggleMenu}
-            active={menuOpen}
+            label={audioMuted ? "Unmute audio" : "Mute audio"}
+            onClick={toggleAudio}
+            active={!audioMuted}
           >
-            {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            {audioMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
           </GlassIconButton>
           <GlassIconButton
-            label={focusMode ? "Hide HUD" : "Show HUD"}
-            onClick={toggleFocusMode}
-            active={!focusMode}
-          >
-            {focusMode ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          </GlassIconButton>
-          <GlassIconButton
-            label="Room controls"
+            label="Settings"
             onClick={() => setControlsOpen(!controlsOpen)}
             active={controlsOpen}
           >
             <SlidersHorizontal className="h-4 w-4" />
           </GlassIconButton>
           <GlassIconButton
-            label="Fullscreen"
-            onClick={toggleFullscreen}
-            active={isFullscreen}
-            className="hidden sm:inline-flex"
+            label={menuOpen ? "Close menu" : "Open menu"}
+            onClick={toggleMenu}
+            active={menuOpen}
           >
-            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </GlassIconButton>
         </div>
       </div>
@@ -193,38 +182,15 @@ export function ClassroomImmersiveHud({
 
         <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
           <NavItem
-            icon={<Presentation className="h-4 w-4 text-indigo-300" />}
-            label={t("classroom.whiteboard")}
-            onClick={() => runMenuAction(() => onAction("board"))}
-          />
-          <NavItem
-            icon={<BookOpen className="h-4 w-4 text-emerald-300" />}
-            label={t("classroom.startLesson")}
-            tone="hover:bg-emerald-500/15"
-            onClick={() =>
-              runMenuAction(() => {
-                setLessonMode(true);
-                onAction("lesson");
-              })
-            }
-          />
-          <NavItem
             icon={<UserRound className="h-4 w-4 text-sky-300" />}
             label={t("classroom.aiTeacher")}
             onClick={() => runMenuAction(() => onAction("teacher"))}
           />
-          {cameraMode === "student" && (
+          {cameraMode === "student" && onChangeSeat && (
             <NavItem
-              icon={<Gamepad2 className="h-4 w-4 text-violet-300" />}
-              label={t("classroom.playtime")}
-              onClick={() => runMenuAction(() => togglePlaytime())}
-            />
-          )}
-          {cameraMode === "teacher" && (
-            <NavItem
-              icon={<Gamepad2 className="h-4 w-4 text-violet-300" />}
-              label={t("classroom.challenges")}
-              onClick={() => runMenuAction(() => toggleChallenge())}
+              icon={<Armchair className="h-4 w-4 text-amber-300" />}
+              label={`Change seat (${selectedSeatId ?? 3})`}
+              onClick={() => runMenuAction(onChangeSeat)}
             />
           )}
           {onBack && (
@@ -237,28 +203,18 @@ export function ClassroomImmersiveHud({
 
           {menuOpen && (
             <div className="space-y-3 pt-2">
-              <EnvironmentPanel className="w-full max-w-none !bg-transparent !border-0 !shadow-none" />
-              <EnvironmentDevPanel />
-              {cameraMode === "student" && <PlaytimePanel />}
+              <EnvironmentPanel className="w-full max-w-none !border-0 !bg-transparent !shadow-none" />
+              {cameraMode === "student" && playtimeOpen && <PlaytimePanel />}
               {cameraMode === "teacher" && (
                 <>
-                  <TeacherChallengePanel />
-                  <TeacherPlaytimePanel />
+                  {challengeOpen && <TeacherChallengePanel />}
+                  {playtimeOpen && <TeacherPlaytimePanel />}
                 </>
               )}
-              <ModelCreditNotice variant="scene" className="pointer-events-auto" />
             </div>
           )}
         </div>
       </aside>
-
-      {focusMode && !menuOpen && (
-        <div className="absolute inset-x-0 bottom-4 flex justify-center">
-          <GlassPanel className="px-3 py-1.5 text-[10px] text-white/55">
-            Drag to look around · ☰ for menu
-          </GlassPanel>
-        </div>
-      )}
     </div>
   );
 }

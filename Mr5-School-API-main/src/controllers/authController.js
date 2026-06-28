@@ -12,6 +12,7 @@ import {
 } from "../services/legalConsentService.js";
 import { isGoogleOAuthEnabled } from "../config/passport.js";
 import { getTrialStatus } from "../services/trialService.js";
+import { ensureIdentityForUser } from "../services/identityService.js";
 
 // Cookie options
 const getAccessTokenCookieOptions = () => ({
@@ -62,9 +63,11 @@ const formatAuthUser = (user) => ({
 	name: user.name,
 	email: user.email,
 	role: user.role,
+	mr5Uid: user.mr5Uid,
 	language: user.language,
 	status: user.status,
 	avatarUrl: user.avatarUrl || user.profileImage,
+	coverImageUrl: user.coverImageUrl,
 	avatarPreset: user.avatarPreset,
 	onboardingCompleted: Boolean(user.onboardingCompleted),
 	welcomeChatCompleted: Boolean(user.welcomeChatCompleted),
@@ -297,6 +300,9 @@ export const getMe = asyncHandler(async (req, res) => {
 	const user = await authService.getUserById(req.user.id);
 	if (!user) {
 		return res.status(404).json({ success: false, error: "User not found" });
+	}
+	if (!user.mr5Uid) {
+		await ensureIdentityForUser(user);
 	}
 	res.status(200).json({
 		success: true,

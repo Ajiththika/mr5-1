@@ -1,7 +1,11 @@
 import * as THREE from "three";
+import {
+  TEACHER_HEIGHT_MAX_M,
+  TEACHER_HEIGHT_MIN_M,
+  resolveTeacherHeightM,
+} from "@/lib/classroom/teacher-presence";
 
-/** Standard human teacher height in meters (1:1 classroom scale). */
-export const TEACHER_AVATAR_HEIGHT_M = 1.65;
+export const TEACHER_AVATAR_HEIGHT_M = 1.72;
 
 export interface TeacherAnchorState {
   position: THREE.Vector3;
@@ -10,7 +14,7 @@ export interface TeacherAnchorState {
 }
 
 /**
- * Teacher at whiteboard front, grounded on floor, facing the student desk.
+ * Teacher centered in front of the board, feet on floor, human scale (1.65–1.8 m).
  */
 export function resolveTeacherAnchor(
   boardBounds: THREE.Box3,
@@ -20,21 +24,38 @@ export function resolveTeacherAnchor(
 ): TeacherAnchorState {
   const boardCenter = boardBounds.getCenter(new THREE.Vector3());
   const boardSize = boardBounds.getSize(new THREE.Vector3());
-  const boardSide = new THREE.Vector3()
-    .crossVectors(new THREE.Vector3(0, 1, 0), classDirection)
-    .normalize();
+  const boardHeight = Math.max(boardSize.y, 0.9);
 
-  const position = boardCenter.clone();
-  position.add(classDirection.clone().multiplyScalar(0.75));
-  position.add(boardSide.clone().multiplyScalar(boardSize.x * 0.08));
-  position.y = floorY;
+  const height = resolveTeacherHeightM(boardHeight);
+
+  const position = new THREE.Vector3(boardCenter.x, floorY, boardCenter.z);
+  position.add(
+    classDirection.clone().multiplyScalar(Math.max(boardSize.z * 0.35 + 0.48, 0.52)),
+  );
 
   const lookAt = studentSeat.clone();
-  lookAt.y = floorY + 1.48;
+  lookAt.y = floorY + height * 0.42;
 
   return {
     position,
     lookAt,
-    height: TEACHER_AVATAR_HEIGHT_M,
+    height: THREE.MathUtils.clamp(height, TEACHER_HEIGHT_MIN_M, TEACHER_HEIGHT_MAX_M),
   };
+}
+
+/** Hard clamp after GLB scaling so the mesh can never explode. */
+export function clampTeacherRootScale(
+  root: THREE.Object3D,
+  targetHeightM: number,
+): void {
+  root.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(root);
+  const size = box.getSize(new THREE.Vector3());
+  if (!Number.isFinite(size.y) || size.y < 0.01) return;
+
+  if (size.y > TEACHER_HEIGHT_MAX_M * 1.08) {
+    const factor = targetHeightM / size.y;
+    root.scale.multiplyScalar(factor);
+    root.updateMatrixWorld(true);
+  }
 }

@@ -51,6 +51,18 @@ const userSchema = new mongoose.Schema(
 			enum: ["pending", "approved", "rejected"],
 			default: "approved", // Students auto-approved by default, AI-TEACHERs pending
 		},
+		mr5Uid: {
+			type: String,
+			unique: true,
+			sparse: true,
+			trim: true,
+			uppercase: true,
+			index: true,
+		},
+		coverImageUrl: {
+			type: String,
+			default: "",
+		},
 		profileImage: String,
 		avatarUrl: {
 			type: String,
@@ -133,6 +145,7 @@ const userSchema = new mongoose.Schema(
 userSchema.index({ role: 1 });
 userSchema.index({ status: 1 });
 userSchema.index({ createdAt: -1 });
+userSchema.index({ name: "text" });
 
 // Password hash middleware
 userSchema.pre("save", async function (next) {

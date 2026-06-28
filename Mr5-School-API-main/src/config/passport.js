@@ -1,6 +1,7 @@
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import User from '../models/User.js';
 import envConfig from './env.js';
+import { ensureIdentityForUser } from '../services/identityService.js';
 
 export const isGoogleOAuthEnabled = Boolean(
     envConfig.GOOGLE_CLIENT_ID && envConfig.GOOGLE_CLIENT_SECRET
@@ -42,6 +43,7 @@ export default function (passport) {
                             password: 'google-oauth-login-' + Math.random().toString(36).slice(-8) // Dummy password
                         };
                         user = await User.create(newUser);
+                        await ensureIdentityForUser(user);
                         return done(null, user);
                     }
                 } catch (err) {

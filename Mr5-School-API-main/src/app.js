@@ -43,6 +43,7 @@ import trialRoutes from "./routes/trialRoutes.js";
 import progressRoutes from "./routes/progressRoutes.js";
 import shopRoutes from "./routes/shopRoutes.js";
 import legalRoutes from "./routes/legalRoutes.js";
+import identityRoutes from "./routes/identityRoutes.js";
 import powerAdminRoutes from "./routes/powerAdminRoutes.js";
 import { handleStripeWebhook } from "./controllers/paymentController.js";
 import { validateEnv } from "./config/env.js";
@@ -198,6 +199,7 @@ app.use("/api/trial", trialRoutes);
 app.use("/api/progress", progressRoutes);
 app.use("/api/shop", shopRoutes);
 app.use("/api/legal", legalRoutes);
+app.use("/api/identity", identityRoutes);
 
 // Health check endpoint
 app.get("/health", (_req, res) => {

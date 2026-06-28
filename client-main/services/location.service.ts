@@ -6,16 +6,18 @@ export interface LocationData {
   region?: string;
   latitude?: number | null;
   longitude?: number | null;
+  timezone?: string;
   isTamilNadu?: boolean;
   isSriLanka?: boolean;
   isTamilRegion?: boolean;
 }
 
 export const DEFAULT_LOCATION: LocationData = {
-  country: 'Universal',
-  region: 'Earth',
-  city: 'Global',
-  isSriLanka: false,
+  country: 'Sri Lanka',
+  region: 'Western Province',
+  city: 'Colombo',
+  timezone: 'Asia/Colombo',
+  isSriLanka: true,
   isTamilNadu: false,
   isTamilRegion: false
 };
@@ -64,6 +66,7 @@ class LocationService {
               city,
               latitude,
               longitude,
+              timezone: isSriLanka ? 'Asia/Colombo' : (typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : undefined),
               isSriLanka,
               isTamilNadu,
               isTamilRegion,
@@ -105,6 +108,7 @@ class LocationService {
         city: data.city,
         latitude: data.latitude,
         longitude: data.longitude,
+        timezone: data.timezone || (isSriLanka ? 'Asia/Colombo' : undefined),
         isSriLanka,
         isTamilNadu,
         isTamilRegion,

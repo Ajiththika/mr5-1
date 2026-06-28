@@ -11,14 +11,14 @@ describe('Greeting Service', () => {
   });
 
   describe('getGreeting', () => {
-    it('should return Tamil greeting for general users', () => {
+    it('should return Sinhala greeting for default Sri Lanka location', () => {
       const date = new Date(2023, 5, 15, 10, 0, 0); // 10 AM
       const greeting = getGreeting(date, DEFAULT_LOCATION);
       
-      expect(greeting.primary).toBe("காலை வணக்கம்");
-      expect(greeting.transliteration).toBe("Kalai Vanakkam");
+      expect(greeting.primary).toBe("සුබ උදේසනක්");
+      expect(greeting.transliteration).toBe("Subha udhasanak");
       expect(greeting.english).toBe("Good Morning");
-      expect(greeting.language).toBe("tamil");
+      expect(greeting.language).toBe("sinhala");
       expect(greeting.timeOfDay).toBe("morning");
     });
 
@@ -68,14 +68,14 @@ describe('Greeting Service', () => {
       expect(greeting.timeOfDay).toBe("default");
     });
 
-    it('should return default greeting for night time', () => {
+    it('should return default Sinhala greeting for night time in Sri Lanka', () => {
       const date = new Date(2023, 5, 15, 3, 0, 0); // 3 AM
       const greeting = getGreeting(date, DEFAULT_LOCATION);
       
-      expect(greeting.primary).toBe("வணக்கம்");
-      expect(greeting.transliteration).toBe("Vanakkam");
+      expect(greeting.primary).toBe("ආයුබෝවන්");
+      expect(greeting.transliteration).toBe("Ayubowan");
       expect(greeting.english).toBe("Hello / Welcome");
-      expect(greeting.language).toBe("tamil");
+      expect(greeting.language).toBe("sinhala");
       expect(greeting.timeOfDay).toBe("default");
     });
   });

@@ -5,6 +5,16 @@ interface ChatMemoryMessage {
   content: string;
 }
 
+export interface ClassroomAiContext {
+  studentSeat?: number;
+  seatLabel?: string;
+  boardContent?: string[];
+  learningProgress?: {
+    sectionIndex?: number;
+    completedTopics?: string[];
+  };
+}
+
 interface BuildPromptOptions {
   user?: User | null;
   recentMessages?: ChatMemoryMessage[];
@@ -12,6 +22,7 @@ interface BuildPromptOptions {
   lessonTitle?: string;
   courseId?: string;
   lessonId?: string;
+  classroom?: ClassroomAiContext;
 }
 
 export function buildStudentAiSystemPrompt({
@@ -21,6 +32,7 @@ export function buildStudentAiSystemPrompt({
   lessonTitle,
   courseId,
   lessonId,
+  classroom,
 }: BuildPromptOptions) {
   const profileLines = [
     user?.name ? `Student name: ${user.name}` : null,
@@ -45,13 +57,33 @@ export function buildStudentAiSystemPrompt({
     .filter(Boolean)
     .join("\n");
 
+  const classroomLines = [
+    classroom?.studentSeat
+      ? `Student seat: ${classroom.seatLabel ?? `Seat ${classroom.studentSeat}`}`
+      : null,
+    classroom?.boardContent?.length
+      ? `Blackboard content:\n${classroom.boardContent.join("\n")}`
+      : null,
+    classroom?.learningProgress?.sectionIndex != null
+      ? `Lesson section index: ${classroom.learningProgress.sectionIndex}`
+      : null,
+    classroom?.learningProgress?.completedTopics?.length
+      ? `Completed topics: ${classroom.learningProgress.completedTopics.join(", ")}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
   return [
-    "You are an expert AI Teacher for MR5 School.",
+    "You are an expert AI Teacher for MR5 School immersive 3D classroom.",
+    "Answer ONLY about the current course and lesson on the blackboard.",
+    "Do not discuss unrelated topics. Keep responses educational, friendly, and step-by-step.",
     "Be warm, patient, and encouraging.",
     "Always adapt vocabulary and depth to the student's age and education level when known.",
     "Use remembered chat history naturally so the student feels known and supported.",
     profileLines ? `\nSTUDENT PROFILE:\n${profileLines}` : "",
     lessonLines ? `\nLESSON CONTEXT:\n${lessonLines}` : "",
+    classroomLines ? `\nCLASSROOM CONTEXT:\n${classroomLines}` : "",
     memoryLines ? `\nRECENT CHAT MEMORY:\n${memoryLines}` : "",
   ]
     .filter(Boolean)

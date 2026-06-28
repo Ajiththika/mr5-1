@@ -25,6 +25,8 @@ import { AvatarPresetBadge } from "@/components/avatar/AvatarPresetBadge";
 import { ProfileEditModal, type ProfileEditForm } from "@/components/profile/ProfileEditModal";
 import { useEnhancedUser } from "@/contexts/EnhancedUserContext";
 import { enrollmentService, type Enrollment } from "@/services/enrollment.service";
+import { IdentityPrivacyPanel } from "@/components/identity/IdentityPrivacyPanel";
+import { FriendInbox } from "@/components/identity/FriendInbox";
 
 function roleLabel(role: string) {
   switch (role) {
@@ -342,6 +344,18 @@ export default function ProfilePageClient() {
                 </Button>
               </div>
             )}
+          </BentoItem>
+
+          <BentoItem
+            colSpan={12}
+            title="Public profile privacy"
+            subtitle="Control what appears on your MR5 academic identity page"
+          >
+            <IdentityPrivacyPanel mr5Uid={user.mr5Uid} />
+          </BentoItem>
+
+          <BentoItem colSpan={12} title="Friends" description="Manage friend requests and connections">
+            <FriendInbox />
           </BentoItem>
 
           <BentoItem

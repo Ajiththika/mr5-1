@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import "../styles/device-compat.css";
+
 @layer base {
   :root {
     /* Light — soft neutrals, grounded surfaces, education-friendly contrast */
@@ -191,7 +193,7 @@
     position: relative;
     isolation: isolate;
     overflow: hidden;
-    min-height: 280px;
+    min-height: clamp(12rem, 42vw, 22rem);
   }
 
   /* Only stretch the WebGL canvas host — not UI overlay siblings */
@@ -258,7 +260,9 @@
   }
 
   .auth-card {
-    @apply w-full max-w-md rounded-3xl border border-border bg-card/95 p-8 shadow-xl backdrop-blur-xl;
+    @apply w-full rounded-3xl border border-border bg-card/95 shadow-xl backdrop-blur-xl;
+    max-width: min(100%, 28rem);
+    padding: clamp(1.25rem, 4vw, 2rem);
   }
 
   .surface-panel {

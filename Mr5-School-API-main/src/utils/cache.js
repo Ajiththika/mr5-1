@@ -37,6 +37,18 @@ class SimpleCache {
     }
 
     /**
+     * Delete cache entries matching prefix
+     * @param {string} prefix
+     */
+    deleteByPrefix(prefix) {
+        for (const key of this.cache.keys()) {
+            if (key.startsWith(prefix)) {
+                this.cache.delete(key);
+            }
+        }
+    }
+
+    /**
      * Delete cache entry
      * @param {string} key - Cache key
      */

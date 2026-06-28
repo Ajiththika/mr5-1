@@ -2,6 +2,7 @@
 
 import { Bell, X, CheckCircle, AlertCircle, Info, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -12,6 +13,7 @@ import { useNotifications } from "@/contexts/NotificationContext";
 import type { AppNotification } from "@/lib/notifications/types";
 import { cn } from "@/lib/utils";
 import { useEnhancedUser } from "@/contexts/EnhancedUserContext";
+import { IdentityFeedPanel, useIdentityFeed } from "@/components/identity/IdentityFeedPanel";
 
 function formatRelativeTime(date: Date): string {
   const diffMs = Date.now() - date.getTime();
@@ -38,6 +40,8 @@ function NotificationIcon({ type }: { type: AppNotification["type"] }) {
 
 export function RealTimeNotifications() {
   const { user } = useEnhancedUser();
+  const [panel, setPanel] = useState<"learning" | "community">("learning");
+  const identityFeed = useIdentityFeed();
   const {
     notifications,
     unreadCount,
@@ -53,53 +57,80 @@ export function RealTimeNotifications() {
 
   if (!user) return null;
 
+  const totalUnread = unreadCount + identityFeed.unreadCount;
+
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
           size="icon"
-          className="relative h-9 w-9"
-          aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
+          className="relative h-9 w-9 touch-target"
+          aria-label={`Notifications${totalUnread > 0 ? `, ${totalUnread} unread` : ""}`}
         >
           <Bell className="h-4 w-4" />
-          {unreadCount > 0 && (
+          {totalUnread > 0 && (
             <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-              {unreadCount > 9 ? "9+" : unreadCount}
+              {totalUnread > 9 ? "9+" : totalUnread}
             </span>
           )}
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent align="end" className="w-[360px] p-0">
+      <PopoverContent align="end" className="w-[min(360px,92vw)] p-0">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <div>
             <h3 className="text-sm font-semibold">Notifications</h3>
-            <p className="text-xs text-muted-foreground">Assignments, courses & updates</p>
+            <p className="text-xs text-muted-foreground">Learning, friends & community</p>
           </div>
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-8 w-8 touch-target"
               aria-label="Refresh notifications"
-              onClick={() => void refreshNotifications()}
+              onClick={() => {
+                void refreshNotifications();
+                void identityFeed.refresh();
+              }}
             >
               <RefreshCw className="h-3.5 w-3.5" />
             </Button>
-            {notifications.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 px-2 text-xs"
-                onClick={markAllAsRead}
-              >
-                Mark read
-              </Button>
-            )}
           </div>
         </div>
 
+        <div className="flex gap-1 border-b border-border px-3 py-2">
+          <Button
+            variant={panel === "learning" ? "secondary" : "ghost"}
+            size="sm"
+            className="h-8 flex-1"
+            onClick={() => setPanel("learning")}
+          >
+            Learning
+          </Button>
+          <Button
+            variant={panel === "community" ? "secondary" : "ghost"}
+            size="sm"
+            className="h-8 flex-1"
+            onClick={() => setPanel("community")}
+          >
+            Community
+          </Button>
+        </div>
+
+        {panel === "community" ? (
+          <div className="p-3">
+            <IdentityFeedPanel
+              tab={identityFeed.tab}
+              setTab={identityFeed.setTab}
+              notifications={identityFeed.notifications}
+              leaderboard={identityFeed.leaderboard}
+              loading={identityFeed.loading}
+              onMarkRead={(id) => void identityFeed.markRead(id)}
+            />
+          </div>
+        ) : (
+        <>
         <div className="max-h-[min(24rem,60vh)] overflow-y-auto">
           <AnimatePresence mode="popLayout">
             {notifications.length === 0 ? (
@@ -177,10 +208,12 @@ export function RealTimeNotifications() {
             <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={clearAll}>
               Clear all
             </Button>
-            <span className="text-[10px] text-muted-foreground">
-              {unreadCount} unread · {notifications.length} total
-            </span>
+            <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={markAllAsRead}>
+              Mark read
+            </Button>
           </div>
+        )}
+        </>
         )}
       </PopoverContent>
     </Popover>

@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { BentoGrid, BentoItem } from "@/components/ui/bento-grid";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
@@ -10,7 +10,6 @@ import { HomePricingSection } from "@/components/home/HomePricingSection";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import nextDynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
 import { useEnhancedUser } from "@/contexts/EnhancedUserContext";
 import {
   Sparkles,
@@ -19,8 +18,8 @@ import {
   Zap,
   Brain,
   Calendar,
-  Search,
 } from "lucide-react";
+import { GlobalAcademicSearch } from "@/components/identity/GlobalAcademicSearch";
 import LoadingScreen from "@/components/loading/LoadingScreen";
 import TeachingAIModal from "@/components/ai/TeachingAIModal";
 import { StudentWelcomeChat } from "@/components/chat/StudentWelcomeChat";
@@ -62,34 +61,10 @@ export default function HomePageClient() {
     typeof getTamilGreeting
   > | null>(null);
 
-  const router = useRouter();
   const { user } = useEnhancedUser();
   const { t } = useTranslation();
   const voiceInteraction = useVoiceInteraction("gemini");
   const { trackNavigation } = useCommonTracking();
-  const [searchQuery, setSearchQuery] = useState("");
-  const searchInputRef = useRef<HTMLInputElement | null>(null);
-
-  const handleSearch = () => {
-    const query = searchQuery.trim();
-    if (query) {
-      router.push(`/courses?search=${encodeURIComponent(query)}`);
-      return;
-    }
-    router.push("/courses");
-  };
-
-  useEffect(() => {
-    const handleShortcut = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        searchInputRef.current?.focus();
-      }
-    };
-
-    window.addEventListener("keydown", handleShortcut);
-    return () => window.removeEventListener("keydown", handleShortcut);
-  }, []);
 
   const needsStudentWelcome =
     user?.role === "student" && user?.welcomeChatCompleted !== true;
@@ -147,7 +122,7 @@ export default function HomePageClient() {
       )}
       <Navbar />
 
-      <main className="flex-1 container mx-auto px-4 py-8 pb-20">
+      <main id="main-content" className="mr5-page-x flex-1 container mx-auto py-8 pb-20">
         <div className="hero-band mb-8 flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between md:p-8">
           <div className="flex flex-col">
             <motion.div
@@ -180,30 +155,13 @@ export default function HomePageClient() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3, duration: 0.4 }}
-            className="relative group w-full md:w-96 perspective-1000 mt-4 md:mt-0"
+            className="relative group w-full md:w-[28rem] perspective-1000 mt-4 md:mt-0"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-primary/30 via-purple-500/30 to-blue-500/30 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition duration-700 will-change-transform" />
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                handleSearch();
-              }}
-              className="relative flex w-full items-center rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground shadow-[0_1px_2px_oklch(var(--shadow-color)/0.06),0_6px_18px_oklch(var(--shadow-color)/0.05)] transition-all duration-300 group-hover:border-primary/25 md:w-96"
-            >
-              <Search className="mr-3 h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary" />
-              <input
-                ref={searchInputRef}
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                type="text"
-                placeholder={t("homepage.searchPlaceholder")}
-                aria-label="Search courses"
-                className="w-full flex-1 border-none bg-transparent text-foreground outline-none placeholder:text-muted-foreground"
-              />
-              <span className="ml-auto hidden rounded border border-border bg-muted px-2 py-1 text-[10px] font-bold tracking-widest text-muted-foreground md:inline-block">
-                ⌘K
-              </span>
-            </form>
+            <GlobalAcademicSearch
+              className="relative"
+              placeholder={t("homepage.searchPlaceholder")}
+            />
           </motion.div>
         </div>
 
