@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { MR5_LOGO_PATH } from "@/lib/brand/logo";
 
 export interface SEOConfig {
 	title: string;
@@ -16,7 +17,7 @@ export interface SEOConfig {
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mr5school.com";
 const siteName = "MR5 School";
-const defaultImage = `${siteUrl}/images/mr5-logo.png`;
+const defaultImage = `${siteUrl}${MR5_LOGO_PATH}`;
 
 export function generateMetadata(config: SEOConfig): Metadata {
 	const {
@@ -136,7 +137,7 @@ export function generateStructuredData(type: "Organization" | "WebSite" | "Cours
 				"@type": "Organization",
 				name: "MR5 School",
 				url: baseUrl,
-				logo: `${baseUrl}/images/mr5-logo.png`,
+				logo: `${baseUrl}${MR5_LOGO_PATH}`,
 				description: "Advanced learning platform with AI-powered avatars and interactive courses",
 				sameAs: [
 					"https://www.facebook.com/mr5school",
@@ -175,7 +176,7 @@ export function generateStructuredData(type: "Organization" | "WebSite" | "Cours
 				"@type": "EducationalOrganization",
 				name: "MR5 School",
 				url: baseUrl,
-				logo: `${baseUrl}/images/mr5-logo.png`,
+				logo: `${baseUrl}${MR5_LOGO_PATH}`,
 				description:
 					"MR5 School is an AI-powered online learning platform with a live 3D classroom, voice-enabled AI teachers, and personalized student memory for every lesson.",
 				sameAs: [
@@ -220,7 +221,7 @@ export function generateStructuredData(type: "Organization" | "WebSite" | "Cours
 					name: "MR5 School",
 					url: baseUrl,
 				},
-				image: data.image || `${baseUrl}/images/mr5-logo.png`,
+				image: data.image || `${baseUrl}${MR5_LOGO_PATH}`,
 				offers: {
 					"@type": "Offer",
 					price: data.price,

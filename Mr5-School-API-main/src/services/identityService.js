@@ -364,7 +364,7 @@ export async function getPublicProfileByUid(uid, viewerUserId = null) {
 					title: cert.title,
 					issuedAt: cert.issuedAt,
 					verifyHref: `/certificate/${cert.verificationId}`,
-			  }))
+				}))
 			: [],
 		projects: privacy.showProjects ? stats.projects || [] : [],
 		achievements: privacy.showAchievements ? stats.achievements || [] : [],

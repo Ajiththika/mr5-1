@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import {
   readViewportSegmentCount,
   resolveDeviceProfile,
@@ -17,7 +17,7 @@ function applyDeviceProfile(profile: DeviceProfile) {
 }
 
 /** Sets `data-device` on `<html>` for CSS device modes — no routing or API impact. */
-export function UniversalDeviceProvider({ children }: { children: React.ReactNode }) {
+export function UniversalDeviceProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const update = () => {
       applyDeviceProfile(

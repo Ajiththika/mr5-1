@@ -89,21 +89,48 @@ const getEnrollmentById = asyncHandler(async (req, res) => {
 // @route   POST /api/enrollments
 // @access  Private
 const createEnrollment = asyncHandler(async (req, res) => {
-	const newenrollment = new Enrollment(req.body);
-	const savedenrollment = await newenrollment.save();
+	const { student, course } = req.body;
 
-	const populatedEnrollment = await Enrollment.findById(savedenrollment._id)
-		.populate("student", "name email profileImage")
-		.populate({
-			path: "course",
-			select: "title description thumbnail price level teacher",
-			populate: { path: "teacher", select: "name email" },
+	const populateEnrollment = (doc) =>
+		Enrollment.findById(doc._id)
+			.populate("student", "name email profileImage")
+			.populate({
+				path: "course",
+				select: "title description thumbnail price level teacher",
+				populate: { path: "teacher", select: "name email" },
+			});
+
+	const existing = await Enrollment.findOne({ student, course }).exec();
+	if (existing) {
+		const populatedEnrollment = await populateEnrollment(existing);
+		return res.status(200).json({
+			success: true,
+			data: populatedEnrollment,
+			message: "Student is already enrolled in this course",
 		});
+	}
 
-	res.status(201).json({
-		success: true,
-		data: populatedEnrollment,
-	});
+	try {
+		const savedenrollment = await new Enrollment(req.body).save();
+		const populatedEnrollment = await populateEnrollment(savedenrollment);
+		return res.status(201).json({
+			success: true,
+			data: populatedEnrollment,
+		});
+	} catch (error) {
+		if (error?.code === 11000) {
+			const duplicate = await Enrollment.findOne({ student, course }).exec();
+			if (duplicate) {
+				const populatedEnrollment = await populateEnrollment(duplicate);
+				return res.status(200).json({
+					success: true,
+					data: populatedEnrollment,
+					message: "Student is already enrolled in this course",
+				});
+			}
+		}
+		throw error;
+	}
 });
 
 // @desc    Update enrollment

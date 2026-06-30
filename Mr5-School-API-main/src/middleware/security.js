@@ -20,6 +20,12 @@ export const securityHeaders = helmet({
 	},
 	crossOriginEmbedderPolicy: false,
 	crossOriginResourcePolicy: { policy: "cross-origin" },
+	hsts: isDevelopment
+		? false
+		: { maxAge: 63072000, includeSubDomains: true, preload: true },
+	referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+	xContentTypeOptions: true,
+	frameguard: { action: "sameorigin" },
 });
 
 // Rate limiting for general API

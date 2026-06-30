@@ -3,7 +3,11 @@ export const asyncHandler = (fn) => (req, res, next) => {
 };
 
 export const errorHandler = (err, req, res, next) => {
-  console.error(err.stack);
+  if (process.env.NODE_ENV !== 'production') {
+    console.error(err.stack);
+  } else {
+    console.error(err.message || 'Internal Server Error');
+  }
 
   let statusCode = err.statusCode || 500;
   let message = err.message || 'Internal Server Error';
@@ -25,6 +29,6 @@ export const errorHandler = (err, req, res, next) => {
     success: false,
     message,
     error: message,
-    stack: process.env.NODE_ENV === 'production' ? null : err.stack,
+    stack: process.env.NODE_ENV === 'production' ? undefined : err.stack,
   });
 };

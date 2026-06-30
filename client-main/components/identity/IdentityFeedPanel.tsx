@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { Globe, Trophy, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { IdentityNotification, LeaderboardFeed } from "@/types/identity";

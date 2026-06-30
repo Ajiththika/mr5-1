@@ -13,6 +13,13 @@ import {
 import { isGoogleOAuthEnabled } from "../config/passport.js";
 import { getTrialStatus } from "../services/trialService.js";
 import { ensureIdentityForUser } from "../services/identityService.js";
+import {
+	INVALID_CREDENTIALS_MESSAGE,
+	REGISTRATION_FAILED_MESSAGE,
+	FORGOT_PASSWORD_MESSAGE,
+	PASSWORD_UPDATE_FAILED_MESSAGE,
+	TOO_MANY_ATTEMPTS_MESSAGE,
+} from "../constants/authMessages.js";
 
 // Cookie options
 const getAccessTokenCookieOptions = () => ({
@@ -127,7 +134,7 @@ export const register = asyncHandler(async (req, res) => {
 			},
 		});
 	} catch (error) {
-		if (error.message === "User already exists with this email") {
+		if (error.message === REGISTRATION_FAILED_MESSAGE) {
 			error.statusCode = 400;
 		}
 		throw error;
@@ -177,11 +184,15 @@ export const login = asyncHandler(async (req, res) => {
 		});
 	} catch (error) {
 		if (
-			error.message === "Invalid credentials" ||
-			error.message === "Your account has been deactivated" ||
-			error.message === "Your account is pending approval"
+			error.message === INVALID_CREDENTIALS_MESSAGE ||
+			error.code === "AUTH_FAILED"
 		) {
 			error.statusCode = 401;
+			error.message = INVALID_CREDENTIALS_MESSAGE;
+		}
+		if (error.code === "AUTH_LOCKED" || error.statusCode === 429) {
+			error.statusCode = 429;
+			error.message = TOO_MANY_ATTEMPTS_MESSAGE;
 		}
 		throw error;
 	}
@@ -371,7 +382,7 @@ export const updatePassword = asyncHandler(async (req, res) => {
 			accessToken: result.accessToken,
 		});
 	} catch (error) {
-		if (error.message === "Current password is incorrect") {
+		if (error.message === PASSWORD_UPDATE_FAILED_MESSAGE) {
 			error.statusCode = 401;
 		}
 		throw error;
@@ -438,7 +449,7 @@ export const forgotPassword = asyncHandler(async (req, res) => {
 
 	res.status(200).json({
 		success: true,
-		data: result.message,
+		data: result.message || FORGOT_PASSWORD_MESSAGE,
 	});
 });
 

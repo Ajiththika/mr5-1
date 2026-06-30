@@ -9,6 +9,7 @@ export interface LocationContextData {
         city: string;
         latitude: number;
         longitude: number;
+        timezone?: string;
     };
     weather: {
         condition: string;

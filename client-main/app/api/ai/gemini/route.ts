@@ -20,7 +20,25 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		const { message, messages, options } = await request.json();
+		let body: {
+			message?: string;
+			messages?: Array<{ role: string; content: string | { text: string } }>;
+			options?: { temperature?: number; max_tokens?: number };
+		} = {};
+
+		try {
+			const raw = await request.text();
+			if (raw.trim()) {
+				body = JSON.parse(raw);
+			}
+		} catch {
+			return NextResponse.json(
+				{ error: "Invalid JSON body" },
+				{ status: 400 },
+			);
+		}
+
+		const { message, messages, options } = body;
 
 		// Handle both single message and messages array formats
 		let prompt = "";
@@ -58,8 +76,31 @@ export async function POST(request: NextRequest) {
 			"gemini-pro"
 		];
 
-		let lastError: any;
+		let lastError: unknown;
 		let responseText: string | null = null;
+
+		const isModelUnavailable = (error: unknown) => {
+			const message = error instanceof Error ? error.message : String(error);
+			return (
+				message.includes("404") ||
+				message.includes("not found") ||
+				message.includes("unsupported")
+			);
+		};
+
+		const isTransientProviderError = (error: unknown) => {
+			const message = error instanceof Error ? error.message : String(error);
+			return (
+				message.includes("429") ||
+				message.includes("503") ||
+				message.includes("Too Many Requests") ||
+				message.includes("high demand") ||
+				message.includes("quota")
+			);
+		};
+
+		const fallbackResponse =
+			"I'm your MR5 study assistant. Ask me about your lessons, homework, or anything you're learning today.";
 
 		// 2. Iterate and try
 		for (const modelName of modelsToTry) {
@@ -79,31 +120,31 @@ export async function POST(request: NextRequest) {
 				// If we succeed, break the loop
 				if (responseText) break;
 
-			} catch (error: any) {
+			} catch (error: unknown) {
 				lastError = error;
-				// Only retry on 404 (Not Found) or 400 (Bad Request - typically model mismatch)
-				const isModelError = error.message?.includes("404") || error.message?.includes("not found") || error.message?.includes("unsupported");
 
-				if (isModelError) {
+				if (isModelUnavailable(error)) {
 					console.warn(`Gemini model '${modelName}' failed (not found/supported). Trying next fallback...`);
 					continue;
 				}
 
-				// If it's another error (e.g. Quota, API Key, 500), throw immediately
+				if (isTransientProviderError(error)) {
+					console.warn(`Gemini model '${modelName}' transient error. Trying next fallback...`);
+					continue;
+				}
+
+				// If it's another error (e.g. API Key, 500), throw immediately
 				throw error;
 			}
 		}
 
-		// 3. If all attempts fail, try to help debug by listing models (if possible)
+		// 3. Graceful fallback when all providers are unavailable (quota, outage, CI)
 		if (!responseText) {
-			console.error("All model fallbacks failed.");
-			// Optional: Try to list models to help debugging
-			// try {
-			// 	 const models = await genAI.listModels();
-			// 	 console.log("Available models:", models);
-			// } catch (e) { /* ignore list error */ }
-
-			throw lastError || new Error("Failed to generate content with any available model.");
+			console.error("All Gemini model fallbacks failed.", lastError);
+			return NextResponse.json({
+				response: fallbackResponse,
+				fallback: true,
+			});
 		}
 
 		return NextResponse.json({ response: responseText });

@@ -22,6 +22,13 @@ export const purchaseItem = asyncHandler(async (req, res) => {
 		return res.status(404).json({ success: false, error: "Item not found" });
 	}
 
+	if (item.type === "teacher_avatar" && item.isPremium && item.priceCents > 0) {
+		return res.status(400).json({
+			success: false,
+			error: "Premium teacher avatars require checkout. Use /api/shop/teacher-checkout.",
+		});
+	}
+
 	const existing = await UserInventory.findOne({
 		user: req.user.id,
 		item: itemId,

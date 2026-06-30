@@ -19,6 +19,7 @@ type BentoItemProps = {
     subtitle?: string;
     header?: React.ReactNode;
     icon?: React.ReactNode;
+    "data-tour-id"?: string;
 };
 
 // --- Spotlight Card (The Core Huly Component) ---
@@ -95,6 +96,7 @@ export const BentoItem = ({
     subtitle,
     header,
     icon,
+    "data-tour-id": tourId,
 }: BentoItemProps) => {
     // Map our 12-column logic to Tailwind classes
     const colSpanClass = {
@@ -111,6 +113,7 @@ export const BentoItem = ({
 
     return (
         <div
+            data-tour-id={tourId}
             className={cn(
                 colSpanClass[colSpan],
                 rowSpanClass,

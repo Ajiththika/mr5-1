@@ -339,7 +339,7 @@ export default function StudentPortal() {
                 { href: "/student/courses", label: "My Courses", icon: BookOpen },
                 { href: "/student/assignments", label: "Assignments", icon: Target },
                 { href: "/student/grades", label: "Grades", icon: Trophy },
-                { href: "/student/shop", label: "Avatar Shop", icon: Sparkles },
+                { href: "/avatar-shop", label: "Own Store", icon: Sparkles },
               ].map((action) => (
                 <Button
                   key={action.href}

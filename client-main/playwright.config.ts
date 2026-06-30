@@ -34,7 +34,7 @@ export default defineConfig({
       timeout: 180 * 1000,
     },
     {
-      command: `NEXT_PUBLIC_API_URL=${API_URL} PORT=${WEB_PORT} npm run dev`,
+      command: `CI=true NEXT_PUBLIC_API_URL=${API_URL} PORT=${WEB_PORT} npm run dev`,
       url: WEB_URL,
       reuseExistingServer: !process.env.CI,
       timeout: 180 * 1000,

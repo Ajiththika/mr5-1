@@ -6,6 +6,7 @@ import { User } from "@/types/user";
 import { authService } from "@/services/auth.service";
 import { enrollmentService } from "@/services/enrollment.service";
 import { useAdvancedCache } from "@/hooks/useAdvancedCache";
+import { useSessionInactivity, broadcastSessionLogout } from "@/hooks/useSessionInactivity";
 
 interface EnhancedUserContextType {
   user: User | null;
@@ -278,17 +279,24 @@ export function EnhancedUserProvider({ children }: { children: React.ReactNode }
   const logout = useCallback(async () => {
     try {
       await authService.logout();
-    } catch (error) {
+    } catch {
       // Ignore errors
     } finally {
+      broadcastSessionLogout();
       setUser(null);
-      // Clear cache
       userCache.clear();
       localStorage.removeItem("token");
-      localStorage.removeItem("userPreferences");
       router.push("/login");
     }
   }, [userCache, router]);
+
+  useSessionInactivity(
+    () => {
+      if (user) void logout();
+    },
+    30 * 60 * 1000,
+    !!user,
+  );
 
   /**
    * Clear user cache (useful after profile updates)

@@ -8,16 +8,17 @@ import { GlobalAcademicSearch } from "@/components/identity/GlobalAcademicSearch
 
 type GlobalSearchTriggerProps = {
 	className?: string;
+	"data-tour-id"?: string;
 };
 
 /** Always-available academic search — compact in navbar, full-screen sheet on mobile. */
-export function GlobalSearchTrigger({ className }: GlobalSearchTriggerProps) {
+export function GlobalSearchTrigger({ className, "data-tour-id": tourId }: GlobalSearchTriggerProps) {
 	const [mobileOpen, setMobileOpen] = useState(false);
 
 	return (
 		<>
 			{/* Desktop / tablet inline search */}
-			<div className={className}>
+			<div className={className} data-tour-id={tourId}>
 				<div className="hidden min-w-0 flex-1 md:block lg:max-w-md xl:max-w-lg">
 					<GlobalAcademicSearch variant="compact" showShortcut />
 				</div>

@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-
-const LOGO_SRC = "/images/mr5-logo.png";
+import { MR5_LOGO_PATH } from "@/lib/brand/logo";
 
 export default function LoadingScreen({
 	onComplete,
@@ -59,7 +58,7 @@ export default function LoadingScreen({
 						className="relative aspect-[612/408] w-full"
 					>
 						<Image
-							src={LOGO_SRC}
+							src={MR5_LOGO_PATH}
 							alt="MR5 School"
 							fill
 							priority

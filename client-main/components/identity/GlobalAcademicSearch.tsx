@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import {
@@ -25,6 +25,7 @@ type GlobalAcademicSearchProps = {
 	onNavigate?: () => void;
 	variant?: "inline" | "compact" | "fullscreen";
 	autoFocus?: boolean;
+	"data-tour-id"?: string;
 };
 
 function SuggestionIcon({ type }: { type: SearchSuggestion["type"] }) {
@@ -40,6 +41,7 @@ export function GlobalAcademicSearch({
 	onNavigate,
 	variant = "inline",
 	autoFocus = false,
+	"data-tour-id": tourId,
 }: GlobalAcademicSearchProps) {
 	const router = useRouter();
 	const listboxId = useId();
@@ -76,7 +78,7 @@ export function GlobalAcademicSearch({
 	}, [setIsOpen]);
 
 	useEffect(() => {
-		const onKeyDown = (event: KeyboardEvent) => {
+		const onKeyDown = (event: globalThis.KeyboardEvent) => {
 			if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
 				event.preventDefault();
 				inputRef.current?.focus();
@@ -84,8 +86,8 @@ export function GlobalAcademicSearch({
 			}
 			if (event.key === "Escape") setIsOpen(false);
 		};
-		window.addEventListener("keydown", onKeyDown as unknown as EventListener);
-		return () => window.removeEventListener("keydown", onKeyDown as unknown as EventListener);
+		window.addEventListener("keydown", onKeyDown);
+		return () => window.removeEventListener("keydown", onKeyDown);
 	}, [setIsOpen]);
 
 	const suggestions = results.suggestions;
@@ -112,7 +114,7 @@ export function GlobalAcademicSearch({
 		if (href) navigate(href);
 	};
 
-	const handleInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+	const handleInputKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
 		if (!showPanel || !suggestions.length) return;
 		if (event.key === "ArrowDown") {
 			event.preventDefault();
@@ -280,7 +282,7 @@ export function GlobalAcademicSearch({
 	}
 
 	return (
-		<div ref={rootRef} className={cn("relative w-full", className)}>
+		<div ref={rootRef} data-tour-id={tourId} className={cn("relative w-full", className)}>
 			{form}
 			{panel}
 		</div>

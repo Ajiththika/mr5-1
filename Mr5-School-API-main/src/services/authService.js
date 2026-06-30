@@ -10,6 +10,18 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import sendEmail from "../utils/sendEmail.js";
 import { ensureIdentityForUser } from "./identityService.js";
+import {
+	checkLoginLockout,
+	clearLoginFailures,
+	recordLoginFailure,
+	verifyCredentialsSecurely,
+} from "./loginSecurityService.js";
+import {
+	INVALID_CREDENTIALS_MESSAGE,
+	FORGOT_PASSWORD_MESSAGE,
+	REGISTRATION_FAILED_MESSAGE,
+	PASSWORD_UPDATE_FAILED_MESSAGE,
+} from "../constants/authMessages.js";
 
 // Token configuration
 const ACCESS_TOKEN_EXPIRE = process.env.JWT_EXPIRE || "15m";
@@ -50,7 +62,7 @@ export const registerUser = async (userData, ipAddress = null, userAgent = null)
 
     const userExists = await User.findOne({ email });
     if (userExists) {
-        throw new Error("User already exists with this email");
+        throw new Error(REGISTRATION_FAILED_MESSAGE);
     }
 
     // AI-TEACHERs require admin approval
@@ -83,37 +95,36 @@ export const registerUser = async (userData, ipAddress = null, userAgent = null)
  * Login user with email and password
  */
 export const loginUser = async (email, password, ipAddress = null, userAgent = null) => {
-    const user = await User.findOne({ email }).select("+password");
-
-    if (!user) {
-        throw new Error("Invalid credentials");
+    const lockout = await checkLoginLockout(email, ipAddress);
+    if (lockout.locked) {
+        const err = new Error(lockout.message);
+        err.statusCode = 429;
+        err.code = "AUTH_LOCKED";
+        throw err;
     }
 
-    if (!user.isActive) {
-        throw new Error("Your account has been deactivated");
+    try {
+        const user = await verifyCredentialsSecurely(email, password);
+
+        await clearLoginFailures(lockout.identifierHash);
+
+        user.lastLogin = new Date();
+        await user.save({ validateBeforeSave: false });
+
+        const accessToken = generateAccessToken(user._id);
+        const refreshToken = await generateRefreshToken(user._id, ipAddress, userAgent);
+
+        return {
+            user,
+            accessToken,
+            refreshToken: refreshToken.token,
+        };
+    } catch (error) {
+        if (error.code !== "AUTH_LOCKED") {
+            await recordLoginFailure(lockout.identifierHash);
+        }
+        throw error;
     }
-
-    if (user.status === "pending") {
-        throw new Error("Your account is pending approval");
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-        throw new Error("Invalid credentials");
-    }
-
-    // Update last login
-    user.lastLogin = new Date();
-    await user.save({ validateBeforeSave: false });
-
-    const accessToken = generateAccessToken(user._id);
-    const refreshToken = await generateRefreshToken(user._id, ipAddress, userAgent);
-
-    return {
-        user,
-        accessToken,
-        refreshToken: refreshToken.token,
-    };
 };
 
 /**
@@ -227,7 +238,7 @@ export const updateUserPassword = async (userId, currentPassword, newPassword, i
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
-        throw new Error("Current password is incorrect");
+        throw new Error(PASSWORD_UPDATE_FAILED_MESSAGE);
     }
 
     user.password = newPassword; // Will be hashed by pre-save hook
@@ -291,7 +302,7 @@ export const forgotPassword = async (email) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-        throw new Error("There is no user with that email");
+        return { message: FORGOT_PASSWORD_MESSAGE };
     }
 
     // Generate reset token
@@ -326,14 +337,14 @@ export const forgotPassword = async (email) => {
             html
         });
 
-        return { message: "Email sent" };
+        return { message: FORGOT_PASSWORD_MESSAGE };
     } catch (err) {
         user.resetPasswordToken = undefined;
         user.resetPasswordExpire = undefined;
 
         await user.save({ validateBeforeSave: false });
 
-        throw new Error("Email could not be sent");
+        return { message: FORGOT_PASSWORD_MESSAGE };
     }
 };
 

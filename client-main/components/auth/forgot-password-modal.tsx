@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authService } from "@/services/auth.service";
 import { Mail, ArrowLeft } from "lucide-react";
+import { FORGOT_PASSWORD_MESSAGE } from "@/lib/auth-security";
 import { toast } from "sonner";
 
 interface ForgotPasswordModalProps {
@@ -32,10 +33,10 @@ export function ForgotPasswordModal({ _open: isOpen, onOpenChange }: ForgotPassw
         try {
             await authService.forgotPassword(email);
             setEmailSent(true);
-            toast.success("Password reset email sent! Check your inbox.");
-        } catch (err: any) {
-            const errorMessage = err.response?.data?.message || err.message || "Failed to send reset email";
-            toast.error(errorMessage);
+            toast.success(FORGOT_PASSWORD_MESSAGE);
+        } catch {
+            setEmailSent(true);
+            toast.success(FORGOT_PASSWORD_MESSAGE);
         } finally {
             setLoading(false);
         }

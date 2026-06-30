@@ -6,7 +6,10 @@ test.describe("Classroom environment", () => {
     await loginAsStudent(page);
   });
 
-  async function enterClassroom(page: import("@playwright/test").Page) {
+  async function enterClassroom(
+    page: import("@playwright/test").Page,
+    options?: { openMenu?: boolean },
+  ) {
     await page.goto("/student/courses");
     await page.waitForLoadState("networkidle");
 
@@ -22,7 +25,9 @@ test.describe("Classroom environment", () => {
     });
     await expect(page.getByText(/loading classroom/i)).toBeHidden({ timeout: 90000 });
     await dismissOverlayDialogs(page);
-    await openClassroomMenu(page);
+    if (options?.openMenu !== false) {
+      await openClassroomMenu(page);
+    }
     return courseId;
   }
 
@@ -40,7 +45,7 @@ test.describe("Classroom environment", () => {
       "Dev panel hidden in production",
     );
 
-    await enterClassroom(page);
+    await enterClassroom(page, { openMenu: false });
 
     await page.getByRole("button", { name: /env debug/i }).click({ timeout: 30000 });
     await page.getByRole("button", { name: /^night$/i }).click();

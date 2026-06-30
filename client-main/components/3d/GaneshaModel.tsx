@@ -124,6 +124,7 @@ export interface GaneshaModelProps {
   animate?: boolean;
   embedded?: boolean;
   targetHeight?: number;
+  modelUrl?: string;
 }
 
 export function GaneshaModel({
@@ -133,10 +134,11 @@ export function GaneshaModel({
   animate = true,
   embedded = false,
   targetHeight: targetHeightOverride,
+  modelUrl,
 }: GaneshaModelProps) {
   const rootRef = useRef<THREE.Group>(null);
-  const modelUrl = getGaneshaModelUrl();
-  const { scene, animations } = useGLTF(modelUrl);
+  const resolvedUrl = modelUrl || getGaneshaModelUrl();
+  const { scene, animations } = useGLTF(resolvedUrl);
   const { actions, mixer } = useAnimations(animations, rootRef);
 
   const isTeacher = variant === "teacher";

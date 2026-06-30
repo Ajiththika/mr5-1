@@ -1,6 +1,7 @@
 import { generateMetadata } from "@/lib/seo";
 import { StructuredData } from "@/components/seo/StructuredData";
 import HomePageClient from "@/components/home/HomePageClient";
+import { MR5_LOGO_PATH } from "@/lib/brand/logo";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mr5school.com";
 
@@ -44,7 +45,7 @@ const homePageSchema = {
     name: "MR5 School",
     url: siteUrl,
   },
-  primaryImageOfPage: `${siteUrl}/images/mr5-logo.png`,
+  primaryImageOfPage: `${siteUrl}${MR5_LOGO_PATH}`,
   potentialAction: {
     "@type": "ReadAction",
     target: siteUrl,

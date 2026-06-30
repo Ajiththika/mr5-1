@@ -42,6 +42,7 @@ import pricingRoutes from "./routes/pricingRoutes.js";
 import trialRoutes from "./routes/trialRoutes.js";
 import progressRoutes from "./routes/progressRoutes.js";
 import shopRoutes from "./routes/shopRoutes.js";
+import userInventoryRoutes from "./routes/userInventoryRoutes.js";
 import legalRoutes from "./routes/legalRoutes.js";
 import identityRoutes from "./routes/identityRoutes.js";
 import powerAdminRoutes from "./routes/powerAdminRoutes.js";
@@ -198,6 +199,7 @@ app.use("/api/pricing", pricingRoutes);
 app.use("/api/trial", trialRoutes);
 app.use("/api/progress", progressRoutes);
 app.use("/api/shop", shopRoutes);
+app.use("/api/user", userInventoryRoutes);
 app.use("/api/legal", legalRoutes);
 app.use("/api/identity", identityRoutes);
 

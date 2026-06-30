@@ -12,7 +12,7 @@ test.describe("Student dashboard navigation", () => {
       { link: "My Courses", heading: /My Courses/i, url: /\/student\/courses/ },
       { link: "Assignments", heading: /Assignments/i, url: /\/student\/assignments/ },
       { link: "Grades", heading: /Grades/i, url: /\/student\/grades/ },
-      { link: "Avatar Shop", heading: /Avatar Shop/i, url: /\/student\/shop/ },
+      { link: "Own Store", heading: /MR5 Own Store/i, url: /\/avatar-shop/ },
       { link: "Schedule", heading: /Schedule/i, url: /\/student\/schedule/ },
       { link: "Dashboard", heading: /welcome back/i, url: /\/student\/portal/ },
     ];

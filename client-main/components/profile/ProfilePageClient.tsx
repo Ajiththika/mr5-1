@@ -354,7 +354,7 @@ export default function ProfilePageClient() {
             <IdentityPrivacyPanel mr5Uid={user.mr5Uid} />
           </BentoItem>
 
-          <BentoItem colSpan={12} title="Friends" description="Manage friend requests and connections">
+          <BentoItem colSpan={12} title="Friends" subtitle="Manage friend requests and connections">
             <FriendInbox />
           </BentoItem>
 

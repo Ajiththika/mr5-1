@@ -4,7 +4,7 @@ export interface ShopItem {
 	_id: string;
 	name: string;
 	description: string;
-	type: "hat" | "shirt" | "accessory" | "book";
+	type: "hat" | "shirt" | "accessory" | "book" | "teacher_avatar";
 	priceCents: number;
 	imageUrl?: string;
 }

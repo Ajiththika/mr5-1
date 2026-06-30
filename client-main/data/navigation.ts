@@ -104,7 +104,7 @@ export const studentNavigation: NavigationItem[] = [
   { title: "My Courses", href: "/student/courses", icon: BookOpen },
   { title: "Assignments", href: "/student/assignments", icon: FileText },
   { title: "Grades", href: "/student/grades", icon: Trophy },
-  { title: "Avatar Shop", href: "/student/shop", icon: ShoppingBag },
+  { title: "Own Store", href: "/avatar-shop", icon: ShoppingBag },
   { title: "Schedule", href: "/student/schedule", icon: Calendar },
 ];
 

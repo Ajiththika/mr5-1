@@ -24,6 +24,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { MoodDetector } from '@/components/classroom/MoodDetector';
 import Image from 'next/image';
+import { MR5_LOGO_PATH } from '@/lib/brand/logo';
 import { toast } from 'sonner';
 import { useEnhancedUser } from '@/contexts/EnhancedUserContext';
 import { studentLearningService } from '@/services/studentLearning.service';
@@ -539,7 +540,7 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
                                             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-amber-500 p-[2px] overflow-hidden">
                                                 <div className="w-full h-full rounded-full bg-black flex items-center justify-center relative">
                                                     <Image
-                                                        src="/assets/mr5-logo-neon.png"
+                                                        src={MR5_LOGO_PATH}
                                                         alt="MR5 AI"
                                                         fill
                                                         sizes="48px"
@@ -628,7 +629,7 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
                                                             <User className="w-5 h-5 text-white" />
                                                         ) : (
                                                             <Image
-                                                                src="/assets/mr5-logo-neon.png"
+                                                                src={MR5_LOGO_PATH}
                                                                 alt="AI"
                                                                 fill
                                                                 sizes="40px"
@@ -695,7 +696,7 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
                                                 >
                                                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-cyan-500/20 overflow-hidden relative">
                                                         <Image
-                                                            src="/assets/mr5-logo-neon.png"
+                                                            src={MR5_LOGO_PATH}
                                                             alt="AI Processing"
                                                             fill
                                                             sizes="40px"

@@ -9,6 +9,8 @@ export interface ClassroomAiContext {
   studentSeat?: number;
   seatLabel?: string;
   boardContent?: string[];
+  teacherName?: string;
+  teacherPersonality?: string;
   learningProgress?: {
     sectionIndex?: number;
     completedTopics?: string[];
@@ -58,6 +60,10 @@ export function buildStudentAiSystemPrompt({
     .join("\n");
 
   const classroomLines = [
+    classroom?.teacherName ? `Active teacher avatar: ${classroom.teacherName}` : null,
+    classroom?.teacherPersonality
+      ? `Teacher personality:\n${classroom.teacherPersonality}`
+      : null,
     classroom?.studentSeat
       ? `Student seat: ${classroom.seatLabel ?? `Seat ${classroom.studentSeat}`}`
       : null,
@@ -75,7 +81,9 @@ export function buildStudentAiSystemPrompt({
     .join("\n");
 
   return [
-    "You are an expert AI Teacher for MR5 School immersive 3D classroom.",
+    classroom?.teacherPersonality
+      ? classroom.teacherPersonality
+      : "You are an expert AI Teacher for MR5 School immersive 3D classroom.",
     "Answer ONLY about the current course and lesson on the blackboard.",
     "Do not discuss unrelated topics. Keep responses educational, friendly, and step-by-step.",
     "Be warm, patient, and encouraging.",

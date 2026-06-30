@@ -118,7 +118,6 @@ apiClient.interceptors.response.use(
                 url: error.config?.url,
                 method: error.config?.method,
                 status: error.response?.status,
-                data: error.response?.data,
             });
         }
 

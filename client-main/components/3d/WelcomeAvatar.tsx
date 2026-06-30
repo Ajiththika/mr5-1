@@ -69,10 +69,8 @@ export function WelcomeAvatar({
     return () => clearInterval(interval);
   }, [location]);
 
-  const speakGreeting = useCallback(() => {
+  const playSpeech = useCallback(() => {
     if (!enableVoice || isMuted || typeof window === "undefined") return;
-    if (!shouldPlayVoiceGreeting()) return;
-    markVoiceGreetingPlayed();
     window.speechSynthesis?.cancel();
     const greetingText = `${greeting?.transliteration || "Vanakkam"}! Welcome to MR5 School.`;
     const utterance = new SpeechSynthesisUtterance(greetingText);
@@ -87,15 +85,20 @@ export function WelcomeAvatar({
   }, [isMuted, enableVoice, greeting]);
 
   useEffect(() => {
-    if (!hasGreeted && greeting && enableVoice && shouldPlayVoiceGreeting()) {
+    if (!hasGreeted && greeting && shouldPlayVoiceGreeting()) {
+      markVoiceGreetingPlayed();
+      setHasGreeted(true);
       setGestureState("greeting_start");
-      setTimeout(() => {
-        setGestureState("speaking");
-        speakGreeting();
-        setHasGreeted(true);
-      }, 800);
+      if (enableVoice && !isMuted) {
+        const timer = window.setTimeout(() => {
+          setGestureState("speaking");
+          playSpeech();
+        }, 800);
+        return () => window.clearTimeout(timer);
+      }
+      setGestureState("idle");
     }
-  }, [hasGreeted, greeting, speakGreeting, enableVoice]);
+  }, [hasGreeted, greeting, playSpeech, enableVoice, isMuted]);
 
   useEffect(() => () => window.speechSynthesis?.cancel(), []);
 

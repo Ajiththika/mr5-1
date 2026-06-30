@@ -35,6 +35,8 @@ const CONSENT_PROTECTED_PREFIXES = [
     "/onboarding",
     "/payment",
     "/avatar",
+    "/avatar-shop",
+    "/inventory",
     "/apps",
 ];
 

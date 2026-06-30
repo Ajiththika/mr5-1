@@ -33,9 +33,7 @@ import { ClassroomEnvironmentProvider, useClassroomEnvironment } from "@/context
 import { ClassroomAtmosphere } from "@/components/3d/classroom/ClassroomAtmosphere";
 import { CeilingFan } from "@/components/3d/classroom/CeilingFan";
 import { ClassroomAmbienceAudio } from "@/components/3d/classroom/ClassroomAmbienceAudio";
-import { WallControlPanel } from "@/components/3d/classroom/WallControlPanel";
 import { useAudio } from "@/hooks/useAudio";
-import { getBrandSoundManager } from "@/lib/audio";
 import { useTranslation } from "@/hooks/useTranslation";
 import type { EnvironmentLighting } from "@/lib/classroom-environment";
 import { resolveStudentSeatedPoseBySeatId, collectChairSeats } from "@/lib/classroom-seat";
@@ -47,7 +45,6 @@ import {
   DEFAULT_SEAT_ID,
 } from "@/lib/classroom/seat-storage";
 import { SmartBlackboard } from "@/components/3d/classroom/SmartBlackboard";
-import { BoardWallLogo } from "@/components/3d/classroom/BoardWallLogo";
 import { SeatSelectionOverlay } from "@/components/classroom/SeatSelectionOverlay";
 import { AskTeacherButton } from "@/components/classroom/AskTeacherButton";
 import { useClassroomLesson } from "@/features/classroom/hooks/useClassroomLesson";
@@ -61,9 +58,16 @@ import {
 import type { ClassroomLessonSection } from "@/types/classroom-session";
 import { useDeviceOrientationLook } from "@/hooks/useDeviceOrientationLook";
 import { MotionViewButton } from "@/components/classroom/MotionViewButton";
+import { ChangeTeacherModal } from "@/components/classroom/ChangeTeacherModal";
+import { ClassroomSettingsPanel } from "@/components/classroom/ClassroomSettingsPanel";
+import { useClassroomOwnStoreRuntime } from "@/hooks/useClassroomOwnStoreRuntime";
 import { get3DPerformanceProfile } from "@/lib/3d/performance-profile";
+import { useActiveTeacher, getTeacherPersonalityPrompt } from "@/contexts/ActiveTeacherContext";
 import { ModelCreditNotice } from "@/components/3d/ModelCreditNotice";
 import { getGaneshaModelUrl } from "@/lib/3d/aws-assets";
+import { deriveClassroomBrandPlacements } from "@/lib/classroom/classroom-brand-placement";
+import type { ClassroomBrandPlacements } from "@/lib/classroom/classroom-brand-placement";
+import { ClassroomBrandStickers } from "@/components/3d/classroom/ClassroomBrandStickers";
 
 const CLASSROOM_GLB = "/assets/3d/rooms/classroom.glb";
 
@@ -99,19 +103,16 @@ interface ClassroomViewState {
   teacherStand: THREE.Vector3;
   teacherLookAt: THREE.Vector3;
   teacherAnchor: TeacherAnchorState;
-  logoPosition: THREE.Vector3;
-  logoLookAt: THREE.Vector3;
   studentPreset: CameraPreset;
   teacherPreset: CameraPreset;
   anchors: ClassroomAnchor[];
   ceilingY: number;
   roomCenter: THREE.Vector3;
-  fanSwitchPosition: THREE.Vector3;
-  fanSwitchLookAt: THREE.Vector3;
   welcomeGuidePosition: THREE.Vector3;
   welcomeGuideLookAt: THREE.Vector3;
   seatGrid: ClassroomSeatSlot[];
   selectedSeatId: number;
+  brandPlacements: ClassroomBrandPlacements;
 }
 
 function Loader() {
@@ -237,7 +238,6 @@ function deriveClassroomViewState(
   const seat = seated.seat;
   const classDirection = seated.classDirection;
 
-  const wallNormal = classDirection.clone().multiplyScalar(-1);
   const boardSide = new THREE.Vector3()
     .crossVectors(new THREE.Vector3(0, 1, 0), classDirection)
     .normalize();
@@ -250,23 +250,6 @@ function deriveClassroomViewState(
   );
   const teacherStand = teacherAnchor.position.clone();
   const teacherLookAt = teacherAnchor.lookAt.clone();
-
-  const logoPosition = boardCenter
-    .clone()
-    .add(wallNormal.clone().multiplyScalar(0.075));
-  logoPosition.y = boardBounds.max.y + 0.22;
-  const logoLookAt = logoPosition
-    .clone()
-    .add(classDirection.clone().multiplyScalar(2));
-
-  const fanSwitchPosition = board
-    .clone()
-    .add(boardSide.clone().multiplyScalar(2.35))
-    .add(wallNormal.clone().multiplyScalar(0.07));
-  fanSwitchPosition.y = floorY + 1.42;
-  const fanSwitchLookAt = fanSwitchPosition
-    .clone()
-    .add(classDirection.clone().multiplyScalar(-2));
 
   const studentEye = seated.eye.clone();
   const studentLook = seated.lookAt.clone();
@@ -347,19 +330,16 @@ function deriveClassroomViewState(
     teacherStand,
     teacherLookAt,
     teacherAnchor,
-    logoPosition,
-    logoLookAt,
     studentPreset,
     teacherPreset,
     anchors,
     ceilingY,
     roomCenter,
-    fanSwitchPosition,
-    fanSwitchLookAt,
     welcomeGuidePosition,
     welcomeGuideLookAt,
     seatGrid,
     selectedSeatId: seatId,
+    brandPlacements: deriveClassroomBrandPlacements(root, classDirection, boardBounds),
   };
 }
 
@@ -811,53 +791,6 @@ function ClassroomLighting({
   );
 }
 
-function PracticalLabBench({ viewState }: { viewState: ClassroomViewState }) {
-  const position = useMemo(() => {
-    const side = new THREE.Vector3()
-      .crossVectors(new THREE.Vector3(0, 1, 0), viewState.classDirection)
-      .normalize();
-    const bench = viewState.board
-      .clone()
-      .add(side.multiplyScalar(-2.1))
-      .add(viewState.classDirection.clone().multiplyScalar(1.4));
-    bench.y = viewState.floorY;
-    return bench;
-  }, [viewState]);
-
-  const rotationY = useMemo(() => {
-    return Math.atan2(viewState.classDirection.x, viewState.classDirection.z);
-  }, [viewState.classDirection]);
-
-  return (
-    <group position={[position.x, position.y, position.z]} rotation={[0, rotationY, 0]}>
-      <mesh castShadow receiveShadow position={[0, 0.42, 0]}>
-        <boxGeometry args={[1.85, 0.07, 0.95]} />
-        <meshStandardMaterial color="#475569" roughness={0.52} metalness={0.14} />
-      </mesh>
-      <mesh castShadow position={[-0.78, 0.21, -0.32]}>
-        <boxGeometry args={[0.07, 0.42, 0.07]} />
-        <meshStandardMaterial color="#334155" roughness={0.7} metalness={0.08} />
-      </mesh>
-      <mesh castShadow position={[0.78, 0.21, -0.32]}>
-        <boxGeometry args={[0.07, 0.42, 0.07]} />
-        <meshStandardMaterial color="#334155" roughness={0.7} metalness={0.08} />
-      </mesh>
-      <mesh castShadow position={[-0.78, 0.21, 0.32]}>
-        <boxGeometry args={[0.07, 0.42, 0.07]} />
-        <meshStandardMaterial color="#334155" roughness={0.7} metalness={0.08} />
-      </mesh>
-      <mesh castShadow position={[0.78, 0.21, 0.32]}>
-        <boxGeometry args={[0.07, 0.42, 0.07]} />
-        <meshStandardMaterial color="#334155" roughness={0.7} metalness={0.08} />
-      </mesh>
-      <mesh position={[0.2, 0.48, 0.1]} rotation={[0.08, 0, 0]}>
-        <boxGeometry args={[0.35, 0.02, 0.25]} />
-        <meshStandardMaterial color="#1e293b" roughness={0.35} metalness={0.2} />
-      </mesh>
-    </group>
-  );
-}
-
 function ClassroomSceneEnvironment({ lighting }: { lighting: EnvironmentLighting }) {
   return (
     <>
@@ -868,19 +801,75 @@ function ClassroomSceneEnvironment({ lighting }: { lighting: EnvironmentLighting
   );
 }
 
+function EquippedOwnStoreAssets({
+  equippedClock,
+  equippedTransport,
+  viewState,
+  windowCenter,
+}: {
+  equippedClock?: string;
+  equippedTransport?: string;
+  viewState: ClassroomViewState;
+  windowCenter: THREE.Vector3;
+}) {
+  if (!equippedClock && !equippedTransport) return null;
+
+  const clockPos: [number, number, number] = [
+    viewState.board.x - viewState.classDirection.x * 0.4,
+    viewState.ceilingY - 0.35,
+    viewState.board.z - viewState.classDirection.z * 0.4,
+  ];
+
+  const busPos: [number, number, number] = [
+    windowCenter.x + viewState.classDirection.x * 4.5,
+    viewState.floorY + 0.6,
+    windowCenter.z + viewState.classDirection.z * 4.5,
+  ];
+
+  return (
+    <>
+      {equippedClock ? (
+        <group position={clockPos}>
+          <mesh>
+            <cylinderGeometry args={[0.18, 0.18, 0.04, 32]} />
+            <meshStandardMaterial color="#f5e6c8" metalness={0.4} roughness={0.35} />
+          </mesh>
+          <mesh position={[0, 0, 0.03]}>
+            <circleGeometry args={[0.14, 32]} />
+            <meshStandardMaterial color="#1e293b" />
+          </mesh>
+        </group>
+      ) : null}
+      {equippedTransport ? (
+        <group position={busPos} rotation={[0, Math.atan2(viewState.classDirection.x, viewState.classDirection.z), 0]}>
+          <mesh>
+            <boxGeometry args={[1.8, 0.7, 0.55]} />
+            <meshStandardMaterial color="#facc15" />
+          </mesh>
+          <mesh position={[0.55, 0.2, 0]}>
+            <boxGeometry args={[0.5, 0.35, 0.52]} />
+            <meshStandardMaterial color="#fde68a" />
+          </mesh>
+        </group>
+      ) : null}
+    </>
+  );
+}
+
 function ClassroomContent({
   viewState,
   cameraMode,
   selectedSeatId,
   onViewStateReady,
   onFanSpeedChange,
-  onWallTeacher,
-  onWallStudent,
-  wallLabels,
   blackboardSection,
   courseTitle,
   lessonLoading,
   teacherMode,
+  teacherModelUrl,
+  teacherFadeKey,
+  equippedClock,
+  equippedTransport,
   motionEnabled,
   getOrientationDelta,
 }: {
@@ -889,26 +878,20 @@ function ClassroomContent({
   selectedSeatId: number;
   onViewStateReady: (state: ClassroomViewState) => void;
   onFanSpeedChange: (speed: number) => void;
-  onWallTeacher: () => void;
-  onWallStudent: () => void;
-  wallLabels: {
-    panel: string;
-    fan: string;
-    fanOn: string;
-    fanOff: string;
-    teacher: string;
-    student: string;
-  };
   blackboardSection: ClassroomLessonSection | null;
   courseTitle?: string;
   lessonLoading?: boolean;
   teacherMode: TeacherPresenceMode;
+  teacherModelUrl?: string;
+  teacherFadeKey?: number;
+  equippedClock?: string;
+  equippedTransport?: string;
   motionEnabled?: boolean;
   getOrientationDelta?: () => { yaw: number; pitch: number };
 }) {
   const { environment } = useClassroomEnvironment();
   const { computed, weather } = useWeatherSync();
-  const { controls, setFanEnabled } = useClassroomStore();
+  const { controls } = useClassroomStore();
   const { lighting } = environment;
   const [fanSpeed, setFanSpeed] = useState(0);
 
@@ -970,11 +953,6 @@ function ClassroomContent({
             windSpeed={weather.windSpeed}
             lightsOn={controls.lightsOn}
           />
-          <PracticalLabBench viewState={viewState} />
-          <BoardWallLogo
-            position={viewState.logoPosition}
-            lookAt={viewState.logoLookAt}
-          />
           <SmartBlackboard
             boardBox={viewState.boardBox}
             classDirection={viewState.classDirection}
@@ -982,6 +960,7 @@ function ClassroomContent({
             courseTitle={courseTitle}
             loading={lessonLoading}
           />
+          <ClassroomBrandStickers placements={viewState.brandPlacements} />
           <CeilingFan
             position={[
               viewState.roomCenter.x,
@@ -995,19 +974,18 @@ function ClassroomContent({
             onSpeedChange={handleFanSpeed}
             environment={fanEnvironment}
           />
-          <WallControlPanel
-            position={viewState.fanSwitchPosition}
-            lookAt={viewState.fanSwitchLookAt}
-            fanOn={controls.fanEnabled}
-            onFanToggle={() => {
-              getBrandSoundManager().playToggle();
-              setFanEnabled(!controls.fanEnabled);
-            }}
-            onTeacher={onWallTeacher}
-            onStudent={onWallStudent}
-            labels={wallLabels}
+          <TeacherAvatar
+            anchor={viewState.teacherAnchor}
+            mode={teacherMode}
+            modelUrl={teacherModelUrl}
+            fadeKey={teacherFadeKey}
           />
-          <TeacherAvatar anchor={viewState.teacherAnchor} mode={teacherMode} />
+          <EquippedOwnStoreAssets
+            equippedClock={equippedClock}
+            equippedTransport={equippedTransport}
+            viewState={viewState}
+            windowCenter={windowVectors.windowCenter}
+          />
           <ContactShadows
             position={[0, viewState.floorY + 0.01, 0]}
             opacity={lighting.effects.rain ? 0.5 : 0.38}
@@ -1049,8 +1027,7 @@ function ClassroomRoomSceneInner({ courseId, onExit }: ClassroomRoomSceneProps) 
   const router = useRouter();
   const { user } = useEnhancedUser();
   const { t } = useTranslation();
-  const { togglePlaytime, toggleChallenge } = useClassroomStore();
-  const { playToggle, playBell, playChatOpen } = useAudio();
+  const { playBell, playChatOpen } = useAudio();
   const voiceInteraction = useVoiceInteraction("gemini");
   const orientation = useDeviceOrientationLook();
 
@@ -1061,6 +1038,16 @@ function ClassroomRoomSceneInner({ courseId, onExit }: ClassroomRoomSceneProps) 
   const [selectedSeatId, setSelectedSeatId] = useState<number>(DEFAULT_SEAT_ID);
   const [seatPickerOpen, setSeatPickerOpen] = useState(false);
   const [seatReady, setSeatReady] = useState(true);
+  const [changeTeacherOpen, setChangeTeacherOpen] = useState(false);
+  const [classroomSettingsOpen, setClassroomSettingsOpen] = useState(false);
+  const {
+    activeTeacher,
+    fadeToken,
+    syncInventory,
+    equipped,
+  } = useActiveTeacher();
+
+  useClassroomOwnStoreRuntime();
 
   const {
     currentSection,
@@ -1092,6 +1079,20 @@ function ClassroomRoomSceneInner({ courseId, onExit }: ClassroomRoomSceneProps) 
   }, [courseId]);
 
   useEffect(() => {
+    if (!user) return;
+    const syncTeachers = async () => {
+      try {
+        const { ownStoreService } = await import("@/services/own-store.service");
+        const invRes = await ownStoreService.getInventory();
+        syncInventory(invRes.data);
+      } catch {
+        // Default teacher remains available
+      }
+    };
+    syncTeachers();
+  }, [user, syncInventory]);
+
+  useEffect(() => {
     useGLTF.preload(getGaneshaModelUrl());
   }, []);
 
@@ -1106,6 +1107,8 @@ function ClassroomRoomSceneInner({ courseId, onExit }: ClassroomRoomSceneProps) 
       studentSeat: selectedSeatId,
       seatLabel: viewState?.seatGrid.find((s) => s.id === selectedSeatId)?.label,
       boardContent: currentSection?.boardLines,
+      teacherName: activeTeacher?.name,
+      teacherPersonality: getTeacherPersonalityPrompt(activeTeacher),
       learningProgress: {
         sectionIndex,
         completedTopics: lesson?.sections
@@ -1113,7 +1116,7 @@ function ClassroomRoomSceneInner({ courseId, onExit }: ClassroomRoomSceneProps) 
           .map((s) => s.title),
       },
     }),
-    [selectedSeatId, viewState, currentSection, sectionIndex, lesson],
+    [selectedSeatId, viewState, currentSection, sectionIndex, lesson, activeTeacher],
   );
 
   const teacherMode = useMemo((): TeacherPresenceMode => {
@@ -1125,38 +1128,6 @@ function ClassroomRoomSceneInner({ courseId, onExit }: ClassroomRoomSceneProps) 
   const handleEnableMotion = useCallback(async () => {
     await orientation.requestPermission();
   }, [orientation]);
-
-  const wallLabels = useMemo(
-    () => ({
-      panel: t("classroom.wall.panel"),
-      fan: t("classroom.wall.fan"),
-      fanOn: t("classroom.wall.fanOn"),
-      fanOff: t("classroom.wall.fanOff"),
-      teacher: t("classroom.wall.teacher"),
-      student: t("classroom.wall.student"),
-    }),
-    [t],
-  );
-
-  const handleWallTeacher = useCallback(() => {
-    playToggle();
-    if (cameraMode === "teacher") {
-      toggleChallenge();
-      return;
-    }
-    playChatOpen();
-    setAiChatOpen(true);
-  }, [cameraMode, toggleChallenge, playToggle, playChatOpen]);
-
-  const handleWallStudent = useCallback(() => {
-    playToggle();
-    if (cameraMode === "student") {
-      togglePlaytime();
-      return;
-    }
-    playChatOpen();
-    setAiChatOpen(true);
-  }, [cameraMode, togglePlaytime, playToggle, playChatOpen]);
 
   const handleViewStateReady = useCallback((state: ClassroomViewState) => {
     setViewState(state);
@@ -1236,13 +1207,14 @@ function ClassroomRoomSceneInner({ courseId, onExit }: ClassroomRoomSceneProps) 
               selectedSeatId={selectedSeatId}
               onViewStateReady={handleViewStateReady}
               onFanSpeedChange={setFanSpeed}
-              onWallTeacher={handleWallTeacher}
-              onWallStudent={handleWallStudent}
-              wallLabels={wallLabels}
               blackboardSection={currentSection}
               courseTitle={courseTitle ?? lesson?.courseName}
               lessonLoading={lessonLoading}
               teacherMode={teacherMode}
+              teacherModelUrl={activeTeacher?.modelUrl}
+              teacherFadeKey={fadeToken}
+              equippedClock={equipped.clock}
+              equippedTransport={equipped.transport}
               motionEnabled={orientation.enabled}
               getOrientationDelta={orientation.getDelta}
             />
@@ -1258,6 +1230,19 @@ function ClassroomRoomSceneInner({ courseId, onExit }: ClassroomRoomSceneProps) 
           onChangeSeat={() => setSeatPickerOpen(true)}
           onBack={onExit}
           onAction={handleAction}
+          onChangeTeacher={() => setChangeTeacherOpen(true)}
+          onClassroomSettings={() => setClassroomSettingsOpen(true)}
+        />
+
+        <ChangeTeacherModal
+          open={changeTeacherOpen}
+          onOpenChange={setChangeTeacherOpen}
+        />
+
+        <ClassroomSettingsPanel
+          open={classroomSettingsOpen}
+          onOpenChange={setClassroomSettingsOpen}
+          onChangeTeacher={() => setChangeTeacherOpen(true)}
         />
 
         {seatPickerOpen && viewState && (

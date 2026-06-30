@@ -173,6 +173,17 @@ const seedDevelopmentData = async () => {
 		console.log("Seeded shop items for development");
 	}
 
+	const { OWN_STORE_CATALOG } = await import("../data/ownStoreCatalog.js");
+	for (const product of OWN_STORE_CATALOG) {
+		const slug = product.teacherSlug || product.itemSlug;
+		await ShopItem.findOneAndUpdate(
+			{ $or: [{ teacherSlug: slug }, { itemSlug: slug }] },
+			{ $set: product },
+			{ upsert: true, new: true },
+		);
+	}
+	console.log(`Ensured ${OWN_STORE_CATALOG.length} Own Store catalog items`);
+
 	const { recordAcceptances, getMandatoryVersionIds } = await import(
 		"../services/legalConsentService.js"
 	);

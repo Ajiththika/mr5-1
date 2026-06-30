@@ -32,7 +32,7 @@ db.once('open', async () => {
     const adminUser = new User({
       name: 'Admin User',
       email: 'admin@example.com',
-      passwordHash: await bcrypt.hash('admin123', salt),
+      passwordHash: await bcrypt.hash(process.env.SEED_ADMIN_PASSWORD || 'ChangeMeInProduction!', salt),
       role: 'admin',
       avatar: {
         id: 'admin-avatar',

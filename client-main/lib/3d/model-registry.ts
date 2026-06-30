@@ -41,6 +41,28 @@ export const MODEL_ASSETS = {
     textureTarget: 1024,
     cdnEnvKey: "NEXT_PUBLIC_CDN_GANESHA_MODEL" as const,
   },
+  joe: {
+    id: "joe-realistic-teacher",
+    path: "/models/joe.glb",
+    credit: "Joe realistic human 3D model — MR5 School classroom teacher avatar",
+    creditShort: "Joe — Realistic Teacher",
+    estimatedMb: 21,
+    teacherHeight: 1.72,
+    displayScale: 0.9,
+    textureTarget: 2048,
+    cdnEnvKey: "NEXT_PUBLIC_CDN_JOE_MODEL" as const,
+  },
+  roger: {
+    id: "roger-classroom-teacher",
+    path: "/models/roger.glb",
+    credit: "Roger CC character — MR5 School classroom teacher avatar",
+    creditShort: "Roger — Classroom Teacher",
+    estimatedMb: 5,
+    teacherHeight: 1.72,
+    displayScale: 0.9,
+    textureTarget: 2048,
+    cdnEnvKey: "NEXT_PUBLIC_CDN_ROGER_MODEL" as const,
+  },
 } as const;
 
 /** @deprecated Alias for ganesha */

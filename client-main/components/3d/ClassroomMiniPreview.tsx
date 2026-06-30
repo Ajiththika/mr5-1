@@ -13,6 +13,11 @@ import { Canvas, useThree } from "@react-three/fiber";
 import { Environment, Html, useGLTF, useProgress } from "@react-three/drei";
 import * as THREE from "three";
 import { resolveStudentSeatedPose } from "@/lib/classroom-seat";
+import {
+  deriveClassroomBrandPlacements,
+  type ClassroomBrandPlacements,
+} from "@/lib/classroom/classroom-brand-placement";
+import { ClassroomBrandStickers } from "@/components/3d/classroom/ClassroomBrandStickers";
 
 const CLASSROOM_GLB = "/assets/3d/rooms/classroom.glb";
 const LOOK_SENSITIVITY = 0.0028;
@@ -192,8 +197,10 @@ function InteriorPreviewCamera({ viewState }: { viewState: MiniViewState }) {
 
 function MiniClassroomModel({
   onReady,
+  onBrandReady,
 }: {
   onReady: (state: MiniViewState) => void;
+  onBrandReady: (placement: ClassroomBrandPlacements) => void;
 }) {
   const { scene } = useGLTF(CLASSROOM_GLB, true);
   const groupRef = useRef<THREE.Group>(null);
@@ -219,8 +226,11 @@ function MiniClassroomModel({
 
   useLayoutEffect(() => {
     if (!groupRef.current) return;
-    onReady(deriveMiniViewState(groupRef.current));
-  }, [model, onReady]);
+    const view = deriveMiniViewState(groupRef.current);
+    onReady(view);
+    const classDirection = view.lookAt.clone().sub(view.eye).setY(0).normalize();
+    onBrandReady(deriveClassroomBrandPlacements(groupRef.current, classDirection));
+  }, [model, onReady, onBrandReady]);
 
   return (
     <group ref={groupRef}>
@@ -232,9 +242,13 @@ function MiniClassroomModel({
 function MiniScene({
   viewState,
   setViewState,
+  brandPlacements,
+  setBrandPlacements,
 }: {
   viewState: MiniViewState | null;
   setViewState: (state: MiniViewState) => void;
+  brandPlacements: ClassroomBrandPlacements | null;
+  setBrandPlacements: (placement: ClassroomBrandPlacements) => void;
 }) {
   return (
     <>
@@ -264,7 +278,11 @@ function MiniScene({
         castShadow
       />
       <Environment preset="apartment" environmentIntensity={0.62} />
-      <MiniClassroomModel onReady={setViewState} />
+      <MiniClassroomModel
+        onReady={setViewState}
+        onBrandReady={setBrandPlacements}
+      />
+      {brandPlacements && <ClassroomBrandStickers placements={brandPlacements} />}
       {viewState && <InteriorPreviewCamera viewState={viewState} />}
     </>
   );
@@ -281,6 +299,8 @@ export function ClassroomMiniPreview({
   showChrome = true,
 }: ClassroomMiniPreviewProps) {
   const [viewState, setViewState] = useState<MiniViewState | null>(null);
+  const [brandPlacements, setBrandPlacements] =
+    useState<ClassroomBrandPlacements | null>(null);
 
   return (
     <div className={`preview-3d-root relative h-full min-h-[280px] w-full ${className}`}>
@@ -292,7 +312,12 @@ export function ClassroomMiniPreview({
         style={{ touchAction: "none" }}
       >
         <Suspense fallback={<Loader />}>
-          <MiniScene viewState={viewState} setViewState={setViewState} />
+          <MiniScene
+            viewState={viewState}
+            setViewState={setViewState}
+            brandPlacements={brandPlacements}
+            setBrandPlacements={setBrandPlacements}
+          />
         </Suspense>
       </Canvas>
       {showChrome && (

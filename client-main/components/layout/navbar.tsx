@@ -24,6 +24,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { LanguageSelector } from "@/components/i18n/LanguageSelector";
 import { GlobalSearchTrigger } from "@/components/identity/GlobalSearchTrigger";
 import { GlobalAcademicSearch } from "@/components/identity/GlobalAcademicSearch";
+import { MR5_LOGO_PATH } from "@/lib/brand/logo";
 
 export function Navbar() {
 	const { user, logout } = useEnhancedUser();
@@ -38,11 +39,11 @@ export function Navbar() {
 				aria-label="Main navigation"
 			>
 				<div className="container mx-auto flex h-[var(--nav-height)] min-h-[var(--touch-target)] items-center justify-between gap-2 px-[max(1rem,var(--safe-left))] pr-[max(1rem,var(--safe-right))] sm:gap-3">
-					<Link href="/" className="group relative ml-1 flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
+					<Link href="/" data-tour-id="tour-home-logo" className="group relative ml-1 flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
 						<div className="absolute -inset-2 rounded-xl bg-primary/15 opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-100" />
 						<div className="relative h-11 w-11 shrink-0 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 sm:h-12 sm:w-12">
 							<Image
-								src="/assets/mr5-logo-neon.png"
+								src={MR5_LOGO_PATH}
 								alt="MR5 School Logo"
 								fill
 								sizes="(max-width: 640px) 44px, 48px"
@@ -60,12 +61,13 @@ export function Navbar() {
 						</div>
 					</Link>
 
-					<GlobalSearchTrigger className="hidden min-w-0 flex-1 px-2 sm:flex md:max-w-none" />
+					<GlobalSearchTrigger data-tour-id="tour-nav-search" className="hidden min-w-0 flex-1 px-2 sm:flex md:max-w-none" />
 
 					<div className="tv-enhance-nav hidden min-w-0 shrink-0 justify-center lg:flex">
 						<div className="flex max-w-full flex-nowrap items-center gap-0.5 overflow-x-auto rounded-full border border-border bg-muted/80 p-1 shadow-inner scrollbar-none lg:gap-1">
 						<Link
 							href="/courses"
+							data-tour-id="tour-nav-library"
 							className="touch-target-inline inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-2.5 py-1 text-fluid-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-card hover:text-foreground hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:px-3 lg:py-1.5"
 						>
 							{t("nav.library")}
@@ -93,7 +95,7 @@ export function Navbar() {
 
 					<div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2 lg:gap-3">
 						<GlobalSearchTrigger className="flex shrink-0 sm:hidden" />
-						<div className="watch-hide hidden sm:block">
+						<div className="watch-hide hidden sm:block" data-tour-id="tour-language">
 							<LanguageSelector compact />
 						</div>
 						<ThemeCustomizer />
@@ -148,6 +150,7 @@ export function Navbar() {
 									{t("nav.signIn")}
 								</Button>
 								<Button
+									data-tour-id="tour-signup"
 									data-testid="nav-start-learning"
 									onClick={() => setShowSignup(true)}
 									size="lg"

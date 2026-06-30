@@ -13,6 +13,11 @@ import { ForgotPasswordModal } from "@/components/auth/forgot-password-modal";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import {
+	sanitizeAuthErrorMessage,
+	clearSensitiveFormState,
+	AUTH_INVALID_MESSAGE,
+} from "@/lib/auth-security";
 
 function LoginForm() {
     const { login } = useEnhancedUser();
@@ -42,8 +47,7 @@ function LoginForm() {
         try {
             loginSchema.parse(formData);
             await login(formData.email, formData.password, redirectTo ?? undefined);
-        } catch (err: any) {
-            console.error("Login Page Error:", err);
+        } catch (err: unknown) {
             if (err instanceof ZodError) {
                 const fieldErrors: Record<string, string> = {};
                 err.errors.forEach((e) => {
@@ -53,41 +57,12 @@ function LoginForm() {
                 });
                 setErrors(fieldErrors);
             } else {
-                let errorMessage = "Invalid credentials. Please try again.";
-
-                if (err.response) {
-                    const data = err.response.data;
-                    if (typeof data === 'string') {
-                        errorMessage = data;
-                    } else if (typeof data === 'object') {
-                        errorMessage = data.message || data.error || JSON.stringify(data);
-                    } else {
-                        errorMessage = err.response.statusText || "Server Error";
-                    }
-
-                    if (err.response.status === 503) {
-                        errorMessage =
-                            "The server is still connecting to the database. Wait a few seconds and try again.";
-                    }
-                } else if (err.message) {
-                    errorMessage = err.message;
-                }
-
-                if (
-                    err.code === "ERR_NETWORK" ||
-                    err.message?.includes("Network Error")
-                ) {
-                    errorMessage =
-                        "Cannot reach the server. Start the API on port 5001, then refresh and try again.";
-                }
-
-                if (errorMessage === "{}") errorMessage = "Server returned an empty error. Please try again.";
-
                 setErrors({
-                    general: errorMessage,
+                    general: sanitizeAuthErrorMessage(err, AUTH_INVALID_MESSAGE),
                 });
             }
         } finally {
+            clearSensitiveFormState(setFormData);
             setLoading(false);
         }
     };
@@ -191,6 +166,8 @@ function LoginForm() {
                                 value={formData.password}
                                 onChange={handleChange}
                                 required
+                                autoComplete="current-password"
+                                spellCheck={false}
                                 className="pl-10 h-11 bg-muted/50 border-border rounded-xl focus:border-primary/50 transition-all text-foreground pr-10"
                             />
                             <button

@@ -28,6 +28,7 @@ import { getTamilGreeting } from "@/lib/tamil-greetings";
 import { motion } from "framer-motion";
 import { useCommonTracking } from "@/hooks/useAnalytics";
 import { ChatShortcutButton } from "@/components/home/ChatShortcutButton";
+import { ProductTour } from "@/components/onboarding/ProductTour";
 import { useTranslation } from "@/hooks/useTranslation";
 
 const WelcomeAvatar = nextDynamic(
@@ -121,6 +122,7 @@ export default function HomePageClient() {
         />
       )}
       <Navbar />
+      <ProductTour enabled={!loading} />
 
       <main id="main-content" className="mr5-page-x flex-1 container mx-auto py-8 pb-20">
         <div className="hero-band mb-8 flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between md:p-8">
@@ -130,7 +132,7 @@ export default function HomePageClient() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <h1 className="heading-display text-4xl md:text-5xl">
+              <h1 data-tour-id="tour-hero" className="heading-display text-4xl md:text-5xl">
                 {t("homepage.title")}
               </h1>
               <p className="mt-2 text-xl font-medium text-foreground/85 md:text-2xl">
@@ -159,6 +161,7 @@ export default function HomePageClient() {
           >
             <div className="absolute inset-0 bg-gradient-to-r from-primary/30 via-purple-500/30 to-blue-500/30 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition duration-700 will-change-transform" />
             <GlobalAcademicSearch
+              data-tour-id="tour-home-search"
               className="relative"
               placeholder={t("homepage.searchPlaceholder")}
             />
@@ -169,6 +172,7 @@ export default function HomePageClient() {
           <BentoItem
             colSpan={8}
             rowSpan={2}
+            data-tour-id="tour-main-bento"
             className="relative overflow-hidden min-h-[400px]"
           >
             <div className="absolute inset-0 z-0">
@@ -212,6 +216,7 @@ export default function HomePageClient() {
                 <div className="flex gap-4 pt-4">
                   <Button asChild size="lg">
                     <Link
+                      data-tour-id="tour-get-started"
                       href={user ? "/dashboard" : "/register"}
                       onClick={() =>
                         trackNavigation(
@@ -240,7 +245,10 @@ export default function HomePageClient() {
                 </div>
               </div>
 
-              <div className="flex-1 relative min-h-[320px] md:min-h-[380px]">
+              <div
+                data-tour-id="tour-ai-avatar"
+                className="flex-1 relative min-h-[320px] md:min-h-[380px]"
+              >
                 <WelcomeAvatar
                   showGreetingText={false}
                   enableVoice={!needsStudentWelcome}

@@ -6,10 +6,10 @@ import { Image } from "@react-three/drei";
 import * as THREE from "three";
 import { getTamilGreeting } from "@/lib/tamil-greetings";
 import { sampleStudentBreathOffsets } from "@/lib/classroom/student-presence";
+import { MR5_LOGO_PATH } from "@/lib/brand/logo";
 
 const BLAZER = "#1a2748";
 const SHIRT = "#f4f4f2";
-const BADGE_URL = "/images/mr5-logo.png";
 
 export function StudentFirstPersonPresence({ enabled = true }: { enabled?: boolean }) {
   const { camera } = useThree();
@@ -113,7 +113,7 @@ export function StudentFirstPersonPresence({ enabled = true }: { enabled?: boole
             <circleGeometry args={[0.042, 32]} />
             <meshStandardMaterial color="#ffffff" roughness={0.35} metalness={0.1} />
           </mesh>
-          <Image url={BADGE_URL} scale={0.056} transparent toneMapped={false} renderOrder={21} />
+          <Image url={MR5_LOGO_PATH} scale={0.056} transparent toneMapped={false} renderOrder={21} />
         </group>
       </group>
     </group>

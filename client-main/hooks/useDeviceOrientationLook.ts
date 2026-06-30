@@ -27,7 +27,7 @@ export function useDeviceOrientationLook() {
 
     try {
       const DOE = DeviceOrientationEvent as typeof DeviceOrientationEvent & {
-        requestPermission?: () => Promise<PermissionState>;
+        requestPermission?: () => Promise<"granted" | "denied" | "prompt">;
       };
       if (typeof DOE.requestPermission === "function") {
         const result = await DOE.requestPermission();

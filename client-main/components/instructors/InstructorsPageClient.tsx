@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { MR5_LOGO_PATH } from "@/lib/brand/logo";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -209,7 +210,7 @@ export default function InstructorsPageClient() {
             <div className="flex items-center gap-4">
               <div className="relative h-16 w-16">
                 <Image
-                  src="/assets/mr5-logo-neon.png"
+                  src={MR5_LOGO_PATH}
                   alt="MR5 School"
                   fill
                   sizes="64px"

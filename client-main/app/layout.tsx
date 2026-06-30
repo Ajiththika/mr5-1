@@ -21,6 +21,7 @@ import { ThemeMetaSync } from "@/components/theme/ThemeMetaSync";
 import type { ReactNode } from "react";
 import { LicenseAttributionBar } from "@/components/legal/LicenseAttributionBar";
 import { UniversalDeviceProvider } from "@/components/responsive/UniversalDeviceProvider";
+import { ActiveTeacherProvider } from "@/contexts/ActiveTeacherContext";
 
 export const metadata: Metadata = genMeta({
 	title: "3D Virtual Classroom & AI Teachers",
@@ -120,6 +121,7 @@ export default function RootLayout({
 							<RegionalSettingsProvider>
 								<ErrorBoundary>
 									<EnhancedUserProvider>
+										<ActiveTeacherProvider>
 										<NotificationProvider>
 										<ThemeMetaSync />
 										<AccessibilityPreferencesSync />
@@ -133,6 +135,7 @@ export default function RootLayout({
 											</AudioProvider>
 										</DashboardContextProvider>
 										</NotificationProvider>
+										</ActiveTeacherProvider>
 									</EnhancedUserProvider>
 								</ErrorBoundary>
 							</RegionalSettingsProvider>

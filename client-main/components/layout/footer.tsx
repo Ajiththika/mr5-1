@@ -12,6 +12,7 @@ import {
   mapsHref,
   telHref,
 } from "@/data/contact";
+import { MR5_LOGO_PATH } from "@/lib/brand/logo";
 
 const FOOTER_LINK_KEYS = [
   { key: "footer.home", href: "/" },
@@ -36,7 +37,7 @@ export function Footer({ year = 2025 }: { year?: number }) {
             <Link href="/" className="group flex items-center gap-4">
               <div className="relative h-10 w-10">
                 <Image
-                  src="/assets/mr5-logo-neon.png"
+                  src={MR5_LOGO_PATH}
                   alt="MR5 School logo"
                   fill
                   sizes="40px"

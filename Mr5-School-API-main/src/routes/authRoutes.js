@@ -32,7 +32,7 @@ const googleNotConfigured = (_req, res) => {
 router.post("/register", authLimiter, register);
 router.post("/login", authLimiter, login);
 router.post("/refresh", refreshToken);
-router.post("/forgotpassword", forgotPassword);
+router.post("/forgotpassword", authLimiter, forgotPassword);
 router.put("/resetpassword/:resettoken", resetPassword);
 router.get("/providers", getAuthProviders);
 

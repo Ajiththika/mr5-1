@@ -3,9 +3,10 @@
 import type { ReactNode } from "react";
 import {
   Armchair,
-  BookOpen,
   DoorOpen,
+  GraduationCap,
   Menu,
+  Settings,
   SlidersHorizontal,
   UserRound,
   Volume2,
@@ -22,6 +23,7 @@ import { GlassIconButton, GlassPanel } from "./GlassPanel";
 import { useClassroomUILayout } from "./ClassroomUILayout";
 import { useClassroomStore } from "../store/classroom.store";
 import { useTranslation } from "@/hooks/useTranslation";
+import { EnvironmentDevPanel } from "@/components/classroom/EnvironmentDevPanel";
 
 type CameraMode = "student" | "teacher";
 type ActionId = "board" | "lesson" | "teacher" | "exit";
@@ -60,6 +62,8 @@ export interface ClassroomImmersiveHudProps {
   onChangeSeat?: () => void;
   onBack?: () => void;
   onAction: (id: ActionId) => void;
+  onChangeTeacher?: () => void;
+  onClassroomSettings?: () => void;
 }
 
 export function ClassroomImmersiveHud({
@@ -71,6 +75,8 @@ export function ClassroomImmersiveHud({
   onChangeSeat,
   onBack,
   onAction,
+  onChangeTeacher,
+  onClassroomSettings,
 }: ClassroomImmersiveHudProps) {
   const { t } = useTranslation();
   const { playtimeOpen, challengeOpen } = useClassroomStore();
@@ -80,7 +86,6 @@ export function ClassroomImmersiveHud({
     closeMenu,
     toggleMenu,
     setControlsOpen,
-    setLessonMode,
     runMenuAction,
     retractForImmersion,
   } = useClassroomUILayout();
@@ -112,7 +117,18 @@ export function ClassroomImmersiveHud({
           <p className="truncate text-[10px] text-white/60 sm:text-xs">{modeLabel}</p>
         </GlassPanel>
 
-        <div className="pointer-events-auto ml-auto flex items-center gap-2">
+        <div className="pointer-events-auto ml-auto flex flex-col items-end gap-2">
+          <div className="flex items-center gap-2">
+          {onChangeTeacher && (
+            <GlassIconButton label="Change teacher" onClick={onChangeTeacher}>
+              <GraduationCap className="h-4 w-4" />
+            </GlassIconButton>
+          )}
+          {onClassroomSettings && (
+            <GlassIconButton label="Classroom settings" onClick={onClassroomSettings}>
+              <Settings className="h-4 w-4" />
+            </GlassIconButton>
+          )}
           {cameraMode === "student" && onChangeSeat && (
             <GlassIconButton
               label={`Seat ${selectedSeatId ?? 3}`}
@@ -142,14 +158,20 @@ export function ClassroomImmersiveHud({
           >
             {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </GlassIconButton>
+          </div>
+          {process.env.NODE_ENV !== "production" && <EnvironmentDevPanel />}
         </div>
       </div>
 
       {controlsOpen && (
-        <div className="pointer-events-auto absolute right-3 top-[4.25rem] z-30 w-[min(calc(100vw-1.5rem),260px)] sm:right-4 sm:top-[4.5rem]">
+        <div className="pointer-events-auto absolute right-3 top-[4.25rem] z-30 w-[min(calc(100vw-1.5rem),260px)] md:hidden sm:right-4 sm:top-[4.5rem]">
           <ControlDock fanSpeed={fanSpeed} embedded />
         </div>
       )}
+
+      <div className="pointer-events-auto absolute bottom-4 left-4 z-30 hidden w-[min(100%,248px)] md:block">
+        <ControlDock fanSpeed={fanSpeed} />
+      </div>
 
       {menuOpen && (
         <div
