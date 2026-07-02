@@ -1,0 +1,13 @@
+Fan_Done2_Rigged — Animated desk fan by Dennis Haupt (3dhaupt)
+https://www.cgtrader.com/designers/3dhaupt
+
+Textures extracted from Fan_Animated (Unreal Engine) package.
+Original source mesh: Fan_Done2_Rigged.fbx
+
+Blog: http://3dartdh.wordpress.com/
+YouTube: https://www.youtube.com/c/3DHaupt
+
+Used in MR5 School teacher desk fan — verify your CGTrader / author
+license terms for production deployment.
+
+MR5 School attribution: Teacher Table Fan by 3dhaupt.

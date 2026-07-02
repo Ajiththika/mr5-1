@@ -1,0 +1,126 @@
+{
+  "family": "mr5-api",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/mr5-ecs-execution-role",
+  "taskRoleArn": "arn:aws:iam::ACCOUNT_ID:role/mr5-api-task-role",
+  "containerDefinitions": [
+    {
+      "name": "api",
+      "image": "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/mr5-api:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 5001,
+          "protocol": "tcp",
+          "name": "http"
+        }
+      ],
+      "environment": [
+        { "name": "NODE_ENV", "value": "production" },
+        { "name": "PORT", "value": "5001" },
+        { "name": "LOG_LEVEL", "value": "info" },
+        { "name": "AI_PROVIDER", "value": "gemini" },
+        { "name": "JWT_EXPIRE", "value": "15m" },
+        { "name": "REFRESH_TOKEN_EXPIRE_DAYS", "value": "7" },
+        { "name": "CORS_ORIGIN", "value": "https://app.mr5school.com" },
+        { "name": "CLIENT_URL", "value": "https://app.mr5school.com" },
+        { "name": "LEGAL_RECONSENT_ENFORCED", "value": "true" },
+        { "name": "CONSENT_IP_LOGGING", "value": "false" }
+      ],
+      "secrets": [
+        {
+          "name": "MONGO_URI",
+          "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:mr5-school/prod/mongo-uri"
+        },
+        {
+          "name": "JWT_SECRET",
+          "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:mr5-school/prod/jwt-secret"
+        },
+        {
+          "name": "GEMINI_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:mr5-school/prod/gemini-api-key"
+        },
+        {
+          "name": "OPENAI_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:mr5-school/prod/openai-api-key"
+        },
+        {
+          "name": "WEATHER_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:mr5-school/prod/weather-api-key"
+        },
+        {
+          "name": "STRIPE_SECRET_KEY",
+          "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:mr5-school/prod/stripe-secret-key"
+        },
+        {
+          "name": "STRIPE_WEBHOOK_SECRET",
+          "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:mr5-school/prod/stripe-webhook-secret"
+        },
+        {
+          "name": "CLOUDINARY_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:mr5-school/prod/cloudinary-api-key"
+        },
+        {
+          "name": "CLOUDINARY_API_SECRET",
+          "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:mr5-school/prod/cloudinary-api-secret"
+        },
+        {
+          "name": "GOOGLE_CLIENT_SECRET",
+          "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:mr5-school/prod/google-client-secret"
+        },
+        {
+          "name": "LIVEKIT_API_SECRET",
+          "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:mr5-school/prod/livekit-api-secret"
+        },
+        {
+          "name": "EMAIL_PASS",
+          "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:mr5-school/prod/email-pass"
+        },
+        {
+          "name": "SMTP_PASS",
+          "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:mr5-school/prod/smtp-pass"
+        },
+        {
+          "name": "AZURE_SPEECH_KEY",
+          "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:mr5-school/prod/azure-speech-key"
+        },
+        {
+          "name": "AVATHOR_SECRET_TOKEN",
+          "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:mr5-school/prod/avathor-secret-token"
+        },
+        {
+          "name": "CONSENT_IP_SALT",
+          "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:mr5-school/prod/consent-ip-salt"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/mr5-api",
+          "awslogs-region": "REGION",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group": "true"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "wget -qO- http://127.0.0.1:5001/ready || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      },
+      "linuxParameters": {
+        "initProcessEnabled": true
+      },
+      "stopTimeout": 30
+    }
+  ],
+  "tags": [
+    { "key": "Project", "value": "mr5-school" },
+    { "key": "Service", "value": "api" },
+    { "key": "Environment", "value": "production" }
+  ]
+}

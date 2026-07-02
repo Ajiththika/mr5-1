@@ -10,6 +10,7 @@ export async function bypassIntroAndLoading(page: Page) {
     window.localStorage.setItem("hasSeenIntro_v1", "true");
     window.sessionStorage.setItem("hasSeenGlobalLoading", "true");
     window.localStorage.setItem("mr5-ai-consent", "true");
+    window.localStorage.setItem("mr5_product_tour_completed_v1", "true");
   });
 }
 

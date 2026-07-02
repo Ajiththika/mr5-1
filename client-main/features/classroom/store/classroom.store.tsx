@@ -10,6 +10,7 @@ import {
 } from "react";
 import type { FanSpeedLevel } from "../environment/environment.types";
 import { touchDailyStreak, xpToLevel } from "@/lib/learning/progression";
+import type { PlaytimePhase } from "@/lib/classroom/playtime-phase";
 
 export interface ClassroomControls {
   fanEnabled: boolean;
@@ -32,6 +33,7 @@ interface ClassroomState {
   controls: ClassroomControls;
   playtime: PlaytimeProgress;
   playtimeOpen: boolean;
+  playtimePhase: PlaytimePhase;
   challengeOpen: boolean;
 }
 
@@ -41,6 +43,7 @@ type Action =
   | { type: "SET_LIGHTS"; value: boolean }
   | { type: "SET_CURTAIN"; value: number }
   | { type: "TOGGLE_PLAYTIME" }
+  | { type: "SET_PLAYTIME_PHASE"; phase: PlaytimePhase }
   | { type: "TOGGLE_CHALLENGE" }
   | { type: "ADD_REWARD"; xp: number; stars: number; badge?: string };
 
@@ -89,6 +92,7 @@ const initialState: ClassroomState = {
   },
   playtime: loadProgress(),
   playtimeOpen: false,
+  playtimePhase: "idle",
   challengeOpen: false,
 };
 
@@ -119,6 +123,12 @@ function reducer(state: ClassroomState, action: Action): ClassroomState {
       };
     case "TOGGLE_PLAYTIME":
       return { ...state, playtimeOpen: !state.playtimeOpen };
+    case "SET_PLAYTIME_PHASE":
+      return {
+        ...state,
+        playtimePhase: action.phase,
+        playtimeOpen: action.phase === "game_rest" ? true : state.playtimeOpen,
+      };
     case "TOGGLE_CHALLENGE":
       return { ...state, challengeOpen: !state.challengeOpen };
     case "ADD_REWARD": {
@@ -148,6 +158,7 @@ interface ClassroomStoreValue extends ClassroomState {
   setLightsOn: (value: boolean) => void;
   setCurtainOpen: (value: number) => void;
   togglePlaytime: () => void;
+  setPlaytimePhase: (phase: PlaytimePhase) => void;
   toggleChallenge: () => void;
   addReward: (xp: number, stars: number, badge?: string) => void;
 }
@@ -177,6 +188,10 @@ export function ClassroomStoreProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "TOGGLE_PLAYTIME" });
   }, []);
 
+  const setPlaytimePhase = useCallback((phase: PlaytimePhase) => {
+    dispatch({ type: "SET_PLAYTIME_PHASE", phase });
+  }, []);
+
   const toggleChallenge = useCallback(() => {
     dispatch({ type: "TOGGLE_CHALLENGE" });
   }, []);
@@ -193,6 +208,7 @@ export function ClassroomStoreProvider({ children }: { children: ReactNode }) {
       setLightsOn,
       setCurtainOpen,
       togglePlaytime,
+      setPlaytimePhase,
       toggleChallenge,
       addReward,
     }),
@@ -203,6 +219,7 @@ export function ClassroomStoreProvider({ children }: { children: ReactNode }) {
       setLightsOn,
       setCurtainOpen,
       togglePlaytime,
+      setPlaytimePhase,
       toggleChallenge,
       addReward,
     ],

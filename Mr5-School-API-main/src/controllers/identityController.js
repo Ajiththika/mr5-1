@@ -78,7 +78,15 @@ export const patchMyPrivacy = async (req, res) => {
 
 export const createFriendRequest = async (req, res) => {
 	try {
-		const data = await sendFriendRequest(req.user._id, req.body.recipientUid);
+		const recipientUid =
+			typeof req.body?.recipientUid === "string" ? req.body.recipientUid.trim() : "";
+		if (!recipientUid) {
+			return res.status(400).json({
+				success: false,
+				error: "recipientUid is required",
+			});
+		}
+		const data = await sendFriendRequest(req.user._id, recipientUid);
 		return res.status(201).json({ success: true, data });
 	} catch (error) {
 		return handleError(res, error);

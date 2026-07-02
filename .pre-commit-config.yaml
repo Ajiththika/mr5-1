@@ -1,0 +1,51 @@
+# MR5 School — pre-commit hooks
+# Install: pip install pre-commit && pre-commit install
+# Run all:  pre-commit run --all-files
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: no-commit-to-branch
+        args: [--branch, main, --branch, master]
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ["--baseline", ".secrets.baseline"]
+        exclude: package-lock.json
+
+  - repo: local
+    hooks:
+      - id: eslint-api
+        name: ESLint (API)
+        entry: bash -c 'cd Mr5-School-API-main && npm run lint'
+        language: system
+        files: ^Mr5-School-API-main/
+        pass_filenames: false
+
+      - id: eslint-web
+        name: ESLint (Web)
+        entry: bash -c 'cd client-main && npm run lint'
+        language: system
+        files: ^client-main/
+        pass_filenames: false
+
+      - id: block-env-commit
+        name: Block .env files with secrets
+        entry: bash -c 'if git diff --cached --name-only | grep -E "^\.env$|/\.env$|\.env\.local$" | grep -v example; then echo "ERROR: Do not commit .env files. Use .env.example only."; exit 1; fi'
+        language: system
+        pass_filenames: false
+        stages: [commit]

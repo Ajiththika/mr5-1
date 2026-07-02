@@ -2,8 +2,8 @@ import { test } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const BASE = 'http://localhost:3000';
-const API = 'http://localhost:5001';
+const BASE = process.env.PLAYWRIGHT_WEB_URL || 'http://localhost:3000';
+const API = process.env.PLAYWRIGHT_API_URL || 'http://localhost:5001';
 const OUT = path.join(process.cwd(), 'demo-screenshots');
 
 const STUDENT = { email: 'student@mr5school.com', password: 'Student@123456' };
@@ -19,6 +19,7 @@ async function skipIntro(page: import('@playwright/test').Page) {
   await page.addInitScript(() => {
     window.localStorage.setItem('hasSeenIntro_v1', 'true');
     window.sessionStorage.setItem('hasSeenGlobalLoading', 'true');
+    window.localStorage.setItem('mr5_product_tour_completed_v1', 'true');
     window.localStorage.setItem(
       'userPreferences',
       JSON.stringify({
@@ -62,10 +63,10 @@ test('capture demo screenshots', async ({ page, request }) => {
   await login(page, ONBOARD);
   if (page.url().includes('/onboarding')) {
     await snap(page, '04-onboarding-step1-desktop');
-    await page.getByRole('button', { name: 'Next' }).click();
+    await page.getByRole('button', { name: 'Next', exact: true }).click();
     await snap(page, '05-onboarding-step2-avatar-desktop');
     await page.locator('button').filter({ hasText: 'Cadet Blue' }).click();
-    await page.getByRole('button', { name: 'Next' }).click();
+    await page.getByRole('button', { name: 'Next', exact: true }).click();
     await snap(page, '06-onboarding-step3-courses-desktop');
   }
 

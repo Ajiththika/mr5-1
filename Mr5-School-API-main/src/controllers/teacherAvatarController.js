@@ -5,6 +5,7 @@ import UserInventory from "../models/UserInventory.js";
 import { asyncHandler } from "../middleware/errorHandler.js";
 import { getStripe } from "../utils/stripeService.js";
 import envConfig from "../config/env.js";
+import { getTeacherSystemPrompt } from "../data/teacherSystemPrompts.js";
 
 const DEFAULT_TEACHER_SLUG = "teacher_default";
 
@@ -45,7 +46,13 @@ export const getTeacherAvatars = asyncHandler(async (req, res) => {
 		type: "teacher_avatar",
 	}).sort({ priceCents: 1 });
 
-	res.status(200).json({ success: true, data: items });
+	res.status(200).json({
+		success: true,
+		data: items.map((item) => ({
+			...item.toObject(),
+			systemPrompt: getTeacherSystemPrompt(item.teacherSlug),
+		})),
+	});
 });
 
 export const getOwnedTeachers = asyncHandler(async (req, res) => {

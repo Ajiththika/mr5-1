@@ -2,7 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   GraduationCap,
   UtensilsCrossed,
-  Building2,
+  Gamepad2,
   Bath,
 } from "lucide-react";
 
@@ -33,10 +33,10 @@ export const CAMPUS_ROOMS: CampusRoom[] = [
   },
   {
     id: "principal",
-    label: "Principal Office",
-    shortLabel: "Office",
+    label: "Gaming Lounge",
+    shortLabel: "Gaming",
     path: "principal",
-    icon: Building2,
+    icon: Gamepad2,
   },
   {
     id: "bathroom",

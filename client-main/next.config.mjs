@@ -1,12 +1,22 @@
 /** @type {import('next').NextConfig} */
+import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const monorepoRoot = path.join(__dirname, "..");
+const isMonorepoCheckout =
+	fs.existsSync(path.join(monorepoRoot, "package.json")) &&
+	fs.existsSync(path.join(monorepoRoot, "client-main", "package.json"));
+// Nested standalone output breaks Docker unless entrypoint handles client-main/server.js.
+// Skip monorepo tracing in container and Vercel builds for a flat, predictable bundle.
+const useMonorepoTracing =
+	isMonorepoCheckout && !process.env.DOCKER_BUILD && !process.env.VERCEL;
+
 const nextConfig = {
-	outputFileTracingRoot: path.join(__dirname, "../"),
+	...(useMonorepoTracing ? { outputFileTracingRoot: monorepoRoot } : {}),
 	images: {
 		remotePatterns: [
 			{
@@ -35,7 +45,7 @@ const nextConfig = {
 	poweredByHeader: false,
 	generateEtags: true,
 	reactStrictMode: true,
-	output: "standalone",
+	...(process.env.NODE_ENV === "production" ? { output: "standalone" } : {}),
 	serverExternalPackages: ["@splinetool/runtime", "@splinetool/react-spline"],
 	experimental: {
 		optimizeCss: true,

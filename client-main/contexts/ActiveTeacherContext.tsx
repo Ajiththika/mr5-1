@@ -9,6 +9,7 @@ import {
 	type ReactNode,
 } from "react";
 import type { TeacherAvatarItem } from "@/services/teacher-avatar.service";
+import { resolveTeacherSystemPrompt } from "@/lib/classroom/teacher-system-prompts";
 import type {
 	OwnStoreInventory,
 	OwnStoreProduct,
@@ -46,6 +47,7 @@ type ActiveTeacherContextValue = ActiveTeacherState &
 const DEFAULT_EQUIPPED: OwnStoreInventory["equipped"] = {
 	teacher: "teacher_default",
 	clock: "",
+	deskFan: "",
 	bell: "",
 	backgroundMusic: "",
 	transport: "",
@@ -245,21 +247,7 @@ export function useOwnStore() {
 }
 
 export function getTeacherPersonalityPrompt(teacher: TeacherAvatarItem | null): string {
-	if (!teacher) {
-		return "You are the MR5 Default Teacher: friendly, balanced, and focused on general education.";
-	}
-	return [
-		`You are ${teacher.name} in the MR5 School immersive 3D classroom.`,
-		teacher.personality ? `Personality: ${teacher.personality}.` : "",
-		teacher.teachingStyle ? `Teaching style: ${teacher.teachingStyle}.` : "",
-		teacher.voiceStyle ? `Voice style: ${teacher.voiceStyle}.` : "",
-		teacher.greeting ? `Typical greeting tone: "${teacher.greeting}"` : "",
-		teacher.expertise?.length
-			? `Special expertise: ${teacher.expertise.join(", ")}.`
-			: "",
-	]
-		.filter(Boolean)
-		.join(" ");
+	return resolveTeacherSystemPrompt(teacher);
 }
 
 export function findOwnedItem(

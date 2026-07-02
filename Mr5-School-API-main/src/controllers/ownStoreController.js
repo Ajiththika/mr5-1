@@ -5,6 +5,7 @@ import UserInventory from "../models/UserInventory.js";
 import { asyncHandler } from "../middleware/errorHandler.js";
 import { getStripe } from "../utils/stripeService.js";
 import envConfig from "../config/env.js";
+import { getTeacherSystemPrompt } from "../data/teacherSystemPrompts.js";
 
 const DEFAULT_TEACHER = "teacher_default";
 
@@ -22,6 +23,20 @@ async function userOwnsSlug(userId, slug) {
 	}).select("type priceCents isPremium teacherSlug itemSlug");
 	if (
 		catalogItem?.type === "teacher_avatar" &&
+		!catalogItem.isPremium &&
+		catalogItem.priceCents <= 0
+	) {
+		return true;
+	}
+	if (
+		catalogItem?.type === "classroom_item" &&
+		!catalogItem.isPremium &&
+		catalogItem.priceCents <= 0
+	) {
+		return true;
+	}
+	if (
+		catalogItem?.type === "transport" &&
 		!catalogItem.isPremium &&
 		catalogItem.priceCents <= 0
 	) {
@@ -84,12 +99,18 @@ function groupInventoryItems(items, inventory, user) {
 	for (const slug of user.ownedExercisePacks ?? []) ownedSlugs.add(slug);
 	for (const slug of user.ownedTransportItems ?? []) ownedSlugs.add(slug);
 
-	const mapItem = (item) => ({
-		...item.toObject(),
-		slug: itemSlugOf(item),
-		owned: ownedSlugs.has(itemSlugOf(item)),
-		equipped: isEquipped(item, user),
-	});
+	const mapItem = (item) => {
+		const base = {
+			...item.toObject(),
+			slug: itemSlugOf(item),
+			owned: ownedSlugs.has(itemSlugOf(item)),
+			equipped: isEquipped(item, user),
+		};
+		if (item.type === "teacher_avatar") {
+			base.systemPrompt = getTeacherSystemPrompt(itemSlugOf(item));
+		}
+		return base;
+	};
 
 	return {
 		teachers: items.filter((i) => i.type === "teacher_avatar").map(mapItem),
@@ -100,6 +121,7 @@ function groupInventoryItems(items, inventory, user) {
 		equipped: {
 			teacher: user.activeTeacherAvatar ?? DEFAULT_TEACHER,
 			clock: user.equippedClock ?? "",
+			deskFan: user.equippedDeskFan ?? "",
 			bell: user.equippedBell ?? "",
 			backgroundMusic: user.equippedBackgroundMusic ?? "",
 			transport: user.equippedTransport ?? "",
@@ -115,6 +137,9 @@ function isEquipped(item, user) {
 	if (item.type === "teacher_avatar") return user.activeTeacherAvatar === slug;
 	if (item.type === "classroom_item" && item.metadata?.assetKind === "clock") {
 		return user.equippedClock === slug;
+	}
+	if (item.type === "classroom_item" && item.metadata?.assetKind === "desk_fan") {
+		return user.equippedDeskFan === slug;
 	}
 	if (item.type === "classroom_item" && item.metadata?.assetKind === "classroom_pack") {
 		return user.equippedClassroomPack === slug;
@@ -207,6 +232,8 @@ export const equipOwnStoreItem = asyncHandler(async (req, res) => {
 		if (item.type === "teacher_avatar") update.activeTeacherAvatar = DEFAULT_TEACHER;
 		else if (item.type === "classroom_item" && item.metadata?.assetKind === "clock") {
 			update.equippedClock = "";
+		} else if (item.type === "classroom_item" && item.metadata?.assetKind === "desk_fan") {
+			update.equippedDeskFan = "";
 		} else if (item.type === "classroom_item" && item.metadata?.assetKind === "classroom_pack") {
 			update.equippedClassroomPack = "";
 		} else if (item.type === "audio_pack" && item.metadata?.audioKind === "bell") {
@@ -219,6 +246,8 @@ export const equipOwnStoreItem = asyncHandler(async (req, res) => {
 		if (item.type === "teacher_avatar") update.activeTeacherAvatar = itemSlug;
 		else if (item.type === "classroom_item" && item.metadata?.assetKind === "clock") {
 			update.equippedClock = itemSlug;
+		} else if (item.type === "classroom_item" && item.metadata?.assetKind === "desk_fan") {
+			update.equippedDeskFan = itemSlug;
 		} else if (item.type === "classroom_item" && item.metadata?.assetKind === "classroom_pack") {
 			update.equippedClassroomPack = itemSlug;
 		} else if (item.type === "audio_pack" && item.metadata?.audioKind === "bell") {
@@ -230,7 +259,7 @@ export const equipOwnStoreItem = asyncHandler(async (req, res) => {
 	}
 
 	const user = await User.findByIdAndUpdate(userId, update, { new: true }).select(
-		"activeTeacherAvatar equippedClock equippedBell equippedBackgroundMusic equippedTransport equippedActivityPack equippedClassroomPack welcomeMessage purchasedTeacherAvatars ownedClassroomItems ownedAudioPacks ownedExercisePacks ownedTransportItems",
+		"activeTeacherAvatar equippedClock equippedDeskFan equippedBell equippedBackgroundMusic equippedTransport equippedActivityPack equippedClassroomPack welcomeMessage purchasedTeacherAvatars ownedClassroomItems ownedAudioPacks ownedExercisePacks ownedTransportItems",
 	);
 
 	res.status(200).json({ success: true, data: user });
@@ -245,7 +274,7 @@ export const updateClassroomSettings = asyncHandler(async (req, res) => {
 	}
 
 	const user = await User.findByIdAndUpdate(req.user.id, update, { new: true }).select(
-		"welcomeMessage activeTeacherAvatar equippedClock equippedBell equippedBackgroundMusic equippedTransport equippedActivityPack equippedClassroomPack",
+		"welcomeMessage activeTeacherAvatar equippedClock equippedDeskFan equippedBell equippedBackgroundMusic equippedTransport equippedActivityPack equippedClassroomPack",
 	);
 
 	res.status(200).json({ success: true, data: user });

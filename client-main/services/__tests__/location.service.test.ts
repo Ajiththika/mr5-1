@@ -16,13 +16,15 @@ describe('Location Service', () => {
       (fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({
-          country_name: 'India',
-          region: 'Tamil Nadu',
-          region_code: 'TN',
-          city: 'Chennai',
-          latitude: 13.0827,
-          longitude: 80.2707
-        })
+          success: true,
+          data: {
+            country: 'India',
+            region: 'Tamil Nadu',
+            city: 'Chennai',
+            latitude: 13.0827,
+            longitude: 80.2707,
+          },
+        }),
       });
 
       const result = await getLocationFromIP();

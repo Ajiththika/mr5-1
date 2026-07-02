@@ -7,11 +7,13 @@ import { useWeatherSync } from "../hooks/useWeatherSync";
 
 export function EnvironmentPanel({ className = "" }: { className?: string }) {
   const { computed, weather, environment, loading, error } = useWeatherSync();
-  const { locationLabel } = useClassroomEnvironment();
+  const { locationLabel, override } = useClassroomEnvironment();
   const { t } = useTranslation();
 
   const TimeIcon =
     environment.timePeriod === "night" || environment.isNight ? Moon : Sun;
+  const showSyncing =
+    loading && override.theme == null && override.timePeriod == null;
 
   return (
     <aside
@@ -22,7 +24,7 @@ export function EnvironmentPanel({ className = "" }: { className?: string }) {
         {t("env.roomAtmosphere")}
       </p>
 
-      {loading ? (
+      {showSyncing ? (
         <p className="text-[10px] text-slate-500">Syncing environment…</p>
       ) : (
         <div className="space-y-2">

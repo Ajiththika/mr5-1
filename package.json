@@ -12,6 +12,8 @@
     "lint:api": "cd Mr5-School-API-main && npm run lint",
     "lint:web": "cd client-main && npm run lint",
     "build": "cd client-main && npm run build",
+    "dev:api": "cd Mr5-School-API-main && npm run dev",
+    "dev:web": "cd client-main && npm run dev",
     "docker:build": "docker compose build",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",

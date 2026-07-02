@@ -470,7 +470,15 @@ export async function sendFriendRequest(requesterId, recipientUid) {
 	});
 
 	if (existing) {
-		return existing;
+		const error = new Error(
+			existing.status === "accepted"
+				? "You are already friends"
+				: existing.status === "pending"
+					? "Friend request already pending"
+					: "Unable to send friend request",
+		);
+		error.statusCode = existing.status === "blocked" ? 403 : 409;
+		throw error;
 	}
 
 	const request = await IdentityFriend.create({

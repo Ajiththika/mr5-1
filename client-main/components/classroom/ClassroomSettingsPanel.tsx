@@ -107,6 +107,15 @@ export function ClassroomSettingsPanel({
 							}}
 						/>
 						<SettingRow
+							label="Desk Fan"
+							value={labelFor(equipped.deskFan, "No desk fan")}
+							actionLabel="Change"
+							onAction={() => {
+								onOpenChange(false);
+								window.location.href = "/avatar-shop?tab=inventory";
+							}}
+						/>
+						<SettingRow
 							label="Clock"
 							value={labelFor(equipped.clock, "Default clock")}
 							actionLabel="Change"
@@ -122,6 +131,15 @@ export function ClassroomSettingsPanel({
 							onAction={() => {
 								onOpenChange(false);
 								window.location.href = "/avatar-shop?tab=inventory";
+							}}
+						/>
+						<SettingRow
+							label="Campus Transport"
+							value={labelFor(equipped.transport, "No bicycle or bus")}
+							actionLabel="Change"
+							onAction={() => {
+								onOpenChange(false);
+								window.location.href = "/avatar-shop?tab=transport";
 							}}
 						/>
 						<SettingRow

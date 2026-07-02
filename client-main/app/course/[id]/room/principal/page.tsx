@@ -19,8 +19,8 @@ export default function PrincipalRoomPage() {
     useState<ComponentType<PrincipalRoomSceneProps> | null>(null);
 
   useEffect(() => {
-    import("@/components/3d/principal-room-scene").then((mod) => {
-      setPrincipalRoomScene(() => mod.PrincipalRoomScene);
+    import("@/components/3d/gaming-room-scene").then((mod) => {
+      setPrincipalRoomScene(() => mod.GamingRoomScene);
     });
   }, []);
 
@@ -42,7 +42,7 @@ export default function PrincipalRoomPage() {
           <PrincipalRoomScene courseId={courseId} onExit={backToCampus} />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-[#1c1917]">
-            <div className="text-white/90 text-sm">Loading principal office…</div>
+            <div className="text-white/90 text-sm">Loading gaming lounge…</div>
           </div>
         )}
       </div>

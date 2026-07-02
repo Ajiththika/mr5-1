@@ -114,10 +114,12 @@ apiClient.interceptors.response.use(
 
         // Log errors in development
         if (process.env.NODE_ENV === "development") {
+            const payload = error.response?.data as { error?: string } | undefined;
             console.error("API Error:", {
                 url: error.config?.url,
                 method: error.config?.method,
                 status: error.response?.status,
+                error: payload?.error,
             });
         }
 

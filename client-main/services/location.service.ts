@@ -88,31 +88,33 @@ class LocationService {
    */
   static async getIpLocation(): Promise<LocationData> {
     try {
-      const response = await fetch('https://ipapi.co/json/');
-      if (!response.ok) throw new Error('IP geolocation failed');
+      const response = await fetch("/api/context/location");
+      if (!response.ok) throw new Error("IP geolocation failed");
 
-      const data = await response.json();
+      const body = await response.json();
+      const data = body.data ?? body;
 
-      const isSriLanka = data.country_name?.toLowerCase() === 'sri lanka';
-      const isTamilNadu = data.region?.toLowerCase().includes('tamil nadu');
-      const city = data.city || '';
-      const isTamilRegion = isSriLanka && (
-        city.toLowerCase().includes('vavuniya') ||
-        city.toLowerCase().includes('jaffna')
-      );
+      const country = data.country ?? data.country_name ?? "";
+      const isSriLanka = country.toLowerCase() === "sri lanka";
+      const isTamilNadu = data.region?.toLowerCase().includes("tamil nadu");
+      const city = data.city || "";
+      const isTamilRegion =
+        isSriLanka &&
+        (city.toLowerCase().includes("vavuniya") ||
+          city.toLowerCase().includes("jaffna"));
 
       return {
-        country: data.country_name,
+        country,
         region: data.region,
         state: data.region,
         city: data.city,
         latitude: data.latitude,
         longitude: data.longitude,
-        timezone: data.timezone || (isSriLanka ? 'Asia/Colombo' : undefined),
+        timezone: data.timezone || (isSriLanka ? "Asia/Colombo" : undefined),
         isSriLanka,
         isTamilNadu,
         isTamilRegion,
-        method: 'ip'
+        method: "ip",
       };
     } catch (error) {
       console.error('IP Location Error:', error);

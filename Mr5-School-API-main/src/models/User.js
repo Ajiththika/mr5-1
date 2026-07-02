@@ -150,6 +150,7 @@ const userSchema = new mongoose.Schema(
 		ownedExercisePacks: { type: [String], default: [] },
 		ownedTransportItems: { type: [String], default: [] },
 		equippedClock: { type: String, default: "" },
+		equippedDeskFan: { type: String, default: "" },
 		equippedBell: { type: String, default: "" },
 		equippedBackgroundMusic: { type: String, default: "" },
 		equippedTransport: { type: String, default: "" },

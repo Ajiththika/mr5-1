@@ -230,7 +230,7 @@ export function ClassroomImmersiveHud({
               {cameraMode === "teacher" && (
                 <>
                   {challengeOpen && <TeacherChallengePanel />}
-                  {playtimeOpen && <TeacherPlaytimePanel />}
+                  <TeacherPlaytimePanel />
                 </>
               )}
             </div>

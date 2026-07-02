@@ -1,15 +1,15 @@
 import * as THREE from "three";
 
-import { MR5_LOGO_ASPECT, MR5_LOGO_PATH } from "@/lib/brand/logo";
+import { MR5_LOGO_TRANSPARENT_PATH, MR5_LOGO_ASPECT } from "@/lib/brand/logo";
 
-/** High-res MR5 crest for crisp in-scene stickers. */
-export const MR5_LOGO_URL = MR5_LOGO_PATH;
+/** High-res MR5 crest for crisp in-scene stickers (transparent blue removed). */
+export const MR5_LOGO_URL = MR5_LOGO_TRANSPARENT_PATH;
 
-/** Large back-wall sticker — visible but premium. */
-export const MR5_WALL_STICKER_OPACITY = 0.22;
+/** Large back-wall sticker — gold crest without blue fill. */
+export const MR5_WALL_STICKER_OPACITY = 0.38;
 
 /** Small desk / board corner stickers. */
-export const MR5_SURFACE_STICKER_OPACITY = 0.42;
+export const MR5_SURFACE_STICKER_OPACITY = 0.55;
 
 export interface WallStickerPlacement {
   position: THREE.Vector3;

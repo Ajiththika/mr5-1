@@ -87,8 +87,23 @@ export function validateEnv() {
 		envConfig.JWT_SECRET &&
 		envConfig.JWT_SECRET.length < 32
 	) {
+		console.error(
+			"JWT_SECRET must be at least 32 characters in production. Use AWS Secrets Manager.",
+		);
+		process.exit(1);
+	}
+
+	if (envConfig.NODE_ENV === "production" && !mongoUri) {
+		console.error("MONGO_URI is required in production.");
+		process.exit(1);
+	}
+
+	if (
+		envConfig.NODE_ENV === "production" &&
+		(!envConfig.CORS_ORIGIN || envConfig.CORS_ORIGIN.includes("localhost"))
+	) {
 		console.warn(
-			"JWT_SECRET is less than 32 characters. Consider using a stronger secret in production.",
+			"CORS_ORIGIN should be set to your production domain (not localhost).",
 		);
 	}
 

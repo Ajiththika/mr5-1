@@ -2,39 +2,23 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Coffee, Gamepad2, Plus, Timer } from "lucide-react";
+import { useClassroomStore } from "@/features/classroom/store/classroom.store";
+import {
+  isGamingTime,
+  phaseLabel,
+  type PlaytimePhase,
+} from "@/lib/classroom/playtime-phase";
 
-const BREAK_FOCUS_SEC = 25 * 60;
-const BREAK_REST_SEC = 5 * 60;
-const GAME_FOCUS_SEC = 60 * 60;
-const GAME_REST_SEC = 5 * 60;
+const BREAK_FOCUS_SEC = process.env.NODE_ENV === "development" ? 15 : 25 * 60;
+const BREAK_REST_SEC = process.env.NODE_ENV === "development" ? 10 : 5 * 60;
+const GAME_FOCUS_SEC = process.env.NODE_ENV === "development" ? 20 : 60 * 60;
+const GAME_REST_SEC = process.env.NODE_ENV === "development" ? 30 : 5 * 60;
 const BONUS_SEC = 5 * 60;
-
-type PlaytimePhase =
-  | "idle"
-  | "break_focus"
-  | "break_rest"
-  | "game_focus"
-  | "game_rest";
 
 function formatTime(totalSeconds: number) {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-}
-
-function phaseLabel(phase: PlaytimePhase) {
-  switch (phase) {
-    case "break_focus":
-      return "Class time";
-    case "break_rest":
-      return "Break time";
-    case "game_focus":
-      return "Lesson time";
-    case "game_rest":
-      return "Game time";
-    default:
-      return "Ready";
-  }
 }
 
 function phaseAccent(phase: PlaytimePhase) {
@@ -52,11 +36,17 @@ function phaseAccent(phase: PlaytimePhase) {
 }
 
 export function TeacherPlaytimePanel() {
+  const { setPlaytimePhase } = useClassroomStore();
   const [phase, setPhase] = useState<PlaytimePhase>("idle");
   const [secondsLeft, setSecondsLeft] = useState(0);
 
   const isRestPhase = phase === "break_rest" || phase === "game_rest";
   const isRunning = phase !== "idle";
+  const gamingActive = isGamingTime(phase);
+
+  useEffect(() => {
+    setPlaytimePhase(phase);
+  }, [phase, setPlaytimePhase]);
 
   useEffect(() => {
     if (!isRunning || secondsLeft <= 0) return;
@@ -131,8 +121,15 @@ export function TeacherPlaytimePanel() {
 
       <p className="mb-3 text-[10px] leading-relaxed text-slate-400">
         Break: 25 min class, then 5 min break · Gaming: 1 hr lesson, then 5 min
-        game · +5 min only during break or game time
+        game · Piano, bats, and Creep specter appear during gaming time
       </p>
+
+      {gamingActive && (
+        <p className="mb-3 rounded-lg border border-emerald-400/20 bg-emerald-500/10 px-2 py-1.5 text-[10px] text-emerald-100">
+          Gaming time — piano, flying bats, and Creep in the room. Click Creep for a
+          screech. Sounds: Pixabay DRAGON-STUDIO + community zombie ambient.
+        </p>
+      )}
 
       <div className="grid grid-cols-3 gap-2">
         <button

@@ -61,6 +61,7 @@ import { MotionViewButton } from "@/components/classroom/MotionViewButton";
 import { ChangeTeacherModal } from "@/components/classroom/ChangeTeacherModal";
 import { ClassroomSettingsPanel } from "@/components/classroom/ClassroomSettingsPanel";
 import { useClassroomOwnStoreRuntime } from "@/hooks/useClassroomOwnStoreRuntime";
+import type { FanSpeedLevel } from "@/features/classroom/environment/environment.types";
 import { get3DPerformanceProfile } from "@/lib/3d/performance-profile";
 import { useActiveTeacher, getTeacherPersonalityPrompt } from "@/contexts/ActiveTeacherContext";
 import { ModelCreditNotice } from "@/components/3d/ModelCreditNotice";
@@ -68,6 +69,18 @@ import { getGaneshaModelUrl } from "@/lib/3d/aws-assets";
 import { deriveClassroomBrandPlacements } from "@/lib/classroom/classroom-brand-placement";
 import type { ClassroomBrandPlacements } from "@/lib/classroom/classroom-brand-placement";
 import { ClassroomBrandStickers } from "@/components/3d/classroom/ClassroomBrandStickers";
+import { GamingGrandPiano } from "@/components/3d/classroom/GamingGrandPiano";
+import { ClassroomWallClock } from "@/components/3d/classroom/ClassroomWallClock";
+import { TeacherTableFan } from "@/components/3d/classroom/TeacherTableFan";
+import {
+  BicycleModel,
+  BICYCLE_TRANSPORT_SLUGS,
+  type BicycleTransportSlug,
+} from "@/components/3d/classroom/BicycleModel";
+import { GamingSpookyBats } from "@/components/3d/classroom/GamingSpookyBats";
+import { GamingCreepSpecter } from "@/components/3d/classroom/GamingCreepSpecter";
+import { GamingSpookyAmbienceAudio } from "@/components/3d/classroom/GamingSpookyAmbienceAudio";
+import { isGamingTime } from "@/lib/classroom/playtime-phase";
 
 const CLASSROOM_GLB = "/assets/3d/rooms/classroom.glb";
 
@@ -801,18 +814,29 @@ function ClassroomSceneEnvironment({ lighting }: { lighting: EnvironmentLighting
   );
 }
 
+const WALL_CLOCK_ITEMS = new Set(["item_clock_3dhaupt", "item_clock_premium"]);
+const DESK_FAN_ITEMS = new Set(["item_fan_3dhaupt"]);
+
 function EquippedOwnStoreAssets({
   equippedClock,
+  equippedDeskFan,
   equippedTransport,
   viewState,
   windowCenter,
+  fanEnabled,
+  fanMode,
+  fanAutoIntensity,
 }: {
   equippedClock?: string;
+  equippedDeskFan?: string;
   equippedTransport?: string;
   viewState: ClassroomViewState;
   windowCenter: THREE.Vector3;
+  fanEnabled: boolean;
+  fanMode: FanSpeedLevel;
+  fanAutoIntensity: number;
 }) {
-  if (!equippedClock && !equippedTransport) return null;
+  if (!equippedClock && !equippedDeskFan && !equippedTransport) return null;
 
   const clockPos: [number, number, number] = [
     viewState.board.x - viewState.classDirection.x * 0.4,
@@ -820,36 +844,86 @@ function EquippedOwnStoreAssets({
     viewState.board.z - viewState.classDirection.z * 0.4,
   ];
 
+  const clockRotationY = Math.atan2(
+    viewState.classDirection.x,
+    viewState.classDirection.z,
+  );
+
   const busPos: [number, number, number] = [
     windowCenter.x + viewState.classDirection.x * 4.5,
     viewState.floorY + 0.6,
     windowCenter.z + viewState.classDirection.z * 4.5,
   ];
 
+  const showWallClock = equippedClock && WALL_CLOCK_ITEMS.has(equippedClock);
+  const showDeskFan = equippedDeskFan && DESK_FAN_ITEMS.has(equippedDeskFan);
+
+  const boardSide = new THREE.Vector3()
+    .crossVectors(new THREE.Vector3(0, 1, 0), viewState.classDirection)
+    .normalize();
+  const deskFanPos: [number, number, number] = [
+    viewState.teacherAnchor.position.x + boardSide.x * 0.52,
+    viewState.floorY + 0.78,
+    viewState.teacherAnchor.position.z + boardSide.z * 0.52,
+  ];
+  const deskFanRotationY =
+    Math.atan2(viewState.classDirection.x, viewState.classDirection.z) + Math.PI;
+
   return (
     <>
       {equippedClock ? (
         <group position={clockPos}>
-          <mesh>
-            <cylinderGeometry args={[0.18, 0.18, 0.04, 32]} />
-            <meshStandardMaterial color="#f5e6c8" metalness={0.4} roughness={0.35} />
-          </mesh>
-          <mesh position={[0, 0, 0.03]}>
-            <circleGeometry args={[0.14, 32]} />
-            <meshStandardMaterial color="#1e293b" />
-          </mesh>
+          {showWallClock ? (
+            <Suspense fallback={null}>
+              <ClassroomWallClock rotationY={clockRotationY + Math.PI} />
+            </Suspense>
+          ) : (
+            <>
+              <mesh>
+                <cylinderGeometry args={[0.18, 0.18, 0.04, 32]} />
+                <meshStandardMaterial color="#f5e6c8" metalness={0.4} roughness={0.35} />
+              </mesh>
+              <mesh position={[0, 0, 0.03]}>
+                <circleGeometry args={[0.14, 32]} />
+                <meshStandardMaterial color="#1e293b" />
+              </mesh>
+            </>
+          )}
+        </group>
+      ) : null}
+      {showDeskFan ? (
+        <group position={deskFanPos} rotation={[0, deskFanRotationY, 0]}>
+          <Suspense fallback={null}>
+            <TeacherTableFan
+              enabled={fanEnabled}
+              mode={fanMode}
+              autoIntensity={fanAutoIntensity}
+              scale={0.95}
+            />
+          </Suspense>
         </group>
       ) : null}
       {equippedTransport ? (
-        <group position={busPos} rotation={[0, Math.atan2(viewState.classDirection.x, viewState.classDirection.z), 0]}>
-          <mesh>
-            <boxGeometry args={[1.8, 0.7, 0.55]} />
-            <meshStandardMaterial color="#facc15" />
-          </mesh>
-          <mesh position={[0.55, 0.2, 0]}>
-            <boxGeometry args={[0.5, 0.35, 0.52]} />
-            <meshStandardMaterial color="#fde68a" />
-          </mesh>
+        <group
+          position={busPos}
+          rotation={[0, Math.atan2(viewState.classDirection.x, viewState.classDirection.z), 0]}
+        >
+          {BICYCLE_TRANSPORT_SLUGS.has(equippedTransport) ? (
+            <Suspense fallback={null}>
+              <BicycleModel slug={equippedTransport as BicycleTransportSlug} />
+            </Suspense>
+          ) : (
+            <>
+              <mesh>
+                <boxGeometry args={[1.8, 0.7, 0.55]} />
+                <meshStandardMaterial color="#facc15" />
+              </mesh>
+              <mesh position={[0.55, 0.2, 0]}>
+                <boxGeometry args={[0.5, 0.35, 0.52]} />
+                <meshStandardMaterial color="#fde68a" />
+              </mesh>
+            </>
+          )}
         </group>
       ) : null}
     </>
@@ -867,8 +941,10 @@ function ClassroomContent({
   lessonLoading,
   teacherMode,
   teacherModelUrl,
+  teacherSlug,
   teacherFadeKey,
   equippedClock,
+  equippedDeskFan,
   equippedTransport,
   motionEnabled,
   getOrientationDelta,
@@ -883,15 +959,21 @@ function ClassroomContent({
   lessonLoading?: boolean;
   teacherMode: TeacherPresenceMode;
   teacherModelUrl?: string;
+  teacherSlug?: string;
   teacherFadeKey?: number;
   equippedClock?: string;
+  equippedDeskFan?: string;
   equippedTransport?: string;
   motionEnabled?: boolean;
   getOrientationDelta?: () => { yaw: number; pitch: number };
 }) {
   const { environment } = useClassroomEnvironment();
   const { computed, weather } = useWeatherSync();
-  const { controls } = useClassroomStore();
+  const { controls, playtimePhase } = useClassroomStore();
+  const gamingSpecterVisible =
+    isGamingTime(playtimePhase) &&
+    teacherSlug !== "teacher_creep" &&
+    !(teacherModelUrl ?? "").toLowerCase().includes("creep");
   const { lighting } = environment;
   const [fanSpeed, setFanSpeed] = useState(0);
 
@@ -982,10 +1064,33 @@ function ClassroomContent({
           />
           <EquippedOwnStoreAssets
             equippedClock={equippedClock}
+            equippedDeskFan={equippedDeskFan}
             equippedTransport={equippedTransport}
             viewState={viewState}
             windowCenter={windowVectors.windowCenter}
+            fanEnabled={controls.fanEnabled}
+            fanMode={controls.fanMode}
+            fanAutoIntensity={computed.fanIntensity}
           />
+          <GamingGrandPiano
+            visible={isGamingTime(playtimePhase)}
+            floorY={viewState.floorY}
+            roomCenter={viewState.roomCenter}
+            classDirection={viewState.classDirection}
+          />
+          <GamingSpookyBats
+            visible={isGamingTime(playtimePhase)}
+            roomCenter={viewState.roomCenter}
+            classDirection={viewState.classDirection}
+            ceilingY={viewState.ceilingY}
+          />
+          <GamingCreepSpecter
+            visible={gamingSpecterVisible}
+            floorY={viewState.floorY}
+            roomCenter={viewState.roomCenter}
+            classDirection={viewState.classDirection}
+          />
+          <GamingSpookyAmbienceAudio />
           <ContactShadows
             position={[0, viewState.floorY + 0.01, 0]}
             opacity={lighting.effects.rain ? 0.5 : 0.38}
@@ -1042,6 +1147,7 @@ function ClassroomRoomSceneInner({ courseId, onExit }: ClassroomRoomSceneProps) 
   const [classroomSettingsOpen, setClassroomSettingsOpen] = useState(false);
   const {
     activeTeacher,
+    activeTeacherSlug,
     fadeToken,
     syncInventory,
     equipped,
@@ -1212,8 +1318,10 @@ function ClassroomRoomSceneInner({ courseId, onExit }: ClassroomRoomSceneProps) 
               lessonLoading={lessonLoading}
               teacherMode={teacherMode}
               teacherModelUrl={activeTeacher?.modelUrl}
+              teacherSlug={activeTeacher?.teacherSlug ?? activeTeacherSlug}
               teacherFadeKey={fadeToken}
               equippedClock={equipped.clock}
+              equippedDeskFan={equipped.deskFan}
               equippedTransport={equipped.transport}
               motionEnabled={orientation.enabled}
               getOrientationDelta={orientation.getDelta}

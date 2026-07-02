@@ -26,6 +26,7 @@ export interface OwnStoreProduct {
 	teachingStyle?: string;
 	greeting?: string;
 	rating?: number;
+	systemPrompt?: string;
 }
 
 export interface OwnStoreInventory {
@@ -37,6 +38,7 @@ export interface OwnStoreInventory {
 	equipped: {
 		teacher: string;
 		clock: string;
+		deskFan: string;
 		bell: string;
 		backgroundMusic: string;
 		transport: string;
@@ -124,6 +126,7 @@ export function toTeacherAvatarItem(item: OwnStoreProduct): import("@/services/t
 		teachingStyle: item.teachingStyle,
 		greeting: item.greeting,
 		rating: item.rating,
+		systemPrompt: item.systemPrompt,
 	};
 }
 

@@ -47,12 +47,16 @@ test.describe("Classroom environment", () => {
 
     await enterClassroom(page, { openMenu: false });
 
-    await page.getByRole("button", { name: /env debug/i }).click({ timeout: 30000 });
+    const envDebug = page.getByRole("button", { name: /env debug/i });
+    await envDebug.scrollIntoViewIfNeeded();
+    await envDebug.click({ timeout: 30000 });
     await page.getByRole("button", { name: /^night$/i }).click();
     await page.getByRole("button", { name: /^rainy$/i }).click();
 
+    await openClassroomMenu(page);
+
     const statusPanel = page.getByLabel(/room atmosphere/i);
-    await expect(statusPanel).toContainText(/night/i);
-    await expect(statusPanel).toContainText(/rainy/i);
+    await expect(statusPanel).toContainText(/night/i, { timeout: 15000 });
+    await expect(statusPanel).toContainText(/rainy/i, { timeout: 15000 });
   });
 });

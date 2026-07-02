@@ -22,6 +22,8 @@ export default function BathroomRoomPage() {
                 <RoomScene
                     modelUrl="/assets/3d/rooms/bathroom.glb"
                     name="Restroom"
+                    courseId={courseId}
+                    variant="restroom"
                 />
             </div>
         </CourseAccessGate>

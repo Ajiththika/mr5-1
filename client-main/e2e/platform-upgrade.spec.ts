@@ -12,7 +12,9 @@ test.describe("Platform upgrade", () => {
     const chatButton = page.getByRole("button", { name: /open ai study assistant/i });
     await expect(chatButton).toBeVisible({ timeout: 20000 });
     await chatButton.click();
-    await expect(page.getByRole("dialog")).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole("dialog", { name: /AI Tutor/i })).toBeVisible({
+      timeout: 15000,
+    });
   });
 
   test("footer language switch updates visible UI", async ({ page }) => {

@@ -154,7 +154,7 @@ export function OwnStoreClient() {
 					<OwnStoreCategoryPanel
 						category="transport"
 						title="School Transport"
-						description="Animated school bus and future transport items outside your classroom window."
+						description="Free bicycles for cycle lovers, plus premium school bus outside your classroom window."
 						onInventoryRefresh={refreshInventory}
 					/>
 				</TabsContent>

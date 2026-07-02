@@ -36,7 +36,10 @@ export function OwnStoreProductCard({
 	onUnequip?: () => void;
 	onPreview?: () => void;
 }) {
-	const emoji = CATEGORY_EMOJI[product.type] ?? "✨";
+	const emoji =
+		product.metadata?.assetKind === "bicycle"
+			? "🚲"
+			: (CATEGORY_EMOJI[product.type] ?? "✨");
 	const isFree = !product.isPremium || product.priceCents <= 0;
 	const comingSoon = product.comingSoon;
 

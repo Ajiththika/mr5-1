@@ -21,7 +21,9 @@ export default function MensaRoomPage() {
                 </div>
                 <RoomScene
                     modelUrl="/assets/3d/rooms/mensa.glb"
-                    name="Mensa (Cafeteria)"
+                    name="Cafeteria"
+                    courseId={courseId}
+                    variant="cafeteria"
                 />
             </div>
         </CourseAccessGate>

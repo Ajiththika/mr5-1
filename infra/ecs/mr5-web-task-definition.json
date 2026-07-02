@@ -1,0 +1,71 @@
+{
+  "family": "mr5-web",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/mr5-ecs-execution-role",
+  "taskRoleArn": "arn:aws:iam::ACCOUNT_ID:role/mr5-web-task-role",
+  "containerDefinitions": [
+    {
+      "name": "web",
+      "image": "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/mr5-web:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "protocol": "tcp",
+          "name": "http"
+        }
+      ],
+      "environment": [
+        { "name": "NODE_ENV", "value": "production" },
+        { "name": "PORT", "value": "3000" },
+        { "name": "HOSTNAME", "value": "0.0.0.0" },
+        { "name": "NEXT_PUBLIC_SITE_URL", "value": "https://app.mr5school.com" },
+        { "name": "NEXT_PUBLIC_API_URL", "value": "https://api.mr5school.com" },
+        { "name": "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME", "value": "REPLACE_CLOUD_NAME" },
+        { "name": "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY", "value": "pk_live_REPLACE_ME" }
+      ],
+      "secrets": [
+        {
+          "name": "GEMINI_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:mr5-school/prod/gemini-api-key"
+        },
+        {
+          "name": "WEATHER_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:mr5-school/prod/weather-api-key"
+        },
+        {
+          "name": "OPENAI_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:mr5-school/prod/openai-api-key"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/mr5-web",
+          "awslogs-region": "REGION",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group": "true"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/ || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 90
+      },
+      "linuxParameters": {
+        "initProcessEnabled": true
+      },
+      "stopTimeout": 30
+    }
+  ],
+  "tags": [
+    { "key": "Project", "value": "mr5-school" },
+    { "key": "Service", "value": "web" },
+    { "key": "Environment", "value": "production" }
+  ]
+}

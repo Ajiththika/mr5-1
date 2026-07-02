@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
 	Award,
 	BarChart3,
@@ -20,7 +20,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { PublicProfile } from "@/types/identity";
 import Link from "next/link";
-import { sendFriendRequest, respondFriendRequest } from "@/services/identity.service";
+import { fetchPublicProfile, sendFriendRequest, respondFriendRequest } from "@/services/identity.service";
+import { useEnhancedUser } from "@/contexts/EnhancedUserContext";
+import { normalizeMr5Uid } from "@/lib/identity/uid";
+import { parseApiError } from "@/lib/errorHandler";
 
 const BADGE_ICONS: Record<string, ReactNode> = {
 	sparkles: <Sparkles className="h-4 w-4" aria-hidden />,
@@ -35,10 +38,42 @@ type PublicProfileViewProps = {
 	profile: PublicProfile;
 };
 
-export function PublicProfileView({ profile }: PublicProfileViewProps) {
+export function PublicProfileView({ profile: initialProfile }: PublicProfileViewProps) {
+	const { user } = useEnhancedUser();
+	const [profile, setProfile] = useState(initialProfile);
 	const [friendStatus, setFriendStatus] = useState<string | null>(null);
-	const [pending, setPending] = useState(profile.friendPending);
-	const [isFriend, setIsFriend] = useState(Boolean(profile.isFriend));
+	const [pending, setPending] = useState(initialProfile.friendPending);
+	const [isFriend, setIsFriend] = useState(Boolean(initialProfile.isFriend));
+
+	useEffect(() => {
+		setProfile(initialProfile);
+		setPending(initialProfile.friendPending);
+		setIsFriend(Boolean(initialProfile.isFriend));
+	}, [initialProfile]);
+
+	useEffect(() => {
+		if (!user?.id) return;
+		let active = true;
+		void fetchPublicProfile(initialProfile.uid)
+			.then((next) => {
+				if (!active) return;
+				setProfile(next);
+				setPending(next.friendPending);
+				setIsFriend(Boolean(next.isFriend));
+			})
+			.catch(() => undefined);
+		return () => {
+			active = false;
+		};
+	}, [user?.id, initialProfile.uid]);
+
+	const isOwnProfile =
+		profile.isOwner ||
+		Boolean(
+			user?.mr5Uid &&
+				normalizeMr5Uid(user.mr5Uid) &&
+				normalizeMr5Uid(user.mr5Uid) === normalizeMr5Uid(profile.uid),
+		);
 	const initials = profile.name
 		.split(" ")
 		.map((part) => part[0])
@@ -47,12 +82,16 @@ export function PublicProfileView({ profile }: PublicProfileViewProps) {
 		.toUpperCase();
 
 	const handleFriendRequest = async () => {
+		if (isOwnProfile) {
+			setFriendStatus("This is your profile.");
+			return;
+		}
 		try {
 			await sendFriendRequest(profile.uid);
 			setPending("outgoing");
 			setFriendStatus("Friend request sent.");
 		} catch (error) {
-			setFriendStatus(error instanceof Error ? error.message : "Unable to send request.");
+			setFriendStatus(parseApiError(error));
 		}
 	};
 
@@ -64,7 +103,7 @@ export function PublicProfileView({ profile }: PublicProfileViewProps) {
 			setPending(null);
 			setFriendStatus("You are now friends.");
 		} catch (error) {
-			setFriendStatus(error instanceof Error ? error.message : "Unable to accept request.");
+			setFriendStatus(parseApiError(error));
 		}
 	};
 
@@ -110,7 +149,7 @@ export function PublicProfileView({ profile }: PublicProfileViewProps) {
 							</div>
 						</div>
 
-						{!profile.isOwner && !profile.private ? (
+						{!isOwnProfile && !profile.private ? (
 							<div className="flex flex-col items-start gap-2 md:items-end">
 								{isFriend ? (
 									<Button variant="secondary" disabled>

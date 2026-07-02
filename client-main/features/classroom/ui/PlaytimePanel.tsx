@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { Gamepad2, Puzzle, Sparkles, X } from "lucide-react";
 import { useClassroomStore } from "../store/classroom.store";
+import { isGamingTime } from "@/lib/classroom/playtime-phase";
 import {
   CLASSROOM_QUIZ,
   MATCH_PAIRS,
@@ -15,7 +16,7 @@ import { getBrandSoundManager } from "@/lib/audio";
 type GameTab = "quiz" | "match" | "observe";
 
 export function PlaytimePanel() {
-  const { playtimeOpen, togglePlaytime, addReward, playtime } = useClassroomStore();
+  const { playtimeOpen, togglePlaytime, addReward, playtime, playtimePhase } = useClassroomStore();
   const [tab, setTab] = useState<GameTab>("quiz");
   const [quizIndex, setQuizIndex] = useState(0);
   const [matchSelected, setMatchSelected] = useState<string | null>(null);
@@ -157,8 +158,9 @@ export function PlaytimePanel() {
         )}
         {tab === "observe" && (
           <p className="text-[11px] leading-relaxed text-slate-400">
-            Find the ceiling fan, window curtains, and whiteboard logo. Tap each in
-            the room, then return here for a bonus when you spot all three.
+            {isGamingTime(playtimePhase)
+              ? "Gaming time! Bats circle overhead, Creep lurks in the corner (click for a screech), and the grand piano is by the side wall."
+              : "Find the ceiling fan, window curtains, and gold crest stickers on the board and desks."}
           </p>
         )}
       </div>

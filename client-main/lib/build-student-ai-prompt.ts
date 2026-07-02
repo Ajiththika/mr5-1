@@ -61,9 +61,6 @@ export function buildStudentAiSystemPrompt({
 
   const classroomLines = [
     classroom?.teacherName ? `Active teacher avatar: ${classroom.teacherName}` : null,
-    classroom?.teacherPersonality
-      ? `Teacher personality:\n${classroom.teacherPersonality}`
-      : null,
     classroom?.studentSeat
       ? `Student seat: ${classroom.seatLabel ?? `Seat ${classroom.studentSeat}`}`
       : null,
@@ -80,15 +77,12 @@ export function buildStudentAiSystemPrompt({
     .filter(Boolean)
     .join("\n");
 
+  const systemPrompt =
+    classroom?.teacherPersonality ??
+    "You are an expert AI Teacher for MR5 School immersive 3D classroom.";
+
   return [
-    classroom?.teacherPersonality
-      ? classroom.teacherPersonality
-      : "You are an expert AI Teacher for MR5 School immersive 3D classroom.",
-    "Answer ONLY about the current course and lesson on the blackboard.",
-    "Do not discuss unrelated topics. Keep responses educational, friendly, and step-by-step.",
-    "Be warm, patient, and encouraging.",
-    "Always adapt vocabulary and depth to the student's age and education level when known.",
-    "Use remembered chat history naturally so the student feels known and supported.",
+    systemPrompt,
     profileLines ? `\nSTUDENT PROFILE:\n${profileLines}` : "",
     lessonLines ? `\nLESSON CONTEXT:\n${lessonLines}` : "",
     classroomLines ? `\nCLASSROOM CONTEXT:\n${classroomLines}` : "",

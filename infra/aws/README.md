@@ -4,8 +4,10 @@
 
 | File | Service |
 |------|---------|
-| `ecs/task-definition-api.json.example` | Express API (port 5001) |
-| `ecs/task-definition-web.json.example` | Next.js web (port 3000) |
+| `../ecs/mr5-api-task-definition.json` | Express API (port 5001) — **canonical** |
+| `../ecs/mr5-web-task-definition.json` | Next.js web (port 3000) |
+| `ecs/task-definition-api.json.example` | Legacy example (deprecated) |
+| `ecs/task-definition-web.json.example` | Legacy example (deprecated) |
 
 Replace placeholders before registering:
 

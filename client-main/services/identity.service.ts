@@ -1,4 +1,6 @@
 import apiClient from "@/lib/apiClient";
+import { parseApiError } from "@/lib/errorHandler";
+import { normalizeMr5Uid } from "@/lib/identity/uid";
 import type {
 	AcademicSearchResponse,
 	CertificateVerification,
@@ -72,20 +74,38 @@ export async function updateMyPrivacySettings(payload: Partial<PrivacySettings>)
 }
 
 export async function sendFriendRequest(recipientUid: string) {
-	const response = await apiClient.post("/api/identity/me/friends", { recipientUid });
-	return response.data.data;
+	const normalized = normalizeMr5Uid(recipientUid);
+	if (!normalized) {
+		throw new Error("Invalid MR5 UID. Use format MR5-STU-XXXXXX.");
+	}
+	try {
+		const response = await apiClient.post("/api/identity/me/friends", {
+			recipientUid: normalized,
+		});
+		return response.data.data;
+	} catch (error) {
+		throw new Error(parseApiError(error));
+	}
 }
 
 export async function fetchFriendRequests() {
-	const response = await apiClient.get<{ success: boolean; data: import("@/types/identity").IdentityFriendRecord[] }>(
-		"/api/identity/me/friends",
-	);
-	return response.data.data;
+	try {
+		const response = await apiClient.get<{ success: boolean; data: import("@/types/identity").IdentityFriendRecord[] }>(
+			"/api/identity/me/friends",
+		);
+		return response.data.data;
+	} catch (error) {
+		throw new Error(parseApiError(error));
+	}
 }
 
 export async function respondFriendRequest(requestId: string, action: "accept" | "decline" | "block") {
-	const response = await apiClient.patch(`/api/identity/me/friends/${requestId}`, { action });
-	return response.data.data;
+	try {
+		const response = await apiClient.patch(`/api/identity/me/friends/${requestId}`, { action });
+		return response.data.data;
+	} catch (error) {
+		throw new Error(parseApiError(error));
+	}
 }
 
 export async function fetchIdentityNotifications(scope: "all" | "global" | "friends" | "personal" = "all") {

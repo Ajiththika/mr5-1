@@ -16,6 +16,7 @@ export interface TeacherAvatarItem {
 	teachingStyle?: string;
 	greeting?: string;
 	rating?: number;
+	systemPrompt?: string;
 }
 
 export interface OwnedTeachersResponse {

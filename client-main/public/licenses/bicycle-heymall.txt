@@ -1,0 +1,10 @@
+Bicycle (for CGTrader) — 3D model by heymall
+https://www.cgtrader.com/designers/heymall
+
+Source blend stored at public/models/bicycles/heymall-classic/bicycle.blend1
+Runtime uses a lightweight classic bicycle mesh until GLB export is available.
+
+Used in MR5 School campus transport — verify your CGTrader / author
+license terms for production deployment.
+
+MR5 School attribution: Classic Bicycle by heymall.

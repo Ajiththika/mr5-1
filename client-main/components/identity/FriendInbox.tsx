@@ -24,8 +24,8 @@ export function FriendInbox() {
 		setLoading(true);
 		try {
 			setRows(await fetchFriendRequests());
-		} catch {
-			setMessage("Unable to load friends.");
+		} catch (error) {
+			setMessage(error instanceof Error ? error.message : "Unable to load friends.");
 		} finally {
 			setLoading(false);
 		}
