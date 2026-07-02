@@ -9,7 +9,7 @@ import type {
 } from "@/types/identity";
 
 const getApiBaseUrl = () =>
-	process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, "") || "http://127.0.0.1:5001";
+	process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, "") || "http://127.0.0.1:5000";
 
 async function readIdentityResponse<T>(response: Response): Promise<T> {
 	if (!response.ok) {

@@ -20,7 +20,7 @@ export const serverEnv = {
   siteUrl: () => process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
   apiUrl: () =>
     process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
-    "http://127.0.0.1:5001",
+    "http://127.0.0.1:5000",
 };
 
 export function assertGeminiConfigured() {

@@ -10,7 +10,7 @@ dotenv.config({ path: join(__dirname, "../../.env") });
 const mongoUri = process.env.MONGO_URI || process.env.MONGODB_URI;
 
 const envConfig = {
-	PORT: process.env.PORT || 5001,
+	PORT: process.env.PORT || 5000,
 	NODE_ENV: process.env.NODE_ENV || "development",
 	MONGO_URI: mongoUri,
 	JWT_SECRET: process.env.JWT_SECRET,

@@ -266,7 +266,7 @@ if (!process.env.VERCEL && process.env.NODE_ENV !== "test") {
 				console.log("Connected to MongoDB successfully");
 			}
 
-			const PORT = process.env.PORT || 5001;
+			const PORT = process.env.PORT || 5000;
 
 			const server = app.listen(PORT, () => {
 				console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);

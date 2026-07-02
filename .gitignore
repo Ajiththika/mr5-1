@@ -15,29 +15,16 @@ out/
 .turbo/
 .vercel/
 
-# Environment & secrets — NEVER commit real values
+# Environment & secrets — NEVER commit real values (only .env.example is tracked)
 .env
 .env.*
 !.env.example
-!.env.local.example
-!.env.production.example
-.envcopy
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Client-specific (allow examples only)
 client-main/.env
 client-main/.env.*
-!client-main/.env.local.example
-!client-main/env.production.example
-
-# API-specific
+!client-main/.env.example
 Mr5-School-API-main/.env
 Mr5-School-API-main/.env.*
 !Mr5-School-API-main/.env.example
-!Mr5-School-API-main/.env.production.example
 
 # Logs & debug
 *.log

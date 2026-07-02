@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const BASE = process.env.PLAYWRIGHT_WEB_URL || 'http://localhost:3000';
-const API = process.env.PLAYWRIGHT_API_URL || 'http://localhost:5001';
+const API = process.env.PLAYWRIGHT_API_URL || 'http://localhost:5000';
 const OUT = path.join(process.cwd(), 'demo-screenshots');
 
 const STUDENT = { email: 'student@mr5school.com', password: 'Student@123456' };

@@ -16,13 +16,13 @@ Immersive 3D learning platform with AI teachers, live weather classrooms, and st
 ```bash
 # 1. API
 cd Mr5-School-API-main
-cp .env.local.example .env
+cp .env.example .env
 # Set MONGO_URI and JWT_SECRET (32+ chars)
-PORT=5001 NODE_ENV=development node src/app.js
+npm run dev
 
 # 2. Frontend
 cd client-main
-cp .env.local.example .env.local
+cp .env.example .env
 npm install && npm run dev
 ```
 
@@ -57,9 +57,8 @@ Push to `main` → GitHub Actions runs tests, builds Docker images, pushes to EC
 
 Copy example files — **never commit real secrets**:
 
-- `client-main/.env.local.example` → `.env.local`
-- `Mr5-School-API-main/.env.local.example` → `.env`
-- `.env.production.example` → AWS Secrets Manager reference
+- `Mr5-School-API-main/.env.example` → `Mr5-School-API-main/.env` (API port **5000**)
+- `client-main/.env.example` → `client-main/.env` (web port **3000**)
 
 ## Scripts
 
