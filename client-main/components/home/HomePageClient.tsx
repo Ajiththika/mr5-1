@@ -124,7 +124,7 @@ export default function HomePageClient() {
       <ProductTour enabled={!loading} />
 
       <main id="main-content" className="mr5-page-x flex-1 container mx-auto py-8 pb-20">
-        <div className="hero-band mb-8 flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between md:p-8">
+        <div className="hero-band relative z-10 mb-8 flex flex-col gap-4 p-6 md:flex-row md:items-start md:justify-between md:p-8">
           <div className="flex flex-col">
             <motion.div
               initial={{ opacity: 0, y: -20 }}
@@ -156,12 +156,12 @@ export default function HomePageClient() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3, duration: 0.4 }}
-            className="relative group w-full md:w-[28rem] perspective-1000 mt-4 md:mt-0"
+            className="group relative z-20 w-full min-w-0 md:w-[28rem] md:shrink-0 mt-4 md:mt-0"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/30 via-purple-500/30 to-blue-500/30 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition duration-700 will-change-transform" />
+            <div className="pointer-events-none absolute -inset-1 rounded-xl bg-gradient-to-r from-primary/25 via-purple-500/20 to-blue-500/25 opacity-60 blur-lg transition-opacity duration-500 group-hover:opacity-100" />
             <GlobalAcademicSearch
               data-tour-id="tour-home-search"
-              className="relative"
+              className="relative z-10 w-full"
               placeholder={t("homepage.searchPlaceholder")}
             />
           </motion.div>

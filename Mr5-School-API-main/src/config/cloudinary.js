@@ -1,20 +1,22 @@
 import { v2 as cloudinary } from "cloudinary";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
+import {
+	cloudName,
+	apiKey,
+	apiSecret,
+	isCloudinaryConfigured,
+} from "../utils/cloudinaryConfig.js";
 
-const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-const apiKey = process.env.CLOUDINARY_API_KEY;
-const apiSecret = process.env.CLOUDINARY_API_SECRET;
-
-if (!cloudName || !apiKey || !apiSecret) {
-    console.warn(
-        "Cloudinary is not fully configured (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET). Upload routes will fail until set.",
-    );
+if (!isCloudinaryConfigured) {
+	console.warn(
+		"Cloudinary is not fully configured (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET). Upload routes will fail until set.",
+	);
 }
 
 cloudinary.config({
-    cloud_name: cloudName,
-    api_key: apiKey,
-    api_secret: apiSecret,
+	cloud_name: cloudName,
+	api_key: apiKey,
+	api_secret: apiSecret,
 });
 
 const storage = new CloudinaryStorage({
@@ -32,3 +34,4 @@ const storage = new CloudinaryStorage({
 });
 
 export { cloudinary, storage };
+export { isCloudinaryConfigured, getCloudinaryPublicConfig } from "../utils/cloudinaryConfig.js";

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { EnhancedUserProvider } from "@/contexts/EnhancedUserContext";
-import "@/lib/suppress-auth-errors";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeColorProvider } from "@/contexts/ThemeColorContext";
 import { UIPreferencesProvider } from "@/contexts/UIPreferencesContext";

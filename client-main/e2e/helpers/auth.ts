@@ -5,6 +5,16 @@ export const STUDENT = {
   password: "Student@123456",
 };
 
+export function getApiBase(): string {
+  return (
+    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.PLAYWRIGHT_API_URL ||
+    "http://localhost:5001"
+  )
+    .replace(/\/$/, "")
+    .replace("://127.0.0.1", "://localhost");
+}
+
 export async function bypassIntroAndLoading(page: Page) {
   await page.addInitScript(() => {
     window.localStorage.setItem("hasSeenIntro_v1", "true");
@@ -36,14 +46,15 @@ export async function ensureLoggedOut(page: Page) {
 }
 
 async function acceptLegalIfNeeded(page: Page) {
-  const requiredRes = await page.request.get("/api/legal/required");
+  const api = getApiBase();
+  const requiredRes = await page.request.get(`${api}/api/legal/required`);
   if (!requiredRes.ok()) return;
 
   const requiredBody = await requiredRes.json();
   const docs = requiredBody.data || [];
   if (docs.length === 0) return;
 
-  await page.request.post("/api/legal/accept", {
+  await page.request.post(`${api}/api/legal/accept`, {
     data: {
       documentVersionIds: docs.map((d: { documentVersionId: string }) => d.documentVersionId),
       locale: "en",
@@ -74,8 +85,10 @@ export async function loginAsStudent(page: Page) {
   await bypassIntroAndLoading(page);
   await page.context().clearCookies();
 
-  const loginRes = await page.request.post("/api/auth/login", {
+  const api = getApiBase();
+  const loginRes = await page.request.post(`${api}/api/auth/login`, {
     data: STUDENT,
+    headers: { Origin: "http://localhost:3000" },
   });
   expect(loginRes.ok()).toBeTruthy();
 
@@ -84,8 +97,9 @@ export async function loginAsStudent(page: Page) {
     await acceptLegalIfNeeded(page);
   }
 
-  await page.request.patch("/api/legal/preferences", {
+  await page.request.patch(`${api}/api/legal/preferences`, {
     data: { aiFeatures: true },
+    headers: { Origin: "http://localhost:3000" },
   });
 
   await page.goto("/student/portal");

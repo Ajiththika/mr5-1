@@ -109,11 +109,23 @@ export async function respondFriendRequest(requestId: string, action: "accept" |
 }
 
 export async function fetchIdentityNotifications(scope: "all" | "global" | "friends" | "personal" = "all") {
-	const response = await apiClient.get<{ success: boolean; data: import("@/types/identity").IdentityNotification[] }>(
-		"/api/identity/me/notifications",
-		{ params: { scope: scope === "all" ? undefined : scope } },
-	);
-	return response.data.data;
+	try {
+		const response = await apiClient.get<{ success: boolean; data: import("@/types/identity").IdentityNotification[] }>(
+			"/api/identity/me/notifications",
+			{ params: { scope: scope === "all" ? undefined : scope } },
+		);
+		return response.data.data ?? [];
+	} catch (error: unknown) {
+		if (
+			typeof error === "object" &&
+			error !== null &&
+			"response" in error &&
+			(error as { response?: { status?: number } }).response?.status === 401
+		) {
+			return [];
+		}
+		throw error;
+	}
 }
 
 export async function markIdentityNotificationRead(notificationId: string) {

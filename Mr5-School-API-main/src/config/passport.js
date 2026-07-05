@@ -22,8 +22,11 @@ export default function (passport) {
                     if (user) {
                         return done(null, user);
                     } else {
+                        const email = profile.emails?.[0]?.value;
+                        if (!email) {
+                            return done(new Error("Google account has no verified email"), null);
+                        }
                         // Check if user exists by email to merge accounts
-                        const email = profile.emails[0].value;
                         user = await User.findOne({ email });
 
                         if (user) {
@@ -38,9 +41,11 @@ export default function (passport) {
                         const newUser = {
                             googleId: profile.id,
                             email: email,
-                            name: profile.displayName,
+                            name: profile.displayName || email.split("@")[0],
                             profileImage: profile.photos?.[0]?.value,
-                            password: 'google-oauth-login-' + Math.random().toString(36).slice(-8) // Dummy password
+                            password: 'google-oauth-login-' + Math.random().toString(36).slice(-8), // Dummy password
+                            status: 'approved',
+                            isActive: true,
                         };
                         user = await User.create(newUser);
                         await ensureIdentityForUser(user);

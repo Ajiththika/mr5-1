@@ -278,7 +278,7 @@
   }
 
   .hero-band {
-    @apply relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-card via-card to-secondary/60 shadow-[0_1px_2px_oklch(var(--shadow-color)/0.06),0_10px_30px_oklch(var(--shadow-color)/0.04)];
+    @apply relative overflow-visible rounded-2xl border border-border bg-gradient-to-br from-card via-card to-secondary/60 shadow-[0_1px_2px_oklch(var(--shadow-color)/0.06),0_10px_30px_oklch(var(--shadow-color)/0.04)];
   }
 
   .section-divider {

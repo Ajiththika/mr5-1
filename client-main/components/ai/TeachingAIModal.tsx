@@ -29,6 +29,7 @@ import { toast } from 'sonner';
 import { useEnhancedUser } from '@/contexts/EnhancedUserContext';
 import { studentLearningService } from '@/services/studentLearning.service';
 import { buildStudentAiSystemPrompt, type ClassroomAiContext } from '@/lib/build-student-ai-prompt';
+import { cn } from '@/lib/utils';
 
 interface Message {
     role: 'user' | 'ai';
@@ -76,6 +77,7 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
     const isNearBottom = useRef(true);
     const abortControllerRef = useRef<AbortController | null>(null);
     const [latency, setLatency] = useState(24);
+    const [showSessionHud, setShowSessionHud] = useState(false);
     const sessionId = useRef(Math.random().toString(36).substr(2, 6).toUpperCase());
 
     // Simulate live latency updates
@@ -85,6 +87,12 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
         }, 2000);
         return () => clearInterval(interval);
     }, []);
+
+    useEffect(() => {
+        if (!isOpen) {
+            setShowSessionHud(false);
+        }
+    }, [isOpen]);
 
     useEffect(() => {
         if (!isOpen) {
@@ -441,7 +449,24 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
         <AnimatePresence>
             {isOpen && (
                 <Dialog open={isOpen} onOpenChange={onClose}>
-                    <DialogContent className="sm:max-w-[1200px] p-0 border-0 bg-transparent shadow-none overflow-hidden h-[85vh] max-h-[900px]">
+                    <DialogContent
+                        showCloseButton={false}
+                        className={cn(
+                            "flex flex-col gap-0 overflow-hidden border-0 bg-transparent p-0 shadow-none duration-200",
+                            // xs–watch: full-screen sheet (overrides default dialog centering)
+                            "fixed inset-0 top-0 left-0 z-50 h-[100dvh] max-h-[100dvh] w-full max-w-none translate-x-0 translate-y-0 rounded-none",
+                            // sm (480px+): floating centered panel
+                            "sm:inset-auto sm:top-1/2 sm:left-1/2 sm:h-[min(92dvh,900px)] sm:max-h-[900px] sm:w-[min(calc(100vw-1.25rem),680px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl",
+                            // md (768px+): tablet width
+                            "md:w-[min(calc(100vw-2rem),880px)]",
+                            // lg (1024px+): desktop with sidebar
+                            "lg:w-[min(calc(100vw-2.5rem),1200px)] lg:rounded-3xl",
+                            // xl (1440px+): large monitors
+                            "xl:w-[min(calc(100vw-3rem),1280px)]",
+                            // 2xl (1920px+): ultrawide cap
+                            "2xl:w-[min(calc(100vw-4rem),1400px)]",
+                        )}
+                    >
                         <DialogDescription className="sr-only">
                             Interactive AI Tutor session where you can ask questions and get real-time feedback.
                         </DialogDescription>
@@ -454,67 +479,67 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 20 }}
                             transition={{ duration: 0.4, ease: "easeOut" }}
-                            className="bg-[#030712]/90 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex h-full relative z-10"
+                            className="relative z-10 flex h-full min-h-0 flex-col overflow-hidden rounded-none border border-white/10 bg-[#030712]/90 shadow-2xl backdrop-blur-2xl sm:rounded-2xl lg:flex-row lg:rounded-3xl"
                         >
-                            {/* Sidebar - Student View & HUD */}
-                            <div className="w-80 border-r border-white/5 bg-black/40 p-6 flex flex-col gap-6 relative overflow-hidden">
+                            {/* Session HUD — collapsible below lg, fixed sidebar at lg+ */}
+                            <div
+                                className={cn(
+                                    "relative flex shrink-0 flex-col gap-3 overflow-hidden border-white/5 bg-black/40 p-3 sm:gap-4 sm:p-4 lg:w-72 lg:gap-6 lg:border-r lg:p-6 xl:w-80",
+                                    showSessionHud
+                                        ? "max-h-[min(48dvh,380px)] overflow-y-auto border-b sm:max-h-[min(44vh,420px)] lg:max-h-none lg:overflow-visible"
+                                        : "hidden lg:flex",
+                                )}
+                            >
                                 {/* Decorative elements */}
                                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent opacity-50" />
 
                                 <div>
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                                        <h3 className="text-sm font-semibold text-white tracking-widest uppercase opacity-80">Live Session</h3>
+                                    <div className="mb-1 flex items-center gap-2 sm:mb-2">
+                                        <div className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+                                        <h3 className="text-xs font-semibold uppercase tracking-widest text-white opacity-80 sm:text-sm">
+                                            Live Session
+                                        </h3>
                                     </div>
-                                    <p className="text-xs text-gray-400 font-mono">ID: {sessionId.current}</p>
+                                    <p className="font-mono text-[10px] text-gray-400 sm:text-xs">ID: {sessionId.current}</p>
                                 </div>
 
-                                <div className="space-y-6">
-                                    <div className="p-1 rounded-2xl bg-gradient-to-br from-white/5 to-transparent border border-white/5 shadow-inner">
-                                        <MoodDetector />
+                                <div className="space-y-3 sm:space-y-4 lg:space-y-6">
+                                    <div className="rounded-2xl border border-white/5 bg-gradient-to-br from-white/5 to-transparent p-1 shadow-inner">
+                                        <MoodDetector compact />
                                     </div>
 
-                                    <div className="space-y-4">
-                                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider pl-1">Neurometric Analysis</h4>
+                                    <div className="space-y-2 sm:space-y-3">
+                                        <h4 className="pl-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500 sm:text-xs">
+                                            Neurometric Analysis
+                                        </h4>
 
-                                        {/* Radial Stats HUD */}
-                                        <div className="grid grid-cols-2 gap-3">
-                                            {/* Engagement */}
-                                            <div className="bg-white/5 rounded-xl p-3 border border-white/5 relative overflow-hidden group">
-                                                <div className="absolute inset-0 bg-red-500/5 group-hover:bg-red-500/10 transition-colors" />
-                                                <Heart className="w-4 h-4 text-red-400 mb-2" />
-                                                <div className="text-xl font-bold text-white mb-1">{emotionalState.engagement}</div>
-                                                <div className="text-[10px] text-gray-400 uppercase">Engagement</div>
+                                        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                                            <div className="group relative overflow-hidden rounded-lg border border-white/5 bg-white/5 p-2 sm:rounded-xl sm:p-3">
+                                                <div className="absolute inset-0 bg-red-500/5 transition-colors group-hover:bg-red-500/10" />
+                                                <Heart className="mb-1 h-3.5 w-3.5 text-red-400 sm:mb-2 sm:h-4 sm:w-4" />
+                                                <div className="text-sm font-bold text-white sm:text-xl">{emotionalState.engagement}</div>
+                                                <div className="text-[9px] uppercase text-gray-400 sm:text-[10px]">Engage</div>
                                             </div>
 
-                                            {/* Confidence */}
-                                            <div className="bg-white/5 rounded-xl p-3 border border-white/5 relative overflow-hidden group">
-                                                <div className="absolute inset-0 bg-amber-500/5 group-hover:bg-amber-500/10 transition-colors" />
-                                                <Sparkles className="w-4 h-4 text-amber-400 mb-2" />
-                                                <div className="text-xl font-bold text-white mb-1">{emotionalState.confidence}</div>
-                                                <div className="text-[10px] text-gray-400 uppercase">Confidence</div>
+                                            <div className="group relative overflow-hidden rounded-lg border border-white/5 bg-white/5 p-2 sm:rounded-xl sm:p-3">
+                                                <div className="absolute inset-0 bg-amber-500/5 transition-colors group-hover:bg-amber-500/10" />
+                                                <Sparkles className="mb-1 h-3.5 w-3.5 text-amber-400 sm:mb-2 sm:h-4 sm:w-4" />
+                                                <div className="text-sm font-bold text-white sm:text-xl">{emotionalState.confidence}</div>
+                                                <div className="text-[9px] uppercase text-gray-400 sm:text-[10px]">Conf.</div>
                                             </div>
 
-                                            {/* Curiosity */}
-                                            <div className="col-span-2 bg-white/5 rounded-xl p-3 border border-white/5 relative overflow-hidden group">
-                                                <div className="absolute inset-0 bg-cyan-500/5 group-hover:bg-cyan-500/10 transition-colors" />
-                                                <div className="flex items-center justify-between">
-                                                    <div>
-                                                        <Bot className="w-4 h-4 text-cyan-400 mb-2" />
-                                                        <div className="text-[10px] text-gray-400 uppercase">Curiosity Level</div>
-                                                    </div>
-                                                    <div className="text-xl font-bold text-white">{emotionalState.curiosity}</div>
-                                                </div>
-                                                <div className="w-full bg-black/50 h-1 mt-2 rounded-full overflow-hidden">
-                                                    <div className="h-full bg-cyan-500 w-[75%]" />
-                                                </div>
+                                            <div className="group relative overflow-hidden rounded-lg border border-white/5 bg-white/5 p-2 sm:rounded-xl sm:p-3">
+                                                <div className="absolute inset-0 bg-cyan-500/5 transition-colors group-hover:bg-cyan-500/10" />
+                                                <Bot className="mb-1 h-3.5 w-3.5 text-cyan-400 sm:mb-2 sm:h-4 sm:w-4" />
+                                                <div className="text-sm font-bold text-white sm:text-xl">{emotionalState.curiosity}</div>
+                                                <div className="text-[9px] uppercase text-gray-400 sm:text-[10px]">Curious</div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="mt-auto">
-                                    <div className="text-[10px] font-mono text-center space-y-1 bg-black/20 py-2 rounded-lg border border-white/5 mx-2">
+                                    <div className="mx-0 rounded-lg border border-white/5 bg-black/20 py-1.5 text-center font-mono text-[9px] space-y-0.5 sm:mx-2 sm:py-2 sm:text-[10px] sm:space-y-1">
                                         <div className="flex items-center justify-center gap-2 text-green-400">
                                             <div className="relative flex h-2 w-2">
                                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -532,32 +557,32 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
                             </div>
 
                             {/* Main Content - AI Chat */}
-                            <div className="flex-1 flex flex-col min-w-0 bg-gradient-to-b from-transparent to-black/20">
+                            <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-gradient-to-b from-transparent to-black/20 pb-[env(safe-area-inset-bottom)]">
                                 {/* Header */}
-                                <div className="flex items-center justify-between px-8 py-5 border-b border-white/5 backdrop-blur-sm sticky top-0 z-20">
-                                    <div className="flex items-center gap-4">
-                                        <div className="relative">
-                                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-amber-500 p-[2px] overflow-hidden">
-                                                <div className="w-full h-full rounded-full bg-black flex items-center justify-center relative">
+                                <div className="sticky top-0 z-20 flex shrink-0 items-center justify-between border-b border-white/5 px-3 py-2.5 backdrop-blur-sm sm:px-5 sm:py-3 md:px-6 md:py-4 lg:px-8 lg:py-5">
+                                    <div className="flex min-w-0 items-center gap-2.5 sm:gap-3 md:gap-4">
+                                        <div className="relative shrink-0">
+                                            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-amber-500 p-[2px] sm:h-10 sm:w-10 md:h-12 md:w-12">
+                                                <div className="relative flex h-full w-full items-center justify-center rounded-full bg-black">
                                                     <Image
                                                         src={MR5_LOGO_PATH}
                                                         alt="MR5 AI"
                                                         fill
-                                                        sizes="48px"
+                                                        sizes="(max-width: 768px) 40px, 48px"
                                                         className="object-cover"
                                                     />
                                                 </div>
                                             </div>
-                                            <div className="absolute -bottom-1 -right-1 bg-black p-1 rounded-full">
-                                                <span className="block w-3 h-3 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
+                                            <div className="absolute -bottom-1 -right-1 rounded-full bg-black p-0.5">
+                                                <span className="block h-2.5 w-2.5 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)] animate-pulse sm:h-3 sm:w-3" />
                                             </div>
                                         </div>
-                                        <div>
-                                            <DialogTitle className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
+                                        <div className="min-w-0">
+                                            <DialogTitle className="truncate text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 sm:text-lg md:text-xl">
                                                 AI Tutor
                                             </DialogTitle>
-                                            <div className="flex items-center gap-2">
-                                                <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-medium text-cyan-300 uppercase tracking-widest">
+                                            <div className="flex items-center gap-1.5 sm:gap-2">
+                                                <span className="hidden rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-medium uppercase tracking-widest text-cyan-300 min-[400px]:inline-flex">
                                                     Interactive
                                                 </span>
                                                 {listening && (
@@ -569,12 +594,21 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex shrink-0 items-center gap-1 sm:gap-1.5 md:gap-2">
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => setShowSessionHud((open) => !open)}
+                                            className="h-8 rounded-full border border-white/10 bg-white/5 px-2.5 text-[9px] font-medium uppercase tracking-wide text-cyan-300 hover:bg-white/10 min-[400px]:h-9 min-[400px]:px-3 min-[400px]:text-[10px] lg:hidden"
+                                        >
+                                            {showSessionHud ? "Hide" : "Session"}
+                                        </Button>
                                         <Button
                                             variant="ghost"
                                             size="icon"
                                             onClick={toggleMute}
-                                            className="w-10 h-10 rounded-full border border-white/5 bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all hover:scale-105"
+                                            className="h-9 w-9 rounded-full border border-white/5 bg-white/5 text-gray-400 transition-all hover:scale-105 hover:bg-white/10 hover:text-white sm:h-10 sm:w-10"
                                         >
                                             {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
                                         </Button>
@@ -582,7 +616,7 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
                                             variant="ghost"
                                             size="icon"
                                             onClick={onClose}
-                                            className="w-10 h-10 rounded-full border border-white/5 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all hover:scale-105 hover:rotate-90"
+                                            className="h-9 w-9 rounded-full border border-white/5 bg-red-500/10 text-red-400 transition-all hover:rotate-90 hover:bg-red-500 hover:text-white hover:scale-105 sm:h-10 sm:w-10"
                                         >
                                             <X className="w-5 h-5" />
                                         </Button>
@@ -590,13 +624,13 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
                                 </div>
 
                                 {/* Chat Area */}
-                                <div className="flex-1 overflow-hidden relative flex flex-col">
+                                <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
                                     <ScrollArea
-                                        className="flex-1 px-8 py-6"
+                                        className="h-0 min-h-0 flex-1 px-3 py-3 sm:px-5 sm:py-5 md:px-6 md:py-6 lg:px-8"
                                         viewportRef={viewportRef as React.RefObject<HTMLDivElement>}
                                         onScroll={handleScroll}
                                     >
-                                        <div className="space-y-8 pb-4">
+                                        <div className="space-y-5 pb-3 sm:space-y-6 md:space-y-8 md:pb-4">
                                             {messages.length === 0 && (
                                                 <div className="h-full flex flex-col items-center justify-center py-20 opacity-0 animate-in fade-in zoom-in duration-700">
                                                     <div className="relative mb-8">
@@ -619,12 +653,14 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
                                                     key={idx}
                                                     initial={{ opacity: 0, y: 20, scale: 0.95 }}
                                                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                                                    className={`flex gap-5 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+                                                    className={cn("flex gap-2.5 sm:gap-4 md:gap-5", msg.role === 'user' ? 'flex-row-reverse' : '')}
                                                 >
-                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg overflow-hidden relative ${msg.role === 'user'
-                                                        ? 'bg-gradient-to-br from-violet-600 to-fuchsia-600'
-                                                        : 'bg-gradient-to-br from-cyan-500 to-blue-600'
-                                                        }`}>
+                                                    <div className={cn(
+                                                        "relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full shadow-lg sm:h-9 sm:w-9 md:h-10 md:w-10",
+                                                        msg.role === 'user'
+                                                            ? 'bg-gradient-to-br from-violet-600 to-fuchsia-600'
+                                                            : 'bg-gradient-to-br from-cyan-500 to-blue-600',
+                                                    )}>
                                                         {msg.role === 'user' ? (
                                                             <User className="w-5 h-5 text-white" />
                                                         ) : (
@@ -638,11 +674,13 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
                                                         )}
                                                     </div>
 
-                                                    <div className={`group relative max-w-[75%] space-y-2`}>
-                                                        <div className={`rounded-3xl px-6 py-4 shadow-xl backdrop-blur-md ${msg.role === 'user'
-                                                            ? 'bg-violet-600/10 border border-violet-500/20 text-white rounded-tr-sm'
-                                                            : 'bg-white/5 border border-white/5 text-gray-100 rounded-tl-sm'
-                                                            }`}>
+                                                    <div className="group relative max-w-[88%] space-y-1 sm:max-w-[82%] md:max-w-[75%] md:space-y-2">
+                                                        <div className={cn(
+                                                            "rounded-2xl px-3.5 py-3 shadow-xl backdrop-blur-md sm:rounded-3xl sm:px-5 sm:py-3.5 md:px-6 md:py-4",
+                                                            msg.role === 'user'
+                                                                ? 'rounded-tr-sm border border-violet-500/20 bg-violet-600/10 text-white'
+                                                                : 'rounded-tl-sm border border-white/5 bg-white/5 text-gray-100',
+                                                        )}>
                                                             {msg.type === 'image' && msg.content ? (
                                                                 <div className="mb-3 overflow-hidden rounded-xl border border-white/10">
                                                                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -726,7 +764,7 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
                                                 animate={{ opacity: 1, y: 0 }}
                                                 exit={{ opacity: 0, y: 10 }}
                                                 onClick={scrollToBottom}
-                                                className="absolute bottom-4 right-8 z-30 p-2 rounded-full bg-cyan-500 text-white shadow-lg hover:bg-cyan-600 transition-colors"
+                                                className="absolute bottom-3 right-3 z-30 rounded-full bg-cyan-500 p-2 text-white shadow-lg transition-colors hover:bg-cyan-600 sm:bottom-4 sm:right-6 md:right-8"
                                             >
                                                 <ArrowDown className="w-5 h-5" />
                                             </motion.button>
@@ -765,7 +803,7 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
 
                                     {/* Input Area */}
                                     <div
-                                        className="p-6 bg-gradient-to-t from-[#030712] to-transparent"
+                                        className="shrink-0 bg-gradient-to-t from-[#030712] to-transparent p-2.5 sm:p-4 lg:p-6"
                                         onDragOver={handleDragOver}
                                         onDragLeave={handleDragLeave}
                                         onDrop={handleDrop}
@@ -789,19 +827,19 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
                                             )}
                                         </AnimatePresence>
 
-                                        <div className="relative max-w-4xl mx-auto flex items-end gap-2 p-1.5 rounded-[24px] bg-white/5 border border-white/10 shadow-2xl focus-within:border-cyan-500/50 focus-within:bg-white/[0.07] transition-all duration-300">
+                                        <div className="relative mx-auto flex max-w-4xl items-end gap-1 rounded-[20px] border border-white/10 bg-white/5 p-1 shadow-2xl transition-all duration-300 focus-within:border-cyan-500/50 focus-within:bg-white/[0.07] sm:gap-2 sm:rounded-[24px] sm:p-1.5">
 
                                             <Button
                                                 size="icon"
                                                 variant="ghost"
                                                 onClick={triggerFileInput}
-                                                className="h-12 w-12 rounded-full text-gray-400 hover:text-white hover:bg-white/10 flex-shrink-0"
+                                                className="h-10 w-10 shrink-0 rounded-full text-gray-400 hover:bg-white/10 hover:text-white sm:h-11 sm:w-11 md:h-12 md:w-12"
                                                 disabled={isSending}
                                             >
-                                                <ImageIcon className="w-5 h-5" />
+                                                <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                                             </Button>
 
-                                            <div className="flex-1 py-1">
+                                            <div className="min-w-0 flex-1 py-1">
                                                 <input
                                                     type="text"
                                                     value={inputMessage}
@@ -812,8 +850,8 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
                                                             handleSendMessage();
                                                         }
                                                     }}
-                                                    placeholder={listening ? "Listening..." : "Ask me anything about your studies..."}
-                                                    className="w-full bg-transparent border-none text-white placeholder-gray-500 focus:ring-0 text-base py-2.5 px-2"
+                                                    placeholder={listening ? "Listening..." : "Ask about your studies..."}
+                                                    className="w-full border-none bg-transparent px-1.5 py-2 text-sm text-white placeholder-gray-500 focus:ring-0 sm:px-2 sm:py-2.5 sm:text-base"
                                                     disabled={isSending}
                                                     autoFocus
                                                 />
@@ -828,31 +866,35 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
                                                 className="hidden"
                                             />
 
-                                            <div className="flex items-center gap-1 pr-1 pb-1">
+                                            <div className="flex items-center gap-0.5 pr-0.5 pb-0.5 sm:gap-1 sm:pr-1 sm:pb-1">
                                                 {browserSupportsSpeechRecognition ? (
                                                     <Button
                                                         size="icon"
                                                         variant="ghost"
                                                         onClick={listening ? stopListening : startListening}
-                                                        className={`h-11 w-11 rounded-full transition-all duration-300 ${listening
-                                                            ? 'bg-red-500 text-white animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.5)]'
-                                                            : 'text-gray-400 hover:text-white hover:bg-white/10'
-                                                            }`}
+                                                        className={cn(
+                                                            "h-10 w-10 rounded-full transition-all duration-300 sm:h-11 sm:w-11",
+                                                            listening
+                                                                ? 'animate-pulse bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.5)]'
+                                                                : 'text-gray-400 hover:bg-white/10 hover:text-white',
+                                                        )}
                                                         disabled={isSending}
                                                     >
-                                                        {listening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                                                        {listening ? <MicOff className="h-4 w-4 sm:h-5 sm:w-5" /> : <Mic className="h-4 w-4 sm:h-5 sm:w-5" />}
                                                     </Button>
                                                 ) : null}
 
                                                 <Button
                                                     size="icon"
                                                     onClick={isSending ? cancelRequest : () => handleSendMessage()}
-                                                    className={`h-11 w-11 rounded-full transition-all duration-300 shadow-lg ${isSending
-                                                        ? 'bg-red-500 hover:bg-red-600 text-white'
-                                                        : inputMessage.trim() || imagePreview
-                                                            ? 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:scale-105 hover:shadow-cyan-500/25'
-                                                            : 'bg-white/10 text-gray-500 cursor-not-allowed'
-                                                        }`}
+                                                    className={cn(
+                                                        "h-10 w-10 rounded-full shadow-lg transition-all duration-300 sm:h-11 sm:w-11",
+                                                        isSending
+                                                            ? 'bg-red-500 text-white hover:bg-red-600'
+                                                            : inputMessage.trim() || imagePreview
+                                                                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:scale-105 hover:shadow-cyan-500/25'
+                                                                : 'cursor-not-allowed bg-white/10 text-gray-500',
+                                                    )}
                                                     disabled={(!inputMessage.trim() && !imagePreview) && !isSending}
                                                 >
                                                     {isSending ? (
@@ -863,7 +905,7 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
                                                 </Button>
                                             </div>
                                         </div>
-                                        <p className="text-center text-[10px] text-gray-600 mt-4 tracking-wide uppercase">
+                                        <p className="mt-2 hidden text-center text-[10px] uppercase tracking-wide text-gray-600 sm:mt-3 sm:block md:mt-4">
                                             AI-Powered Study Assistant • Mr5 School
                                         </p>
                                     </div>

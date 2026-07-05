@@ -6,8 +6,9 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Smile, Meh, Video, VideoOff, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-export function MoodDetector() {
+export function MoodDetector({ compact = false }: { compact?: boolean }) {
     const webcamRef = useRef<Webcam>(null);
     const [isCameraOn, setIsCameraOn] = useState(false);
     const [mood, setMood] = useState<"Happy" | "Neutral" | "Focused" | "Distracted">("Neutral");
@@ -144,10 +145,13 @@ export function MoodDetector() {
     };
 
     return (
-        <Card className="bg-slate-900/80 border-white/10 p-4 backdrop-blur-md w-full max-w-xs">
-            <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-cyan-400" />
+        <Card className={cn(
+            "w-full border-white/10 bg-slate-900/80 backdrop-blur-md",
+            compact ? "border-0 bg-transparent p-2 shadow-none" : "max-w-xs p-4",
+        )}>
+            <div className={cn("flex items-center justify-between", compact ? "mb-2" : "mb-4")}>
+                <h3 className="flex items-center gap-2 text-xs font-semibold text-white sm:text-sm">
+                    <Activity className="h-3.5 w-3.5 text-cyan-400 sm:h-4 sm:w-4" />
                     Student Engagement
                 </h3>
                 <Button
@@ -160,7 +164,10 @@ export function MoodDetector() {
                 </Button>
             </div>
 
-            <div className="relative aspect-video bg-black/50 rounded-lg overflow-hidden mb-4 border border-white/5">
+            <div className={cn(
+                "relative overflow-hidden rounded-lg border border-white/5 bg-black/50",
+                compact ? "mb-2 aspect-[16/10] max-h-28" : "mb-4 aspect-video",
+            )}>
                 {isCameraOn ? (
                     <>
                         <Webcam

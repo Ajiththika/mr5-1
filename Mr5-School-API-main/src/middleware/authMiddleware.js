@@ -6,13 +6,12 @@ export const verifyToken = async (req, res, next) => {
 	try {
 		let token;
 
-		// Check for token in headers or cookies
 		if (
 			req.headers.authorization &&
 			req.headers.authorization.startsWith("Bearer")
 		) {
 			token = req.headers.authorization.split(" ")[1];
-		} else if (req.cookies && req.cookies.access_token) {
+		} else if (req.cookies?.access_token) {
 			token = req.cookies.access_token;
 		}
 
@@ -23,22 +22,23 @@ export const verifyToken = async (req, res, next) => {
 			});
 		}
 
+		if (!process.env.JWT_SECRET) {
+			console.error("CRITICAL: JWT_SECRET is missing!");
+			return res.status(500).json({
+				success: false,
+				error: "Server configuration error",
+			});
+		}
+
 		try {
-			// Verify token
-			if (!process.env.JWT_SECRET) {
-				console.error("CRITICAL: JWT_SECRET is missing!");
-				throw new Error("Server configuration error");
-			}
-
 			const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-			// Get user from token
 			req.user = await User.findById(decoded.id).select("-password");
 
 			if (!req.user) {
 				return res.status(401).json({
 					success: false,
-					error: "User not found",
+					error: "Session invalid — please sign in again",
+					errorCode: "USER_NOT_FOUND",
 				});
 			}
 
@@ -50,7 +50,7 @@ export const verifyToken = async (req, res, next) => {
 			}
 
 			next();
-		} catch (err) {
+		} catch {
 			return res.status(401).json({
 				success: false,
 				error: "Not authorized to access this route",
@@ -88,12 +88,12 @@ export const authorize = (...roles) => {
 
 // Admin only middleware helper
 export const isAdmin = (req, res, next) => {
-	if (req.user && req.user.role === 'admin') {
+	if (req.user && req.user.role === "admin") {
 		next();
 	} else {
 		res.status(403).json({
 			success: false,
-			error: "Access denied. Admin only."
+			error: "Access denied. Admin only.",
 		});
 	}
 };
@@ -108,18 +108,25 @@ export const optionalAuth = async (req, res, next) => {
 			req.headers.authorization.startsWith("Bearer")
 		) {
 			token = req.headers.authorization.split(" ")[1];
+		} else if (req.cookies?.access_token) {
+			token = req.cookies.access_token;
+		}
 
-			try {
-				const decoded = jwt.verify(token, process.env.JWT_SECRET);
-				req.user = await User.findById(decoded.id).select("-password");
-			} catch (err) {
-				// Token invalid, but continue without user
-				req.user = null;
-			}
+		if (!token) {
+			req.user = null;
+			return next();
+		}
+
+		try {
+			const decoded = jwt.verify(token, process.env.JWT_SECRET);
+			req.user = await User.findById(decoded.id).select("-password");
+		} catch {
+			req.user = null;
 		}
 
 		next();
-	} catch (error) {
+	} catch {
+		req.user = null;
 		next();
 	}
 };

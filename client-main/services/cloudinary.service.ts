@@ -1,135 +1,181 @@
-import { CldUploadWidget, CldImage, CldVideoPlayer } from 'next-cloudinary';
+import { CldUploadWidget, CldImage, CldVideoPlayer } from "next-cloudinary";
+import {
+  assertUnsignedUploadPreset,
+  getCloudinaryClientConfig,
+} from "@/lib/cloudinary.config";
 
-// Types for Cloudinary responses
-interface CloudinaryUploadWidgetResults {
-  event: string;
-  info: {
-    secure_url: string;
-    public_id: string;
-    original_filename: string;
-    format: string;
-    resource_type: string;
-    bytes: number;
-    width: number;
-    height: number;
-  };
+export interface CloudinaryUploadResult {
+  secure_url: string;
+  public_id: string;
+  original_filename?: string;
+  format?: string;
+  resource_type?: string;
+  bytes?: number;
+  width?: number;
+  height?: number;
 }
 
 interface UploadOptions {
   folder?: string;
   tags?: string[];
-  resource_type?: 'image' | 'video' | 'raw' | 'auto';
+  resource_type?: "image" | "video" | "raw" | "auto";
   eager?: string;
   overwrite?: boolean;
 }
 
+function normalizeUploadResult(data: Record<string, unknown>): CloudinaryUploadResult {
+  const url =
+    (data.secure_url as string) ||
+    (data.url as string) ||
+    ((data.data as Record<string, unknown> | undefined)?.url as string);
+
+  const publicId =
+    (data.public_id as string) ||
+    ((data.data as Record<string, unknown> | undefined)?.public_id as string);
+
+  if (!url || !publicId) {
+    throw new Error("Upload response missing url or public_id");
+  }
+
+  return {
+    secure_url: url,
+    public_id: publicId,
+    original_filename: data.original_filename as string | undefined,
+    format: data.format as string | undefined,
+    resource_type: (data.resource_type as string) || "image",
+    bytes: data.bytes as number | undefined,
+    width: data.width as number | undefined,
+    height: data.height as number | undefined,
+  };
+}
+
 /**
- * Upload a file to Cloudinary
- * @param file - File object to upload
- * @param options - Upload options
- * @returns Promise with upload result
+ * Signed upload via Express API (recommended — API secret never exposed to browser).
+ */
+async function uploadViaBackend(
+  file: File,
+  options: UploadOptions = {},
+): Promise<CloudinaryUploadResult> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  if (options.folder) formData.append("folder", options.folder);
+  if (options.tags?.length) formData.append("tags", options.tags.join(","));
+
+  const response = await fetch("/api/upload", {
+    method: "POST",
+    body: formData,
+    credentials: "include",
+  });
+
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const message =
+      (payload as { message?: string; error?: string }).message ||
+      (payload as { error?: string }).error ||
+      `Backend upload failed (${response.status})`;
+    throw new Error(message);
+  }
+
+  return normalizeUploadResult(
+    ((payload as { data?: Record<string, unknown> }).data ?? payload) as Record<string, unknown>,
+  );
+}
+
+/**
+ * Unsigned upload via Cloudinary upload preset (optional — requires dashboard preset).
+ */
+async function uploadViaUnsignedPreset(
+  file: File,
+  options: UploadOptions = {},
+): Promise<CloudinaryUploadResult> {
+  const { uploadUrl } = getCloudinaryClientConfig();
+  const uploadPreset = assertUnsignedUploadPreset();
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", uploadPreset);
+
+  if (options.folder) formData.append("folder", options.folder);
+  if (options.tags?.length) formData.append("tags", options.tags.join(","));
+  if (options.resource_type) formData.append("resource_type", options.resource_type);
+
+  const response = await fetch(uploadUrl, {
+    method: "POST",
+    body: formData,
+  });
+
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const message =
+      (payload as { error?: { message?: string } }).error?.message ||
+      JSON.stringify(payload);
+    throw new Error(`Cloudinary unsigned upload failed (${response.status}): ${message}`);
+  }
+
+  return normalizeUploadResult(payload as Record<string, unknown>);
+}
+
+/**
+ * Upload a file — tries signed backend upload first, then unsigned preset fallback.
  */
 export const uploadToCloudinary = async (
   file: File,
-  options: UploadOptions = {}
-): Promise<CloudinaryUploadWidgetResults['info'] | null> => {
+  options: UploadOptions = {},
+): Promise<CloudinaryUploadResult> => {
   try {
-    // Create FormData for the upload
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'ml_default');
+    return await uploadViaBackend(file, options);
+  } catch (backendError) {
+    const hasPreset = Boolean(process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET?.trim());
+    const hasCloudName = Boolean(process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME?.trim());
 
-    // Add optional parameters
-    if (options.folder) {
-      formData.append('folder', options.folder);
+    if (!hasCloudName) {
+      throw new Error(
+        "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME is missing. Check client-main/.env.",
+      );
     }
 
-    if (options.tags) {
-      formData.append('tags', options.tags.join(','));
+    if (!hasPreset) {
+      const reason =
+        backendError instanceof Error ? backendError.message : "Backend upload failed";
+      throw new Error(
+        `${reason}. Sign in and ensure the API Cloudinary env vars are set, or configure NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET for unsigned uploads.`,
+      );
     }
 
-    if (options.resource_type) {
-      formData.append('resource_type', options.resource_type);
-    }
-
-    // Make the API request
-    const response = await fetch(
-      `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/upload`,
-      {
-        method: 'POST',
-        body: formData,
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('Cloudinary Upload Error Details:', errorData);
-      throw new Error(`Upload failed with status ${response.status}: ${JSON.stringify(errorData)}`);
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error uploading to Cloudinary:', error);
-    return null;
+    return uploadViaUnsignedPreset(file, options);
   }
 };
 
-/**
- * Upload multiple files to Cloudinary
- * @param files - Array of File objects to upload
- * @param options - Upload options
- * @returns Promise with array of upload results
- */
 export const uploadMultipleToCloudinary = async (
   files: File[],
-  options: UploadOptions = {}
-): Promise<Array<CloudinaryUploadWidgetResults['info'] | null>> => {
-  try {
-    const uploadPromises = files.map(file => uploadToCloudinary(file, options));
-    return await Promise.all(uploadPromises);
-  } catch (error) {
-    console.error('Error uploading multiple files to Cloudinary:', error);
-    return Array(files.length).fill(null);
-  }
+  options: UploadOptions = {},
+): Promise<CloudinaryUploadResult[]> => {
+  return Promise.all(files.map((file) => uploadToCloudinary(file, options)));
 };
 
-/**
- * Delete a file from Cloudinary
- * @param publicId - Public ID of the file to delete
- * @param resourceType - Type of resource (image, video, raw)
- * @returns Promise with deletion result
- */
 export const deleteFromCloudinary = async (
   publicId: string,
-  resourceType: 'image' | 'video' | 'raw' = 'image'
+  resourceType: "image" | "video" | "raw" = "image",
 ): Promise<boolean> => {
-  try {
-    // For security reasons, deletions should typically be handled server-side
-    // This is a client-side implementation for demonstration purposes
-    console.warn('Delete operations should be handled server-side for security.');
+  const response = await fetch("/api/upload/delete", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ publicId, resourceType }),
+  });
 
-    const response = await fetch('/api/cloudinary/delete', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        publicId,
-        resourceType,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Delete failed with status ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.result === 'ok';
-  } catch (error) {
-    console.error('Error deleting from Cloudinary:', error);
-    return false;
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(
+      (payload as { message?: string }).message || `Delete failed (${response.status})`,
+    );
   }
+
+  const payload = await response.json();
+  return (payload as { result?: string }).result === "ok";
 };
 
 export { CldUploadWidget, CldImage, CldVideoPlayer as CldVideo };

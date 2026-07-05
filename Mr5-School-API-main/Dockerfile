@@ -12,7 +12,7 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV PORT=5001
+ENV PORT=5000
 
 RUN addgroup -S nodejs && adduser -S apiuser -G nodejs
 
@@ -23,9 +23,9 @@ COPY --from=builder /app/public ./public
 
 USER apiuser
 
-EXPOSE 5001
+EXPOSE 5000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD node -e "require('http').get('http://127.0.0.1:5001/ready',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
+  CMD node -e "require('http').get('http://127.0.0.1:5000/ready',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
 
 CMD ["node", "src/app.js"]

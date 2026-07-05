@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { CldUploadWidget, CldImage } from 'next-cloudinary';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { getCloudinaryClientConfigOrNull } from '@/lib/cloudinary.config';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -37,6 +38,11 @@ export function CloudinaryUpload({
 }: CloudinaryUploadProps) {
   const [uploadedImage, setUploadedImage] = useState<CloudinaryResult | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const cloudinaryConfig = getCloudinaryClientConfigOrNull();
+  const uploadPreset =
+    cloudinaryConfig?.uploadPreset ??
+    process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET ??
+    undefined;
 
   const handleUploadSuccess = useCallback((result: any) => {
     setIsUploading(false);
@@ -54,6 +60,32 @@ export function CloudinaryUpload({
     setIsUploading(true);
   }, []);
 
+  if (!cloudinaryConfig) {
+    return (
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Media Upload</CardTitle>
+          <CardDescription>
+            Cloudinary is not configured. Set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME in client-main/.env.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  if (!uploadPreset) {
+    return (
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Media Upload</CardTitle>
+          <CardDescription>
+            Set NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET (unsigned preset, e.g. mr5_unsigned) or use profile upload which uses signed /api/upload.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
@@ -62,7 +94,7 @@ export function CloudinaryUpload({
       </CardHeader>
       <CardContent className="space-y-4">
         <CldUploadWidget
-          uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
+          uploadPreset={uploadPreset}
           options={{
             folder,
             tags,

@@ -1,6 +1,7 @@
 "use client";
 
-import { OrbitControls, Environment, Center } from "@react-three/drei";
+import { OrbitControls, Center } from "@react-three/drei";
+import { SafeEnvironment } from "@/components/3d/SafeEnvironment";
 import { GaneshaModel } from "@/components/3d/GaneshaModel";
 
 export function TeacherAvatarPreviewScene({ modelUrl }: { modelUrl?: string }) {
@@ -8,7 +9,7 @@ export function TeacherAvatarPreviewScene({ modelUrl }: { modelUrl?: string }) {
 		<>
 			<ambientLight intensity={0.65} />
 			<directionalLight position={[3, 5, 2]} intensity={1.1} />
-			<Environment preset="apartment" />
+			<SafeEnvironment preset="apartment" />
 			<Center>
 				<GaneshaModel variant="teacher" embedded animate targetHeight={1.72} modelUrl={modelUrl} />
 			</Center>

@@ -1,55 +1,41 @@
 # Google OAuth Setup — MR5 School
 
-## 1. Google Cloud Console
+## Local (macOS)
 
-1. Open https://console.cloud.google.com/ and select or create a project.
-2. **APIs & Services → OAuth consent screen**
-   - User type: **External** (testing) or **Internal** (Google Workspace)
-   - App name, support email, developer contact
-   - Scopes: `email`, `profile`, `openid`
-   - If status is **Testing**, add your Gmail under **Test users**
-3. **APIs & Services → Credentials → Create credentials → OAuth client ID**
-   - Type: **Web application**
-   - **Authorized JavaScript origins:** `http://localhost:3000`
-   - **Authorized redirect URIs:** `http://localhost:3000/api/auth/google/callback`
-4. Copy the **Client ID** and **Client secret**.
+Port **5000** is often taken by AirPlay. This project uses **5001**.
 
-## 2. API `.env`
+| Setting | Value |
+|---------|-------|
+| Frontend | `http://localhost:3000` |
+| API | `http://localhost:5001` |
+| OAuth callback | `http://localhost:5001/api/auth/google/callback` |
 
-In `Mr5-School-API-main/.env`:
+## Google Cloud Console (required)
 
-```env
-GOOGLE_CLIENT_ID=your_id.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=your_secret
-GOOGLE_CALLBACK_URL=http://localhost:3000/api/auth/google/callback
-CLIENT_URL=http://localhost:3000
-CORS_ORIGIN=http://localhost:3000
+Open https://console.cloud.google.com/apis/credentials → your OAuth client.
+
+### Authorized JavaScript origins
+
+```
+http://localhost:3000
+http://localhost:5001
 ```
 
-Use port **3000** for the callback so auth cookies are set on the same origin as the Next.js app (proxied `/api/*`).
+### Authorized redirect URIs (only this)
 
-## 3. Restart API
+```
+http://localhost:5001/api/auth/google/callback
+```
+
+Remove any `3000` or `5000` callback entries. Save. Wait ~1 minute.
+
+**This is the only fix for Error 400: redirect_uri_mismatch.** The app already sends this URI.
+
+## Verify
 
 ```bash
-cd Mr5-School-API-main && npm run dev
+curl -sI http://localhost:5001/api/auth/google | grep -i location
+# must include: redirect_uri=http%3A%2F%2Flocalhost%3A5001%2Fapi%2Fauth%2Fgoogle%2Fcallback
 ```
 
-You should **not** see: `Google OAuth not configured`.
-
-## 4. Verify
-
-```bash
-curl -I http://localhost:3000/api/auth/google
-```
-
-Expect `302` to `accounts.google.com`, not JSON `503`.
-
-## 5. Production
-
-| Setting | Example |
-|---------|---------|
-| `GOOGLE_CALLBACK_URL` | `https://mr5school.com/api/auth/google/callback` |
-| `CLIENT_URL` | `https://mr5school.com` |
-| Google redirect URI | Must match `GOOGLE_CALLBACK_URL` exactly |
-
-Publish the OAuth consent screen or add all users as test users.
+Then: http://localhost:3000/login → Google

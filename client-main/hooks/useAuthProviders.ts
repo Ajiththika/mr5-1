@@ -1,13 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getApiBaseUrl } from "@/lib/api-base";
 
 type AuthProviders = {
   google: boolean;
 };
 
+const devGoogleFallback =
+  process.env.NODE_ENV === "development" &&
+  process.env.NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED === "true";
+
 export function useAuthProviders() {
-  const [providers, setProviders] = useState<AuthProviders>({ google: false });
+  const [providers, setProviders] = useState<AuthProviders>({
+    google: devGoogleFallback,
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -15,10 +22,15 @@ export function useAuthProviders() {
 
     async function load() {
       try {
-        const response = await fetch("/api/auth/providers", {
+        const response = await fetch(`${getApiBaseUrl()}/api/auth/providers`, {
           credentials: "include",
         });
-        if (!response.ok) return;
+        if (!response.ok) {
+          if (devGoogleFallback && !cancelled) {
+            setProviders({ google: true });
+          }
+          return;
+        }
         const payload = await response.json();
         if (!cancelled && payload?.data) {
           setProviders({
@@ -26,7 +38,9 @@ export function useAuthProviders() {
           });
         }
       } catch {
-        // OAuth unavailable — keep google false
+        if (devGoogleFallback && !cancelled) {
+          setProviders({ google: true });
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }

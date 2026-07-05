@@ -71,6 +71,9 @@ const app = express();
 
 if (isProduction) {
     app.set("trust proxy", 1);
+} else {
+    // Next.js /api proxy sends X-Forwarded-For in local dev
+    app.set("trust proxy", 1);
 }
 
 // CORS configuration - MUST be before any security middleware
@@ -266,10 +269,22 @@ if (!process.env.VERCEL && process.env.NODE_ENV !== "test") {
 				console.log("Connected to MongoDB successfully");
 			}
 
-			const PORT = process.env.PORT || 5000;
+			const PORT = process.env.PORT || 5001;
 
 			const server = app.listen(PORT, () => {
 				console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+			});
+
+			server.on("error", (err) => {
+				if (err.code === "EADDRINUSE") {
+					const hint =
+						String(PORT) === "5000"
+							? "Port 5000 is often taken by macOS AirPlay Receiver — disable it in System Settings → General → AirDrop & Handoff, or use PORT=5001 in .env."
+							: `Another API process is already using port ${PORT}. Stop it with: kill $(lsof -t -i:${PORT})`;
+					console.error(`\n❌ EADDRINUSE on port ${PORT}.\n   ${hint}\n`);
+					process.exit(1);
+				}
+				throw err;
 			});
 
 			const gracefulShutdown = (signal) => {

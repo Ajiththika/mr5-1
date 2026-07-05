@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useAuthProviders } from "@/hooks/useAuthProviders";
+import { getGoogleOAuthUrl } from "@/lib/api-base";
 import { cn } from "@/lib/utils";
 
 type GoogleSignInButtonProps = {
@@ -12,7 +13,13 @@ type GoogleSignInButtonProps = {
 export function GoogleSignInButton({ className, size = "default" }: GoogleSignInButtonProps) {
   const { providers, loading } = useAuthProviders();
 
-  if (loading || !providers.google) {
+  if (loading) {
+    return (
+      <div className="h-11 w-full animate-pulse rounded-2xl border border-border bg-muted/40" aria-hidden />
+    );
+  }
+
+  if (!providers.google) {
     return null;
   }
 
@@ -36,7 +43,7 @@ export function GoogleSignInButton({ className, size = "default" }: GoogleSignIn
           className,
         )}
         onClick={() => {
-          window.location.href = "/api/auth/google";
+          window.location.href = getGoogleOAuthUrl();
         }}
       >
         <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden>
@@ -93,7 +100,7 @@ export function GoogleSignInButtonOnly({ className, size = "default" }: GoogleSi
         className,
       )}
       onClick={() => {
-        window.location.href = "/api/auth/google";
+        window.location.href = getGoogleOAuthUrl();
       }}
     >
       <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden>

@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { useRouter } from "next/navigation";
 import { User } from "@/types/user";
 import { authService } from "@/services/auth.service";
+import { clearGuestSession } from "@/lib/apiClient";
 import { enrollmentService } from "@/services/enrollment.service";
 import { useAdvancedCache } from "@/hooks/useAdvancedCache";
 import { useSessionInactivity, broadcastSessionLogout } from "@/hooks/useSessionInactivity";
@@ -167,6 +168,7 @@ export function EnhancedUserProvider({ children }: { children: React.ReactNode }
         // Update cache
         userCache.set("currentUser", response.data);
         setUser(response.data);
+        clearGuestSession();
       }
     } catch (error) {
       // If refresh fails (e.g., 401), clear user state
@@ -210,6 +212,7 @@ export function EnhancedUserProvider({ children }: { children: React.ReactNode }
       };
       // Note: accessToken/refreshToken are set as httpOnly cookies by the server
 
+      clearGuestSession();
       setUser(userData);
       // Update cache
       userCache.set("currentUser", userData);

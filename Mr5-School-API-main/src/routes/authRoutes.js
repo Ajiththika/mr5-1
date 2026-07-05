@@ -18,8 +18,12 @@ import { verifyToken } from "../middleware/authMiddleware.js";
 import { authLimiter } from "../middleware/security.js";
 import passport from "passport";
 import { isGoogleOAuthEnabled } from "../config/passport.js";
+import envConfig from "../config/env.js";
 
 const router = express.Router();
+
+const clientBaseUrl = () =>
+	(envConfig.CLIENT_URL || "http://localhost:3000").replace(/\/$/, "");
 
 const googleNotConfigured = (_req, res) => {
 	res.status(503).json({
@@ -36,14 +40,21 @@ router.post("/forgotpassword", authLimiter, forgotPassword);
 router.put("/resetpassword/:resettoken", resetPassword);
 router.get("/providers", getAuthProviders);
 
+const googleAuthCallback = (req, res, next) => {
+	passport.authenticate("google", { session: false }, (err, user) => {
+		if (err) return next(err);
+		if (!user) {
+			return res.redirect(`${clientBaseUrl()}/login?error=google_auth_failed`);
+		}
+		req.user = user;
+		return next();
+	})(req, res, next);
+};
+
 // Google Auth Routes (only when OAuth credentials are set)
 if (isGoogleOAuthEnabled) {
 	router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
-	router.get(
-		"/google/callback",
-		passport.authenticate("google", { session: false, failureRedirect: "/login" }),
-		googleCallback
-	);
+	router.get("/google/callback", googleAuthCallback, googleCallback);
 } else {
 	router.get("/google", googleNotConfigured);
 	router.get("/google/callback", googleNotConfigured);

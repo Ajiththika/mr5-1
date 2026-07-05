@@ -235,6 +235,10 @@ const connectDBInternal = async () => {
 			const memoryServer = await createMemoryServer();
 			uri = memoryServer.getUri();
 			console.log("No MongoDB URI found; using in-memory MongoDB for local development.");
+			console.warn(
+				"⚠️  In-memory MongoDB resets on API restart — login sessions and refresh tokens are lost. " +
+					"For persistent dev data set MONGO_URI=mongodb://127.0.0.1:27017/mr5school (requires local MongoDB or Atlas).",
+			);
 		}
 
 		if (!uri) {

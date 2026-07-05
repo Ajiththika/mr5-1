@@ -2,7 +2,8 @@
 
 import React, { Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
-import { Environment, Html, OrbitControls } from "@react-three/drei";
+import { Html, OrbitControls } from "@react-three/drei";
+import { SafeEnvironment } from "@/components/3d/SafeEnvironment";
 import { GrandPianoProp } from "@/components/3d/props/GrandPianoProp";
 
 function Loader() {
@@ -117,7 +118,7 @@ function GamingLoungeContent({
     <>
       <color attach="background" args={["#0f0a1a"]} />
       <fog attach="fog" args={["#0f0a1a", 10, 26]} />
-      <Environment preset="night" environmentIntensity={0.35} />
+      <SafeEnvironment preset="night" environmentIntensity={0.35} />
       <ambientLight intensity={0.4} color="#e9d5ff" />
       <directionalLight position={[3, 8, 4]} intensity={0.7} color="#f5f3ff" />
       <hemisphereLight args={["#c4b5fd", "#1e1b4b", 0.45]} />

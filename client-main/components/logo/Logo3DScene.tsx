@@ -1,7 +1,8 @@
 "use client";
 import { Canvas } from "@react-three/fiber";
 import { Logo3D } from "./Logo3D";
-import { OrbitControls, Environment } from "@react-three/drei";
+import { OrbitControls } from "@react-three/drei";
+import { SafeEnvironment } from "@/components/3d/SafeEnvironment";
 import { Suspense } from "react";
 
 interface Logo3DSceneProps {
@@ -36,7 +37,7 @@ export default function Logo3DScene({
 						powerPreference: "high-performance",
 					}}
 				>
-					<Environment preset="sunset" />
+					<SafeEnvironment preset="sunset" />
 
 					{/* Lighting */}
 					<ambientLight intensity={0.5} />

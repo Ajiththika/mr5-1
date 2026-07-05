@@ -4,12 +4,12 @@ import React, { Suspense, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
 import {
   OrbitControls,
-  Environment,
   Html,
   useGLTF,
   useProgress,
   Center,
 } from "@react-three/drei";
+import { SafeEnvironment } from "@/components/3d/SafeEnvironment";
 import * as THREE from "three";
 
 const PRINCIPAL_ROOM_GLB = "/assets/3d/rooms/principal.glb";
@@ -143,7 +143,7 @@ function PrincipalRoomContent({ courseId, onExit }: PrincipalRoomContentProps) {
     <>
       <color attach="background" args={["#1c1917"]} />
       <fog attach="fog" args={["#1c1917", 12, 28]} />
-      <Environment preset="apartment" environmentIntensity={0.45} />
+      <SafeEnvironment preset="apartment" environmentIntensity={0.45} />
       <ambientLight intensity={0.55} color="#fff8f0" />
       <directionalLight
         position={[4, 8, 2]}

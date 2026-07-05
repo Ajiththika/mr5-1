@@ -129,9 +129,14 @@ export const getMyNotifications = async (req, res) => {
 		const scope = req.query.scope || "all";
 		const limit = Math.min(parseInt(req.query.limit, 10) || 30, 50);
 		const data = await listNotifications(req.user._id, { scope, limit });
-		return res.status(200).json({ success: true, data });
+		return res.status(200).json({ success: true, data: data ?? [] });
 	} catch (error) {
-		return handleError(res, error);
+		console.error("Notifications error:", error?.message || error);
+		return res.status(500).json({
+			success: false,
+			error: "Failed to load notifications",
+			message: process.env.NODE_ENV === "development" ? error?.message : undefined,
+		});
 	}
 };
 

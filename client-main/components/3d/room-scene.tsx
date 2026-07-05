@@ -4,12 +4,12 @@ import React, { Suspense, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
 import {
   OrbitControls,
-  Environment,
   Html,
   useGLTF,
   useProgress,
   Center,
 } from "@react-three/drei";
+import { SafeEnvironment } from "@/components/3d/SafeEnvironment";
 import * as THREE from "three";
 
 export type RoomSceneVariant = "default" | "cafeteria" | "restroom";
@@ -212,7 +212,7 @@ function RoomContent({
     <>
       <color attach="background" args={[bg]} />
       <fog attach="fog" args={[fog, 12, 28]} />
-      <Environment preset={variant === "cafeteria" ? "sunset" : "apartment"} environmentIntensity={0.45} />
+      <SafeEnvironment preset={variant === "cafeteria" ? "sunset" : "apartment"} environmentIntensity={0.45} />
       <ambientLight
         intensity={variant === "restroom" ? 0.65 : 0.5}
         color={variant === "cafeteria" ? "#fff7ed" : "#f0f9ff"}

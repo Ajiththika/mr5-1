@@ -12,11 +12,11 @@ import React, {
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import {
   ContactShadows,
-  Environment,
   Html,
   useGLTF,
   useProgress,
 } from "@react-three/drei";
+import { SafeEnvironment } from "@/components/3d/SafeEnvironment";
 import { useRouter } from "next/navigation";
 import * as THREE from "three";
 import TeachingAIModal from "@/components/ai/TeachingAIModal";
@@ -809,7 +809,7 @@ function ClassroomSceneEnvironment({ lighting }: { lighting: EnvironmentLighting
     <>
       <color attach="background" args={[lighting.background]} />
       <fog attach="fog" args={[lighting.fogColor, lighting.fogNear, lighting.fogFar]} />
-      <Environment preset="apartment" environmentIntensity={lighting.environmentIntensity} />
+      <SafeEnvironment preset="apartment" environmentIntensity={lighting.environmentIntensity} />
     </>
   );
 }

@@ -24,6 +24,7 @@ function LoginForm() {
     const searchParams = useSearchParams();
     const redirectTo = searchParams.get("redirect");
     const sessionExpired = searchParams.get("expired") === "true";
+    const oauthError = searchParams.get("error");
 
 
     const [formData, setFormData] = useState({
@@ -90,6 +91,12 @@ function LoginForm() {
                 {sessionExpired && (
                     <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
                         Your session expired. Please sign in again.
+                    </div>
+                )}
+
+                {oauthError && (
+                    <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                        Google sign-in failed. Please try again or use email and password.
                     </div>
                 )}
 

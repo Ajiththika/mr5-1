@@ -11,12 +11,12 @@ import React, {
 } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import {
-  Environment,
   Html,
   OrbitControls,
   useGLTF,
   useProgress,
 } from "@react-three/drei";
+import { SafeEnvironment } from "@/components/3d/SafeEnvironment";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import * as THREE from "three";
 import { useRouter } from "next/navigation";
@@ -305,7 +305,7 @@ function CampusSceneContent({
         args={[isNight ? "#0b1226" : "#cfe8ff", layout ? layout.radius * 2 : 25, layout ? layout.radius * 10 : 120]}
       />
       <CampusCamera layout={layout} controlsRef={controlsRef} />
-      <Environment preset={isNight ? "night" : "city"} environmentIntensity={isNight ? 0.45 : 0.7} />
+      <SafeEnvironment preset={isNight ? "night" : "city"} environmentIntensity={isNight ? 0.45 : 0.7} />
       <ambientLight intensity={isNight ? 0.5 : 0.75} color={isNight ? "#c7d2fe" : "#fff8f0"} />
       <directionalLight
         position={[12, 18, 8]}

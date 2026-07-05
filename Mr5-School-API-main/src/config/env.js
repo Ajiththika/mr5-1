@@ -9,8 +9,32 @@ dotenv.config({ path: join(__dirname, "../../.env") });
 
 const mongoUri = process.env.MONGO_URI || process.env.MONGODB_URI;
 
+const clientUrl = (process.env.CLIENT_URL || "http://localhost:3000").replace(/\/$/, "");
+const apiPort = String(process.env.PORT || "5001");
+
+/**
+ * Local OAuth always uses http://localhost:{PORT}/api/auth/google/callback.
+ * This prevents PORT vs GOOGLE_CALLBACK_URL drift (root cause of redirect_uri_mismatch).
+ * Production/custom hosts still honor GOOGLE_CALLBACK_URL when not localhost.
+ */
+function resolveGoogleCallbackUrl(port) {
+	const fallback = `http://localhost:${port}/api/auth/google/callback`;
+	const configured = (process.env.GOOGLE_CALLBACK_URL || fallback).replace(/\/$/, "");
+	try {
+		const url = new URL(configured);
+		if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+			return `http://localhost:${port}/api/auth/google/callback`;
+		}
+		return configured;
+	} catch {
+		return fallback;
+	}
+}
+
+const googleCallbackUrl = resolveGoogleCallbackUrl(apiPort);
+
 const envConfig = {
-	PORT: process.env.PORT || 5000,
+	PORT: process.env.PORT || 5001,
 	NODE_ENV: process.env.NODE_ENV || "development",
 	MONGO_URI: mongoUri,
 	JWT_SECRET: process.env.JWT_SECRET,
@@ -19,7 +43,7 @@ const envConfig = {
 	REFRESH_TOKEN_EXPIRE_DAYS: parseInt(process.env.REFRESH_TOKEN_EXPIRE_DAYS, 10) || 7,
 	LOG_LEVEL: process.env.LOG_LEVEL || "info",
 	CORS_ORIGIN: process.env.CORS_ORIGIN || "http://localhost:3000",
-	CLIENT_URL: process.env.CLIENT_URL || "http://localhost:3000",
+	CLIENT_URL: clientUrl,
 	GEMINI_API_KEY: process.env.GEMINI_API_KEY || "",
 	OPENAI_API_KEY: process.env.OPENAI_API_KEY || "",
 	OPENAI_MODEL: process.env.OPENAI_MODEL || "gpt-3.5-turbo",
@@ -31,9 +55,7 @@ const envConfig = {
 	STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || "",
 	GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || "",
 	GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || "",
-	GOOGLE_CALLBACK_URL:
-		process.env.GOOGLE_CALLBACK_URL ||
-		`${process.env.CLIENT_URL || "http://localhost:3000"}/api/auth/google/callback`,
+	GOOGLE_CALLBACK_URL: googleCallbackUrl,
 	CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || "",
 	CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY || "",
 	CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || "",
@@ -105,6 +127,23 @@ export function validateEnv() {
 		console.warn(
 			"CORS_ORIGIN should be set to your production domain (not localhost).",
 		);
+	}
+
+	const googleConfigured =
+		envConfig.GOOGLE_CLIENT_ID && envConfig.GOOGLE_CLIENT_SECRET;
+	if (googleConfigured) {
+		try {
+			const callbackUrl = new URL(envConfig.GOOGLE_CALLBACK_URL);
+			const apiPort = String(envConfig.PORT);
+			if (callbackUrl.port && callbackUrl.port !== apiPort) {
+				console.error(
+					`❌ GOOGLE_CALLBACK_URL port (${callbackUrl.port}) must match PORT (${apiPort}).`,
+				);
+			}
+		} catch {
+			console.error("❌ GOOGLE_CALLBACK_URL is not a valid URL:", envConfig.GOOGLE_CALLBACK_URL);
+		}
+		console.log(`GOOGLE CALLBACK: ${envConfig.GOOGLE_CALLBACK_URL}`);
 	}
 
 	console.log("Environment variables validated successfully");

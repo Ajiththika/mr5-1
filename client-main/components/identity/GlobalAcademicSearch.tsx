@@ -8,6 +8,7 @@ import {
 	GraduationCap,
 	Loader2,
 	Search,
+	SearchX,
 	Shield,
 	Sparkles,
 	UserRound,
@@ -134,77 +135,113 @@ export function GlobalAcademicSearch({
 	const panel = showPanel ? (
 		<div
 			className={cn(
-				"overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-xl",
+				"w-full min-w-0 overflow-hidden rounded-xl border border-border/80 bg-popover/95 text-popover-foreground shadow-2xl ring-1 ring-black/5 backdrop-blur-md dark:ring-white/10",
 				isFullscreen
 					? "relative mt-3 max-h-[min(60vh,420px)]"
-					: "absolute left-0 right-0 top-[calc(100%+0.5rem)] z-[100] max-h-[min(70vh,320px)]",
+					: "absolute left-0 right-0 top-[calc(100%+0.5rem)] z-[100] max-h-[min(70vh,360px)]",
 			)}
 			role="presentation"
 		>
-			<div className="border-b border-border px-4 py-2 text-xs text-muted-foreground">
-				{intent === "uid" ? (
-					<span className="inline-flex items-center gap-1.5">
-						<Shield className="h-3.5 w-3.5" aria-hidden />
-						Profile UID search
-					</span>
-				) : (
-					<span className="inline-flex items-center gap-1.5">
-						<Sparkles className="h-3.5 w-3.5" aria-hidden />
-						Courses & learners
-					</span>
-				)}
-			</div>
+			{suggestions.length > 0 || isLoading ? (
+				<div className="border-b border-border/70 px-3 py-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground sm:px-4">
+					{intent === "uid" ? (
+						<span className="inline-flex items-center gap-1.5">
+							<Shield className="h-3.5 w-3.5" aria-hidden />
+							Profile UID search
+						</span>
+					) : (
+						<span className="inline-flex items-center gap-1.5">
+							<Sparkles className="h-3.5 w-3.5" aria-hidden />
+							Courses & learners
+						</span>
+					)}
+				</div>
+			) : null}
 
-			<ul id={listboxId} role="listbox" className="max-h-80 overflow-y-auto overscroll-contain py-1">
-				{error ? (
-					<li className="px-4 py-3 text-sm text-destructive" role="option">
-						{error}
-					</li>
-				) : null}
+			{isLoading && suggestions.length === 0 ? (
+				<div className="flex items-center justify-center gap-2 px-4 py-8 text-sm text-muted-foreground">
+					<Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+					Searching…
+				</div>
+			) : null}
 
-				{!error && suggestions.length === 0 && !isLoading ? (
-					<li className="px-4 py-3 text-sm text-muted-foreground" role="option">
-						No matches yet. Try a course title, learner name, or MR5 UID.
-					</li>
-				) : null}
+			{error ? (
+				<div className="px-4 py-4 text-sm text-destructive" role="alert">
+					{error}
+				</div>
+			) : null}
 
-				{suggestions.map((item, index) => (
-					<li key={`${item.type}-${item.href}-${item.label}`} role="option" aria-selected={index === activeIndex}>
-						<button
-							type="button"
-							onMouseDown={(event) => event.preventDefault()}
-							onClick={() => navigate(item.href)}
-							className={cn(
-								"touch-target-inline flex w-full items-center gap-3 px-4 py-3 text-left transition-colors focus-visible:bg-accent focus-visible:outline-none",
-								index === activeIndex ? "bg-accent" : "hover:bg-accent",
-							)}
-						>
-							<SuggestionIcon type={item.type} />
-							<span className="min-w-0 flex-1">
-								<span className="block truncate text-sm font-medium">{item.label}</span>
-								{item.subLabel ? (
-									<span className="block truncate text-xs text-muted-foreground">{item.subLabel}</span>
-								) : null}
-							</span>
-							{item.type === "profile" ? (
-								<GraduationCap className="h-4 w-4 text-muted-foreground" aria-hidden />
-							) : null}
-						</button>
-					</li>
-				))}
-			</ul>
-
-			{query.trim() ? (
-				<div className="border-t border-border px-4 py-2">
+			{!error && suggestions.length === 0 && !isLoading ? (
+				<div className="flex flex-col items-center gap-3 px-4 py-6 text-center sm:px-6 sm:py-8">
+					<div className="flex h-11 w-11 items-center justify-center rounded-full bg-muted/80">
+						<SearchX className="h-5 w-5 text-muted-foreground" aria-hidden />
+					</div>
+					<div className="space-y-1">
+						<p className="text-sm font-semibold text-foreground">
+							No matches for &ldquo;{query.trim()}&rdquo;
+						</p>
+						<p className="text-xs leading-relaxed text-muted-foreground">
+							Try a course title, learner name, or MR5 UID like MR5-STU-XXXX
+						</p>
+					</div>
 					<button
 						type="button"
 						onClick={() => {
 							const href = submit();
 							if (href) navigate(href);
 						}}
-						className="touch-target-inline text-xs font-medium text-primary hover:underline"
+						className="mt-1 inline-flex min-h-10 w-full max-w-xs items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
 					>
-						Press Enter to search “{query.trim()}”
+						Search all courses
+					</button>
+				</div>
+			) : null}
+
+			{suggestions.length > 0 ? (
+				<ul id={listboxId} role="listbox" className="max-h-72 overflow-y-auto overscroll-contain py-1">
+					{suggestions.map((item, index) => (
+						<li
+							key={`${item.type}-${item.href}-${item.label}`}
+							id={`${listboxId}-opt-${index}`}
+							role="option"
+							aria-selected={index === activeIndex}
+						>
+							<button
+								type="button"
+								onMouseDown={(event) => event.preventDefault()}
+								onClick={() => navigate(item.href)}
+								className={cn(
+									"flex w-full min-h-11 items-center gap-3 px-3 py-2.5 text-left transition-colors focus-visible:bg-accent focus-visible:outline-none sm:px-4 sm:py-3",
+									index === activeIndex ? "bg-accent" : "hover:bg-accent/70",
+								)}
+							>
+								<SuggestionIcon type={item.type} />
+								<span className="min-w-0 flex-1">
+									<span className="block truncate text-sm font-medium">{item.label}</span>
+									{item.subLabel ? (
+										<span className="block truncate text-xs text-muted-foreground">{item.subLabel}</span>
+									) : null}
+								</span>
+								{item.type === "profile" ? (
+									<GraduationCap className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+								) : null}
+							</button>
+						</li>
+					))}
+				</ul>
+			) : null}
+
+			{suggestions.length > 0 && query.trim() ? (
+				<div className="border-t border-border/70 px-3 py-2 sm:px-4">
+					<button
+						type="button"
+						onClick={() => {
+							const href = submit();
+							if (href) navigate(href);
+						}}
+						className="w-full text-left text-xs font-medium text-primary hover:underline"
+					>
+						View all results for &ldquo;{query.trim()}&rdquo;
 					</button>
 				</div>
 			) : null}
@@ -282,7 +319,7 @@ export function GlobalAcademicSearch({
 	}
 
 	return (
-		<div ref={rootRef} data-tour-id={tourId} className={cn("relative w-full", className)}>
+		<div ref={rootRef} data-tour-id={tourId} className={cn("relative z-20 w-full min-w-0", className)}>
 			{form}
 			{panel}
 		</div>

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Globe, Trophy, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useEnhancedUser } from "@/contexts/EnhancedUserContext";
 import type { IdentityNotification, LeaderboardFeed } from "@/types/identity";
 import {
 	fetchIdentityNotifications,
@@ -14,12 +15,19 @@ import {
 type FeedTab = "global" | "friends" | "personal";
 
 export function useIdentityFeed() {
+	const { isAuthenticated, loading: authLoading } = useEnhancedUser();
 	const [tab, setTab] = useState<FeedTab>("personal");
 	const [notifications, setNotifications] = useState<IdentityNotification[]>([]);
 	const [leaderboard, setLeaderboard] = useState<LeaderboardFeed | null>(null);
 	const [loading, setLoading] = useState(false);
 
 	const refresh = useCallback(async () => {
+		if (!isAuthenticated) {
+			setNotifications([]);
+			setLeaderboard(null);
+			return;
+		}
+
 		setLoading(true);
 		try {
 			const [items, board] = await Promise.all([
@@ -34,13 +42,21 @@ export function useIdentityFeed() {
 		} finally {
 			setLoading(false);
 		}
-	}, [tab]);
+	}, [tab, isAuthenticated]);
 
 	useEffect(() => {
+		if (authLoading) return;
+
+		if (!isAuthenticated) {
+			setNotifications([]);
+			setLeaderboard(null);
+			return;
+		}
+
 		void refresh();
 		const timer = window.setInterval(() => void refresh(), 60_000);
 		return () => window.clearInterval(timer);
-	}, [refresh]);
+	}, [refresh, isAuthenticated, authLoading]);
 
 	const unreadCount = notifications.filter((n) => !n.read).length;
 

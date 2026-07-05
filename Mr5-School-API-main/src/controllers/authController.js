@@ -11,6 +11,7 @@ import {
 	getConsentStatus,
 } from "../services/legalConsentService.js";
 import { isGoogleOAuthEnabled } from "../config/passport.js";
+import envConfig from "../config/env.js";
 import { getTrialStatus } from "../services/trialService.js";
 import { ensureIdentityForUser } from "../services/identityService.js";
 import {
@@ -21,12 +22,12 @@ import {
 	TOO_MANY_ATTEMPTS_MESSAGE,
 } from "../constants/authMessages.js";
 
-// Cookie options
+// Cookie options — sameSite "lax" required for OAuth callback (cross-site redirect from Google)
 const getAccessTokenCookieOptions = () => ({
 	expires: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
 	httpOnly: true,
 	secure: process.env.NODE_ENV === "production",
-	sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+	sameSite: "lax",
 	path: "/",
 });
 
@@ -36,7 +37,7 @@ const getRefreshTokenCookieOptions = () => ({
 	),
 	httpOnly: true,
 	secure: process.env.NODE_ENV === "production",
-	sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+	sameSite: "lax",
 	path: "/",
 });
 
@@ -44,7 +45,7 @@ const consentCookieOptions = () => ({
 	expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
 	httpOnly: true,
 	secure: process.env.NODE_ENV === "production",
-	sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+	sameSite: "lax",
 	path: "/",
 });
 
@@ -59,10 +60,18 @@ const setAuthCookies = (res, accessToken, refreshToken) => {
 	res.cookie("refresh_token", refreshToken, getRefreshTokenCookieOptions());
 };
 
-// Helper to clear auth cookies
+// Helper to clear auth cookies (must match set options for reliable removal)
 const clearAuthCookies = (res) => {
-	res.cookie("access_token", "", { expires: new Date(0), httpOnly: true });
-	res.cookie("refresh_token", "", { expires: new Date(0), httpOnly: true });
+	const clearOpts = {
+		expires: new Date(0),
+		httpOnly: true,
+		path: "/",
+		sameSite: "lax",
+		secure: process.env.NODE_ENV === "production",
+	};
+	res.cookie("access_token", "", clearOpts);
+	res.cookie("refresh_token", "", clearOpts);
+	res.cookie("mr5_consent_ok", "", clearOpts);
 };
 
 const formatAuthUser = (user) => ({
@@ -80,6 +89,20 @@ const formatAuthUser = (user) => ({
 	welcomeChatCompleted: Boolean(user.welcomeChatCompleted),
 	trial: getTrialStatus(user),
 });
+
+/** Role-aware redirect after successful authentication (login + OAuth). */
+const getPostAuthRedirectPath = (user) => {
+	switch (user.role) {
+		case "admin":
+			return "/admin";
+		case "AI-TEACHER":
+			return "/dashboard";
+		case "student":
+			return user.onboardingCompleted ? "/student/portal" : "/onboarding";
+		default:
+			return "/dashboard";
+	}
+};
 
 /**
  * @desc    Register user
@@ -310,7 +333,12 @@ export const getSessions = asyncHandler(async (req, res) => {
 export const getMe = asyncHandler(async (req, res) => {
 	const user = await authService.getUserById(req.user.id);
 	if (!user) {
-		return res.status(404).json({ success: false, error: "User not found" });
+		clearAuthCookies(res);
+		return res.status(401).json({
+			success: false,
+			error: "Session invalid — user no longer exists. Please sign in again.",
+			errorCode: "USER_NOT_FOUND",
+		});
 	}
 	if (!user.mr5Uid) {
 		await ensureIdentityForUser(user);
@@ -409,26 +437,35 @@ export const getAuthProviders = asyncHandler(async (_req, res) => {
  * @access  Public
  */
 export const googleCallback = asyncHandler(async (req, res) => {
-	// Passport middleware puts user in req.user
+	const clientUrl = envConfig.CLIENT_URL;
+
 	if (!req.user) {
-		throw new Error("Google authentication failed");
+		return res.redirect(`${clientUrl}/login?error=google_auth_failed`);
 	}
 
 	const ipAddress = getClientIp(req);
 	const userAgent = req.headers["user-agent"];
 
-	const { user, accessToken, refreshToken } = await authService.loginWithGoogle(
-		req.user,
-		ipAddress,
-		userAgent
-	);
+	try {
+		const { user, accessToken, refreshToken } = await authService.loginWithGoogle(
+			req.user,
+			ipAddress,
+			userAgent
+		);
 
-	setAuthCookies(res, accessToken, refreshToken);
+		setAuthCookies(res, accessToken, refreshToken);
 
-	// Redirect to client dashboard (using relative path on assumption of proxy or env var)
-	// The user requested redirect logic isn't explicit but standard MERN redirects to frontend.
-	const redirectUrl = process.env.CLIENT_URL ? `${process.env.CLIENT_URL}/dashboard` : "http://localhost:3000/dashboard";
-	res.redirect(redirectUrl);
+		const consentStatus = await getConsentStatus(user._id);
+		if (consentStatus.satisfied) {
+			res.cookie("mr5_consent_ok", "1", consentCookieOptions());
+		}
+
+		const redirectPath = getPostAuthRedirectPath(user);
+		res.redirect(`${clientUrl}${redirectPath}`);
+	} catch (err) {
+		const message = encodeURIComponent(err.message || "google_auth_failed");
+		res.redirect(`${clientUrl}/login?error=${message}`);
+	}
 });
 
 /**

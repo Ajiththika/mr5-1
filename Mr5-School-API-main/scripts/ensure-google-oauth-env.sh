@@ -1,34 +1,28 @@
 #!/usr/bin/env bash
-# Ensures Google OAuth env keys exist in Mr5-School-API-main/.env (does not print secrets).
+# Align GOOGLE_CALLBACK_URL with backend PORT (default 5000).
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-ENV_FILE="$ROOT/.env"
-EXAMPLE="$ROOT/.env.example"
+ENV_FILE="$(cd "$(dirname "$0")/.." && pwd)/.env"
+PORT="${PORT:-5000}"
+CALLBACK="http://localhost:${PORT}/api/auth/google/callback"
 
 if [[ ! -f "$ENV_FILE" ]]; then
-  cp "$EXAMPLE" "$ENV_FILE"
-  echo "Created .env from .env.example"
+  echo "No .env at $ENV_FILE"
+  exit 1
 fi
 
-# Migrate legacy callback on port 5001 → 3000 (Next.js proxy)
-if grep -q 'GOOGLE_CALLBACK_URL=http://localhost:5001/api/auth/google/callback' "$ENV_FILE" 2>/dev/null; then
-  sed -i.bak 's|GOOGLE_CALLBACK_URL=http://localhost:5001/api/auth/google/callback|GOOGLE_CALLBACK_URL=http://localhost:3000/api/auth/google/callback|' "$ENV_FILE"
-  rm -f "$ENV_FILE.bak"
-  echo "Updated GOOGLE_CALLBACK_URL to use port 3000"
+if grep -q '^GOOGLE_CALLBACK_URL=' "$ENV_FILE"; then
+  sed -i.bak "s|^GOOGLE_CALLBACK_URL=.*|GOOGLE_CALLBACK_URL=${CALLBACK}|" "$ENV_FILE"
+  echo "Set GOOGLE_CALLBACK_URL=${CALLBACK}"
+else
+  echo "GOOGLE_CALLBACK_URL=${CALLBACK}" >> "$ENV_FILE"
+  echo "Appended GOOGLE_CALLBACK_URL=${CALLBACK}"
 fi
 
-append_if_missing() {
-  local key="$1"
-  local value="$2"
-  if ! grep -q "^${key}=" "$ENV_FILE" 2>/dev/null; then
-    echo "${key}=${value}" >> "$ENV_FILE"
-    echo "Added ${key} to .env (set your value in the file)"
-  fi
-}
+if grep -q '^PORT=' "$ENV_FILE"; then
+  sed -i.bak "s|^PORT=.*|PORT=${PORT}|" "$ENV_FILE"
+else
+  echo "PORT=${PORT}" >> "$ENV_FILE"
+fi
 
-append_if_missing "GOOGLE_CLIENT_ID" ""
-append_if_missing "GOOGLE_CLIENT_SECRET" ""
-append_if_missing "GOOGLE_CALLBACK_URL" "http://localhost:3000/api/auth/google/callback"
-
-echo "Done. Add Google credentials to .env — see docs/GOOGLE_OAUTH_SETUP.md"
+rm -f "${ENV_FILE}.bak"
