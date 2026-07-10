@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { MR5_LOGO_PATH } from "@/lib/brand/logo";
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES, type LocaleCode } from "@/lib/i18n/config";
 
 export interface SEOConfig {
 	title: string;
@@ -19,7 +20,7 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mr5school.com";
 const siteName = "MR5 School";
 const defaultImage = `${siteUrl}${MR5_LOGO_PATH}`;
 
-export function generateMetadata(config: SEOConfig): Metadata {
+export function generateMetadata(config: SEOConfig & { locale?: LocaleCode }): Metadata {
 	const {
 		title,
 		description,
@@ -32,11 +33,15 @@ export function generateMetadata(config: SEOConfig): Metadata {
 		modifiedTime,
 		noIndex = false,
 		noFollow = false,
+		locale = DEFAULT_LOCALE,
 	} = config;
 
 	const fullTitle = `${title} | ${siteName}`;
 	const canonicalUrl = url ? `${siteUrl}${url}` : siteUrl;
 	const ogImage = image.startsWith("http") ? image : `${siteUrl}${image}`;
+	const localeAlternates = Object.fromEntries(
+		SUPPORTED_LOCALES.map((item) => [item.code, `${siteUrl}/${item.code}${url ?? ""}`]),
+	);
 
 	return {
 		title: {
@@ -58,6 +63,7 @@ export function generateMetadata(config: SEOConfig): Metadata {
 		metadataBase: new URL(siteUrl),
 		alternates: {
 			canonical: canonicalUrl,
+			languages: localeAlternates,
 		},
 		robots: {
 			index: !noIndex,
@@ -72,7 +78,7 @@ export function generateMetadata(config: SEOConfig): Metadata {
 		},
 		openGraph: {
 			type: type === "product" ? "website" : type,
-			locale: "en_US",
+			locale: `${locale}_${locale.toUpperCase()}`,
 			url: canonicalUrl,
 			siteName,
 			title: fullTitle,

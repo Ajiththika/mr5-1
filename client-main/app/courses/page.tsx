@@ -38,6 +38,7 @@ import { toast } from "sonner";
 import { useDebounce } from "@/hooks/useDebounce";
 import { CourseDiscoveryPanel } from "@/components/courses/CourseDiscoveryPanel";
 import { GenerationProgressCard } from "@/components/courses/GenerationProgressCard";
+import { LocalizedCourseContent } from "@/components/course/LocalizedCourseContent";
 
 const COURSE_FALLBACK_THUMB = "/assets/dashboard/course-icon-1.png";
 
@@ -602,12 +603,14 @@ function CoursesPageContent() {
 
                     <div className="p-5 flex flex-col relative z-10">
                       <div className="flex-1 space-y-3">
-                        <h3 className="text-xl font-bold leading-tight group-hover:text-primary transition-colors line-clamp-2">
-                          {course.title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-                          {course.description}
-                        </p>
+                        <LocalizedCourseContent
+                          bundle={{
+                            title: { default: course.title, translations: {} },
+                            description: { default: course.description, translations: {} },
+                          }}
+                          fallbackTitle={course.title}
+                          fallbackDescription={course.description}
+                        />
                         {course.teacher?.name && (
                           <p className="text-xs text-muted-foreground">
                             Instructor: {course.teacher.name}

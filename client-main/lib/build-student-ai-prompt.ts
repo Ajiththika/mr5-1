@@ -1,4 +1,5 @@
 import { User } from "@/types/user";
+import type { LocaleCode } from "@/lib/i18n/config";
 
 interface ChatMemoryMessage {
   role: "user" | "assistant" | "system";
@@ -25,6 +26,7 @@ interface BuildPromptOptions {
   courseId?: string;
   lessonId?: string;
   classroom?: ClassroomAiContext;
+  locale?: LocaleCode;
 }
 
 export function buildStudentAiSystemPrompt({
@@ -35,6 +37,7 @@ export function buildStudentAiSystemPrompt({
   courseId,
   lessonId,
   classroom,
+  locale = "en",
 }: BuildPromptOptions) {
   const profileLines = [
     user?.name ? `Student name: ${user.name}` : null,
@@ -77,9 +80,19 @@ export function buildStudentAiSystemPrompt({
     .filter(Boolean)
     .join("\n");
 
+  const localeInstruction = locale === "ta"
+    ? "Answer in Tamil whenever possible and use a warm, encouraging tone."
+    : locale === "si"
+      ? "Answer in Sinhala whenever possible and use a warm, encouraging tone."
+      : locale === "ar"
+        ? "Answer in Arabic whenever possible and use a warm, encouraging tone."
+        : locale === "he"
+          ? "Answer in Hebrew whenever possible and use a warm, encouraging tone."
+          : "Answer in the student's preferred language whenever possible and keep the explanation clear and supportive.";
+
   const systemPrompt =
     classroom?.teacherPersonality ??
-    "You are an expert AI Teacher for MR5 School immersive 3D classroom.";
+    `You are an expert AI Teacher for MR5 School immersive 3D classroom. ${localeInstruction}`;
 
   return [
     systemPrompt,

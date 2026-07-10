@@ -1,0 +1,17 @@
+export const messages = {
+  "footer.tagline": "智能成长之道。",
+  "footer.language": "语言",
+  "nav.home": "首页",
+  "nav.courses": "课程",
+  "nav.pricing": "价格",
+  "nav.about": "关于",
+  "nav.connect": "联系",
+  "nav.signIn": "登录",
+  "nav.startLearning": "开始学习",
+  "homepage.title": "3D虚拟教室",
+  "homepage.subtitle": "与AI教师一起学习",
+  "homepage.searchPlaceholder": "搜索课程、课程内容、主题...",
+  "classroom.title": "教室",
+  "classroom.aiTeacher": "AI教师",
+  "classroom.startLesson": "开始课程",
+};

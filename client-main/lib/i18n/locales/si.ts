@@ -1,0 +1,17 @@
+export const messages = {
+  "footer.tagline": "ඉගෙනීමේ ස්මාර්ට් මාර්ගය.",
+  "footer.language": "භාෂාව",
+  "nav.home": "මුල් පිටුව",
+  "nav.courses": "පාඨමාලා",
+  "nav.pricing": "මිල",
+  "nav.about": "අප ගැන",
+  "nav.connect": "සම්බන්ධ වන්න",
+  "nav.signIn": "පිවිසෙන්න",
+  "nav.startLearning": "ඉගෙනීම ආරම්භ කරන්න",
+  "homepage.title": "3D අතථ්‍ය පන්ති කාමරය",
+  "homepage.subtitle": "AI ගුරුවරුන් සමඟ ඉගෙන ගන්න",
+  "homepage.searchPlaceholder": "පාඨමාලා, පාඩම්, මාතෘකා සොයන්න...",
+  "classroom.title": "පන්ති කාමරය",
+  "classroom.aiTeacher": "AI ගුරු",
+  "classroom.startLesson": "පාඩම ආරම්භ කරන්න",
+};

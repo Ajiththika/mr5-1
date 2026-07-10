@@ -1,6 +1,8 @@
 "use client";
 
-import { SUPPORTED_LOCALES, type LocaleCode } from "@/lib/i18n/config";
+import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { SUPPORTED_LOCALES, isLocaleCode, type LocaleCode } from "@/lib/i18n/config";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAudio } from "@/hooks/useAudio";
 
@@ -12,11 +14,24 @@ interface LanguageSelectorProps {
 export function LanguageSelector({ compact = false, className = "" }: LanguageSelectorProps) {
   const { locale, setLocale, t } = useTranslation();
   const { playLanguageSwitch } = useAudio();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [queryString, setQueryString] = useState("");
+
+  useEffect(() => {
+    setQueryString(window.location.search);
+  }, []);
 
   const handleSelect = (code: LocaleCode) => {
     if (code !== locale) {
       playLanguageSwitch();
       setLocale(code);
+
+      const segments = pathname.split("/").filter(Boolean);
+      const hasLocalePrefix = segments[0] && isLocaleCode(segments[0]);
+      const cleanPath = hasLocalePrefix ? `/${segments.slice(1).join("/")}` : pathname;
+      const nextPath = `/${code}${cleanPath === "/" ? "" : cleanPath}`;
+      router.push(`${nextPath}${queryString}`);
     }
   };
 
@@ -30,7 +45,7 @@ export function LanguageSelector({ compact = false, className = "" }: LanguageSe
       >
         {SUPPORTED_LOCALES.map((item) => (
           <option key={item.code} value={item.code} className="bg-slate-900">
-            {item.nativeLabel}
+            {item.flag} {item.nativeLabel}
           </option>
         ))}
       </select>
@@ -51,6 +66,7 @@ export function LanguageSelector({ compact = false, className = "" }: LanguageSe
               : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200"
           }`}
         >
+          <span className="mr-1">{item.flag}</span>
           {item.nativeLabel}
         </button>
       ))}

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { isLocaleCode, stripLocalePrefix } from "@/lib/i18n/config";
 
 const PUBLIC_PATHS = [
     "/login",
@@ -49,10 +50,14 @@ function isConsentProtectedPath(pathname: string) {
 
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
+    const segments = pathname.split("/").filter(Boolean);
+    const localeCandidate = segments[0];
+    const hasLocalePrefix = Boolean(localeCandidate && isLocaleCode(localeCandidate));
+    const effectivePathname = hasLocalePrefix ? stripLocalePrefix(pathname) : pathname;
 
     const isPublicPath = PUBLIC_PATHS.some((path) => {
-        if (path === "/") return pathname === "/";
-        return pathname.startsWith(path);
+        if (path === "/") return effectivePathname === "/";
+        return effectivePathname.startsWith(path);
     });
 
     if (
@@ -77,30 +82,40 @@ export function middleware(request: NextRequest) {
 
     if (!token && !isPublicPath) {
         const loginUrl = new URL("/login", request.url);
-        loginUrl.searchParams.set("redirect", pathname);
+        loginUrl.searchParams.set("redirect", effectivePathname);
         return NextResponse.redirect(loginUrl);
     }
 
-    if (token && (pathname === "/login" || pathname === "/register")) {
+    if (token && (effectivePathname === "/login" || effectivePathname === "/register")) {
         return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
     if (
         token &&
-        isConsentProtectedPath(pathname) &&
-        pathname !== "/legal/accept" &&
+        isConsentProtectedPath(effectivePathname) &&
+        effectivePathname !== "/legal/accept" &&
         !request.cookies.get("mr5_consent_ok")?.value
     ) {
         const acceptUrl = new URL("/legal/accept", request.url);
-        acceptUrl.searchParams.set("redirect", pathname);
+        acceptUrl.searchParams.set("redirect", effectivePathname);
         return NextResponse.redirect(acceptUrl);
     }
 
     const isDevOnlyPath =
-        pathname.startsWith("/nebula") || pathname.startsWith("/demo");
+        effectivePathname.startsWith("/nebula") || effectivePathname.startsWith("/demo");
 
     if (isDevOnlyPath && process.env.NODE_ENV === "production") {
         return NextResponse.redirect(new URL("/", request.url));
+    }
+
+    if (hasLocalePrefix) {
+        const response = NextResponse.rewrite(new URL(effectivePathname, request.url));
+        response.cookies.set("mr5-locale", localeCandidate, {
+            path: "/",
+            maxAge: 60 * 60 * 24 * 365,
+            sameSite: "lax",
+        });
+        return response;
     }
 
     return NextResponse.next();

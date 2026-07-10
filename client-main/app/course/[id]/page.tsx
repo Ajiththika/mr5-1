@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import dynamic from "next/dynamic";
 import type { SchoolCampusSceneProps } from "@/components/3d/school-campus-scene";
 import { CAMPUS_ROOMS } from "@/lib/campus-rooms";
+import { LocalizedCourseContent } from "@/components/course/LocalizedCourseContent";
 
 const ClassroomMiniPreview = dynamic(
     () =>
@@ -176,13 +177,14 @@ export default function CoursePage() {
                                 </Badge>
                             </div>
 
-                            <h1 className="text-5xl md:text-7xl font-black tracking-tighter leading-tight italic text-foreground text-glow">
-                                {courseData?.title}
-                            </h1>
-
-                            <p className="text-xl text-muted-foreground leading-relaxed font-light max-w-xl">
-                                {courseData?.description}
-                            </p>
+                            <LocalizedCourseContent
+                                bundle={{
+                                    title: { default: courseData?.title, translations: {} },
+                                    description: { default: courseData?.description, translations: {} },
+                                }}
+                                fallbackTitle={courseData?.title}
+                                fallbackDescription={courseData?.description}
+                            />
                         </div>
 
                         {/* Interactive Stats */}

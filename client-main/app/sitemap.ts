@@ -1,4 +1,5 @@
 import { MetadataRoute } from "next";
+import { buildLocalePath, SUPPORTED_LOCALES } from "@/lib/i18n/config";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, "") ||
@@ -85,6 +86,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
+  const localizedStaticPages = SUPPORTED_LOCALES.flatMap((locale) =>
+    staticPages.map((page) => ({
+      ...page,
+      url: `${baseUrl}${buildLocalePath(page.url.replace(baseUrl, ""), locale.code as any)}`,
+    })),
+  );
+
   const coursePages: MetadataRoute.Sitemap = courses.map((course) => ({
     url: `${baseUrl}/course/${course._id}`,
     lastModified: course.updatedAt ? new Date(course.updatedAt) : currentDate,
@@ -92,5 +100,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  return [...staticPages, ...coursePages];
+  const localizedCoursePages = SUPPORTED_LOCALES.flatMap((locale) =>
+    coursePages.map((page) => ({
+      ...page,
+      url: `${baseUrl}${buildLocalePath(page.url.replace(baseUrl, ""), locale.code as any)}`,
+    })),
+  );
+
+  return [...localizedStaticPages, ...localizedCoursePages];
 }

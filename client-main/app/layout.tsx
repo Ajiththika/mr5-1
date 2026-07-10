@@ -15,6 +15,7 @@ import { AccessibilityPreferencesSync } from "@/components/accessibility/Accessi
 import { ConsentFeaturesBootstrap } from "@/components/legal/ConsentFeaturesBootstrap";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AudioProvider } from "@/contexts/AudioContext";
+import { LocaleRouteSync } from "@/components/i18n/LocaleRouteSync";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { ThemeMetaSync } from "@/components/theme/ThemeMetaSync";
 import type { ReactNode } from "react";
@@ -127,7 +128,8 @@ export default function RootLayout({
 										<ConsentFeaturesBootstrap />
 										<DashboardContextProvider>
 											<AudioProvider>
-												{children}
+												<LocaleRouteSync />
+											{children}
 												<LicenseAttributionBar />
 												<Toaster />
 												<PerformanceMonitor />

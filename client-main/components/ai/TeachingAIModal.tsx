@@ -30,6 +30,7 @@ import { useEnhancedUser } from '@/contexts/EnhancedUserContext';
 import { studentLearningService } from '@/services/studentLearning.service';
 import { buildStudentAiSystemPrompt, type ClassroomAiContext } from '@/lib/build-student-ai-prompt';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Message {
     role: 'user' | 'ai';
@@ -59,6 +60,7 @@ interface TeachingAIModalProps {
 
 export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTitle, lessonTitle, classroomContext, voiceInteraction }: TeachingAIModalProps) {
     const { user } = useEnhancedUser();
+    const { locale } = useLanguage();
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputMessage, setInputMessage] = useState('');
     const [isMuted, setIsMuted] = useState(false);
@@ -282,6 +284,7 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
                 courseId,
                 lessonId,
                 classroom: classroomContext,
+                locale,
             });
 
             const apiMessages = [

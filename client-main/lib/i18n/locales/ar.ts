@@ -1,0 +1,17 @@
+export const messages = {
+  "footer.tagline": "Smart Way to Grow.",
+  "footer.language": "Language",
+  "nav.home": "Home",
+  "nav.courses": "Courses",
+  "nav.pricing": "Pricing",
+  "nav.about": "About",
+  "nav.connect": "Connect",
+  "nav.signIn": "Sign In",
+  "nav.startLearning": "Start Learning",
+  "homepage.title": "3D Virtual Classroom",
+  "homepage.subtitle": "Learn with AI Teachers",
+  "homepage.searchPlaceholder": "Search courses, lessons, topics...",
+  "classroom.title": "Classroom",
+  "classroom.aiTeacher": "AI Teacher",
+  "classroom.startLesson": "Start Lesson",
+};

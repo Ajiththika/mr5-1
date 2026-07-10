@@ -1,0 +1,17 @@
+export const messages = {
+  "footer.tagline": "வளர்ச்சிக்கான ஸ்மார்ட் வழி.",
+  "footer.language": "மொழி",
+  "nav.home": "முகப்பு",
+  "nav.courses": "பாடநெறிகள்",
+  "nav.pricing": "விலை",
+  "nav.about": "எங்களைப் பற்றி",
+  "nav.connect": "தொடர்பு",
+  "nav.signIn": "உள்நுழை",
+  "nav.startLearning": "கற்றலைத் தொடங்கு",
+  "homepage.title": "3D மெய்நிகர் வகுப்பறை",
+  "homepage.subtitle": "AI ஆசிரியர்களுடன் கற்றுக்கொள்ளுங்கள்",
+  "homepage.searchPlaceholder": "பாடங்கள், பாடங்கள், தலைப்புகளைத் தேடுங்கள்...",
+  "classroom.title": "வகுப்பறை",
+  "classroom.aiTeacher": "AI ஆசிரியர்",
+  "classroom.startLesson": "பாடத்தைத் தொடங்கு",
+};
