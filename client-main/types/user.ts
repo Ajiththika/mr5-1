@@ -21,6 +21,8 @@ export interface User {
     avatarPreset?: string;
     onboardingCompleted?: boolean;
     welcomeChatCompleted?: boolean;
+    country?: string;
+    countryName?: string;
     trial?: TrialStatus;
     age?: number;
     educationLevel?: string;

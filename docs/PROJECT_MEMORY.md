@@ -135,13 +135,16 @@ Mounted in `src/app.js` with root prefix `/api/`:
 
 ## 9. Current Project Status
 
-* **Total Completion:** ~75% (Enhanced by recent certification, admin/student UI, and onboarding progress).
+* **Total Completion:** ~77% (Enhanced by recent certification, admin/student UI, onboarding progress, and the first production-stability fixes).
 * **Completed Work:**
   * PDF and QR Code generation for certificates (`pdfGenerator.js`, `qrCodeGenerator.js`).
   * Backend and Frontend for Certificate Approval workflow.
   * Google OAuth client integration (GoogleSignInButton handles toggles gracefully).
   * Legal Consent Engine implementation.
   * R3F 3D Classroom rendering and local play store setup.
+  * Backend compatibility shim for the student controller.
+  * Frontend API proxy fallback aligned to port 5001.
+  * Passport deserialization updated for current Mongoose compatibility.
 * **Remaining Work:**
   * Server synchronization of R3F/Zustand Classroom XP to DB.
   * Drag-and-drop lesson reordering in the admin Course Factory UI.
@@ -153,9 +156,9 @@ Mounted in `src/app.js` with root prefix `/api/`:
 
 ## 10. Critical Risks
 
-1. **Broken E2E Tests:** Playwright tests are failing in CI/CD and local environments because browser binaries are missing.
+1. **Broken E2E Tests:** Playwright tests are still failing in CI/CD and local environments until browser binaries are installed.
 2. **In-Memory Rate Limiting:** The backend uses an in-memory rate limiter which does not share states across multiple scaled AWS ECS Fargate instances (needs Redis).
-3. **Empty studentController.js:** Empty controller file poses a server-crashing risk if referenced by existing routes.
+3. **Environment Configuration:** Production OAuth, Stripe, and AI provider credentials still need to be configured for full external-service verification.
 4. **Google OAuth Config Matches:** Missing or mismatched Redirect URIs in Google Cloud Console relative to production domain credentials will fail OAuth.
 
 ---

@@ -22,6 +22,7 @@ import {
   Activity,
   Factory,
   Box,
+  Award,
   type LucideIcon,
 } from "lucide-react";
 
