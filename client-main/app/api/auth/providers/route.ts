@@ -15,7 +15,17 @@ function fallbackProviders(): NextResponse {
 export async function GET(request: NextRequest) {
   try {
     const response = await proxyToApi(request, "/api/auth/providers");
-    if (response.ok) return response;
+    if (response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      const google =
+        Boolean(payload?.data?.google) ||
+        process.env.NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED === "true" ||
+        Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
+      return NextResponse.json({
+        success: true,
+        data: { google },
+      });
+    }
     if (response.status === 503) return fallbackProviders();
     return response;
   } catch {

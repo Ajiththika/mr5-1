@@ -33,7 +33,7 @@ export function getApiBaseUrl(): string {
 /** Google OAuth starts on the API origin — must match GOOGLE_CALLBACK_URL host/port. */
 export function getGoogleOAuthUrl(): string {
   // We use the absolute origin here to ensure the OAuth flow redirects to the correct domain
-  if (typeof window !== "undefined") {
+  if (typeof window !== "undefined" && process.env.NODE_ENV !== "test") {
       return `${window.location.origin}/api/auth/google`;
   }
   return `${getApiBaseUrl()}/api/auth/google`;

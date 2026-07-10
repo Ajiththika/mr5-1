@@ -122,6 +122,11 @@ const isAllowedOrigin = (origin) => {
         return true;
     }
 
+    // Support Vercel deployment previews and branch URLs dynamically
+    if (origin.endsWith(".vercel.app") || /\.vercel\.app$/.test(origin)) {
+        return true;
+    }
+
     return allowedOrigins.includes(origin);
 };
 
