@@ -66,6 +66,7 @@ export const powerAdminNavigation: NavigationSection[] = [
       { title: "Content Library", href: "/admin/content-library", icon: Library },
       { title: "3D Assets", href: "/admin/assets", icon: Box },
       { title: "Approval Queue", href: "/admin/approvals", icon: CheckCircle2 },
+      { title: "Certificates", href: "/admin/certificates", icon: Award },
     ],
   },
   {
@@ -104,6 +105,7 @@ export const studentNavigation: NavigationItem[] = [
   { title: "My Courses", href: "/student/courses", icon: BookOpen },
   { title: "Assignments", href: "/student/assignments", icon: FileText },
   { title: "Grades", href: "/student/grades", icon: Trophy },
+  { title: "Certificates", href: "/student/certificates", icon: Award },
   { title: "Own Store", href: "/avatar-shop", icon: ShoppingBag },
   { title: "Schedule", href: "/student/schedule", icon: Calendar },
 ];

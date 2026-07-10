@@ -76,7 +76,9 @@ export function LoginModal({ _open: isOpen, onOpenChange }: LoginModalProps) {
 
 				if (
 					err.code === "ERR_NETWORK" ||
-					err.message?.includes("Network Error")
+					err.code === "ECONNABORTED" ||
+					err.message?.includes("Network Error") ||
+					err.message?.includes("timeout")
 				) {
 					errorMessage =
 						"Cannot reach the server. Start the API on port 5001, then try again.";

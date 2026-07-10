@@ -22,8 +22,22 @@ import envConfig from "../config/env.js";
 
 const router = express.Router();
 
-const clientBaseUrl = () =>
-	(envConfig.CLIENT_URL || "http://localhost:3000").replace(/\/$/, "");
+const clientBaseUrl = (req) => {
+	const forwardedHost = req.headers['x-forwarded-host'] || req.headers.host;
+	const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+
+	// If CLIENT_URL is explicitly set to a production domain, prefer it
+	if (envConfig.CLIENT_URL && !envConfig.CLIENT_URL.includes('localhost')) {
+		return envConfig.CLIENT_URL.replace(/\/$/, "");
+	}
+
+	if (forwardedHost) {
+		// Next.js rewrite proxy runs on the same domain as the frontend
+		return `${protocol}://${forwardedHost}`.replace(/\/$/, "");
+	}
+
+	return (envConfig.CLIENT_URL || "http://localhost:3000").replace(/\/$/, "");
+};
 
 const googleNotConfigured = (_req, res) => {
 	res.status(503).json({
@@ -44,7 +58,7 @@ const googleAuthCallback = (req, res, next) => {
 	passport.authenticate("google", { session: false }, (err, user) => {
 		if (err) return next(err);
 		if (!user) {
-			return res.redirect(`${clientBaseUrl()}/login?error=google_auth_failed`);
+			return res.redirect(`${clientBaseUrl(req)}/login?error=google_auth_failed`);
 		}
 		req.user = user;
 		return next();

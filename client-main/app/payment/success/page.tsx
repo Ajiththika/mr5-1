@@ -108,7 +108,7 @@ function PaymentSuccessContent() {
 
 			{/* High-end Visual Assets */}
 			<div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
-			<div className="absolute top-0 left-0 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-30 pointer-events-none" />
+			<div className="absolute top-0 left-0 w-full h-full bg-[url('/noise.svg')] opacity-30 pointer-events-none" />
 
 			<main className="flex-1 container mx-auto px-4 flex items-center justify-center relative z-10 py-20">
 				<motion.div

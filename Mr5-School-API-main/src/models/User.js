@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema(
 		},
 		role: {
 			type: String,
-			enum: ["student", "AI-TEACHER", "admin"],
+			enum: ["student", "AI-TEACHER", "instructor", "employer", "partner_school", "admin"],
 			default: "student",
 		},
 		adminRole: {
@@ -58,6 +58,29 @@ const userSchema = new mongoose.Schema(
 			trim: true,
 			uppercase: true,
 			index: true,
+		},
+		// ─── MR5 Academy Certification Identity ────────────────────────────────
+		country: {
+			type: String,
+			default: "",
+			trim: true,
+			maxlength: 2,
+			uppercase: true,
+			// ISO 3166-1 alpha-2: SL, IN, GB, US, DE, CA
+		},
+		countryName: {
+			type: String,
+			default: "",
+			trim: true,
+		},
+		certificationId: {
+			type: String,
+			unique: true,
+			sparse: true,
+			trim: true,
+			uppercase: true,
+			index: true,
+			// MR5-2026-SL-000001 — set when first certificate is awarded
 		},
 		coverImageUrl: {
 			type: String,

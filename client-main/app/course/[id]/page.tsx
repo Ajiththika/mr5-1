@@ -153,7 +153,7 @@ export default function CoursePage() {
             <div className="fixed inset-0 pointer-events-none overflow-hidden">
                 <div className="absolute top-0 left-1/4 w-[1000px] h-[1000px] bg-primary/5 rounded-full blur-[150px]" />
                 <div className="absolute bottom-0 right-1/4 w-[800px] h-[800px] bg-purple-600/5 rounded-full blur-[150px]" />
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
+                <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-20" />
             </div>
 
             <main className="relative z-10 container mx-auto px-4 py-12 md:py-24">

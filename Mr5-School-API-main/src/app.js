@@ -46,6 +46,9 @@ import userInventoryRoutes from "./routes/userInventoryRoutes.js";
 import legalRoutes from "./routes/legalRoutes.js";
 import identityRoutes from "./routes/identityRoutes.js";
 import powerAdminRoutes from "./routes/powerAdminRoutes.js";
+import certificateRoutes from "./routes/certificateRoutes.js";
+import verificationRoutes from "./routes/verificationRoutes.js";
+import transcriptRoutes from "./routes/transcriptRoutes.js";
 import { handleStripeWebhook } from "./controllers/paymentController.js";
 import { validateEnv } from "./config/env.js";
 import aiService from "./services/ai.service.js"; // Import aiService instance
@@ -205,6 +208,9 @@ app.use("/api/shop", shopRoutes);
 app.use("/api/user", userInventoryRoutes);
 app.use("/api/legal", legalRoutes);
 app.use("/api/identity", identityRoutes);
+app.use("/api/certificates", certificateRoutes);
+app.use("/api/verify", verificationRoutes);
+app.use("/api/transcripts", transcriptRoutes);
 
 // Health check endpoint
 app.get("/health", (_req, res) => {

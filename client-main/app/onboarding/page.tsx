@@ -25,6 +25,29 @@ export default function OnboardingPage() {
   const [selectedPreset, setSelectedPreset] = useState("");
   const [courses, setCourses] = useState<Course[]>([]);
   const [saving, setSaving] = useState(false);
+  const [country, setCountry] = useState("");
+  const [countryName, setCountryName] = useState("");
+
+  const SUPPORTED_COUNTRIES: Record<string, string> = {
+    LK: "Sri Lanka",
+    IN: "India",
+    DE: "Germany",
+    GB: "United Kingdom",
+    US: "United States",
+    CA: "Canada",
+    AU: "Australia",
+    SG: "Singapore",
+    AE: "United Arab Emirates",
+    MY: "Malaysia",
+    PK: "Pakistan",
+    BD: "Bangladesh",
+    NP: "Nepal",
+    PH: "Philippines",
+    NG: "Nigeria",
+    ZA: "South Africa",
+    KE: "Kenya",
+    GL: "Global",
+  };
 
   useEffect(() => {
     if (!loading && !user) {
@@ -39,6 +62,12 @@ export default function OnboardingPage() {
     }
     if (user?.avatarPreset) {
       setSelectedPreset(user.avatarPreset);
+    }
+    if (user?.country) {
+      setCountry(user.country);
+    }
+    if (user?.countryName) {
+      setCountryName(user.countryName);
     }
   }, [user, loading, router]);
 
@@ -55,6 +84,8 @@ export default function OnboardingPage() {
         name: displayName || user?.name,
         avatarPreset: selectedPreset,
         onboardingCompleted: true,
+        country,
+        countryName,
       });
       await refreshUser?.();
       toast.success("Welcome to Mr5 School!");
@@ -102,15 +133,40 @@ export default function OnboardingPage() {
         <CardContent className="space-y-6">
           {step === 1 && (
             <div className="space-y-4">
-              <label className="text-sm font-medium" htmlFor="displayName">
-                Display name
-              </label>
-              <Input
-                id="displayName"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Your name"
-              />
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="displayName">
+                  Display name
+                </label>
+                <Input
+                  id="displayName"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="Your name"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="country">
+                  Country of Residence
+                </label>
+                <select
+                  id="country"
+                  value={country}
+                  onChange={(e) => {
+                    const code = e.target.value;
+                    setCountry(code);
+                    setCountryName(SUPPORTED_COUNTRIES[code] || "");
+                  }}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="">Select your country...</option>
+                  {Object.entries(SUPPORTED_COUNTRIES).map(([code, name]) => (
+                    <option key={code} value={code}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           )}
 
@@ -174,7 +230,7 @@ export default function OnboardingPage() {
               <Button
                 onClick={() => setStep((s) => s + 1)}
                 disabled={
-                  (step === 1 && !displayName.trim()) ||
+                  (step === 1 && (!displayName.trim() || !country)) ||
                   (step === 2 && !selectedPreset)
                 }
               >

@@ -31,7 +31,12 @@ export function sanitizeAuthErrorMessage(
 		message?: string;
 	};
 
-	if (err?.code === "ERR_NETWORK" || err?.message?.includes("Network Error")) {
+	if (
+		err?.code === "ERR_NETWORK" ||
+		err?.code === "ECONNABORTED" ||
+		err?.message?.includes("Network Error") ||
+		err?.message?.includes("timeout")
+	) {
 		return AUTH_NETWORK_MESSAGE;
 	}
 

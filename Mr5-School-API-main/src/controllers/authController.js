@@ -88,6 +88,9 @@ const formatAuthUser = (user) => ({
 	onboardingCompleted: Boolean(user.onboardingCompleted),
 	welcomeChatCompleted: Boolean(user.welcomeChatCompleted),
 	trial: getTrialStatus(user),
+	country: user.country,
+	countryName: user.countryName,
+	certificationId: user.certificationId,
 });
 
 /** Role-aware redirect after successful authentication (login + OAuth). */
@@ -369,6 +372,8 @@ export const updateDetails = asyncHandler(async (req, res) => {
 		timezone: req.body.timezone,
 		gradingSystem: req.body.gradingSystem,
 		regionalPreferences: req.body.regionalPreferences,
+		country: req.body.country,
+		countryName: req.body.countryName,
 	};
 
 	const user = await authService.updateUserDetails(req.user.id, fieldsToUpdate);
@@ -432,12 +437,28 @@ export const getAuthProviders = asyncHandler(async (_req, res) => {
 });
 
 /**
+ * Helper to dynamically determine client URL for redirects
+ */
+const getDynamicClientUrl = (req) => {
+	const forwardedHost = req.headers['x-forwarded-host'] || req.headers.host;
+	const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+
+	if (envConfig.CLIENT_URL && !envConfig.CLIENT_URL.includes('localhost')) {
+		return envConfig.CLIENT_URL.replace(/\/$/, "");
+	}
+	if (forwardedHost) {
+		return `${protocol}://${forwardedHost}`.replace(/\/$/, "");
+	}
+	return (envConfig.CLIENT_URL || "http://localhost:3000").replace(/\/$/, "");
+};
+
+/**
  * @desc    Google Auth Callback
  * @route   GET /api/auth/google/callback
  * @access  Public
  */
 export const googleCallback = asyncHandler(async (req, res) => {
-	const clientUrl = envConfig.CLIENT_URL;
+	const clientUrl = getDynamicClientUrl(req);
 
 	if (!req.user) {
 		return res.redirect(`${clientUrl}/login?error=google_auth_failed`);

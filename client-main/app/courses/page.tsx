@@ -395,7 +395,7 @@ function CoursesPageContent() {
 
       <div className="relative h-72 w-full overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-background to-background" />
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
+        <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-20" />
 
         <div className="container mx-auto px-4 h-full flex flex-col justify-center relative z-10">
           <motion.div

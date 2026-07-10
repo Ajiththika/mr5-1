@@ -3,6 +3,7 @@ import UserPrivacySettings from "../models/UserPrivacySettings.js";
 import UserLearningStats from "../models/UserLearningStats.js";
 import UserBadge from "../models/UserBadge.js";
 import UserCertificate from "../models/UserCertificate.js";
+import Certificate from "../models/Certificate.js";
 import IdentityFriend from "../models/IdentityFriend.js";
 import Course from "../models/Course.js";
 import Enrollment from "../models/Enrollment.js";
@@ -287,11 +288,12 @@ export async function getPublicProfileByUid(uid, viewerUserId = null) {
 		throw error;
 	}
 
-	const [privacy, stats, badges, certificates, friendRelation] = await Promise.all([
+	const [privacy, stats, badges, certificates, newCertificates, friendRelation] = await Promise.all([
 		getOrCreatePrivacy(user._id),
 		getOrCreateStats(user._id),
 		UserBadge.find({ user: user._id, visible: true }).sort({ earnedAt: -1 }).lean(),
 		UserCertificate.find({ user: user._id }).sort({ issuedAt: -1 }).lean(),
+		Certificate.find({ student: user._id, status: "issued" }).sort({ issuedAt: -1 }).lean(),
 		getFriendRelation(viewerUserId, user._id),
 	]);
 
@@ -359,12 +361,20 @@ export async function getPublicProfileByUid(uid, viewerUserId = null) {
 					.filter(Boolean)
 			: [],
 		certificates: privacy.showCertificates
-			? certificates.map((cert) => ({
-					verificationId: cert.verificationId,
-					title: cert.title,
-					issuedAt: cert.issuedAt,
-					verifyHref: `/certificate/${cert.verificationId}`,
-				}))
+			? [
+					...newCertificates.map((c) => ({
+						verificationId: c.certificateId,
+						title: c.title,
+						issuedAt: c.issuedAt || c.createdAt,
+						verifyHref: `/certificate/${c.certificateId}`,
+					})),
+					...certificates.map((cert) => ({
+						verificationId: cert.verificationId,
+						title: cert.title,
+						issuedAt: cert.issuedAt,
+						verifyHref: `/certificate/${cert.verificationId}`,
+					})),
+			  ]
 			: [],
 		projects: privacy.showProjects ? stats.projects || [] : [],
 		achievements: privacy.showAchievements ? stats.achievements || [] : [],
@@ -375,11 +385,43 @@ export async function getPublicProfileByUid(uid, viewerUserId = null) {
 }
 
 export async function verifyCertificate(verificationId) {
-	const cert = await UserCertificate.findOne({ verificationId })
+	// Query Certificate model first (handles new issued certificates)
+	const cert = await Certificate.findOne({
+		$or: [
+			{ certificateId: verificationId?.toUpperCase() },
+			{ verificationHash: verificationId?.toUpperCase() },
+		],
+	})
+		.populate({ path: "student", select: PUBLIC_USER_SELECT })
+		.lean();
+
+	if (cert) {
+		if (cert.status !== "issued") {
+			const error = new Error("Certificate has not been issued yet");
+			error.statusCode = 403;
+			throw error;
+		}
+		return {
+			valid: true,
+			verificationId: cert.certificateId,
+			title: cert.title,
+			issuedAt: cert.issuedAt,
+			recipient: {
+				uid: cert.student?.mr5Uid || cert.certificationId,
+				name: cert.student?.name || cert.studentName,
+				roleLabel: cert.student ? mapRoleLabel(cert.student.role) : "Student",
+				profileHref: cert.student?.mr5Uid ? `/u/${cert.student.mr5Uid}` : `/u/${cert.certificationId}`,
+			},
+			watermarkHash: cert.verificationHash || null,
+		};
+	}
+
+	// Fallback to legacy UserCertificate model
+	const legacyCert = await UserCertificate.findOne({ verificationId })
 		.populate({ path: "user", select: PUBLIC_USER_SELECT })
 		.lean();
 
-	if (!cert || !cert.user) {
+	if (!legacyCert || !legacyCert.user) {
 		const error = new Error("Certificate not found");
 		error.statusCode = 404;
 		throw error;
@@ -387,16 +429,16 @@ export async function verifyCertificate(verificationId) {
 
 	return {
 		valid: true,
-		verificationId: cert.verificationId,
-		title: cert.title,
-		issuedAt: cert.issuedAt,
+		verificationId: legacyCert.verificationId,
+		title: legacyCert.title,
+		issuedAt: legacyCert.issuedAt,
 		recipient: {
-			uid: cert.user.mr5Uid,
-			name: cert.user.name,
-			roleLabel: mapRoleLabel(cert.user.role),
-			profileHref: `/u/${cert.user.mr5Uid}`,
+			uid: legacyCert.user.mr5Uid,
+			name: legacyCert.user.name,
+			roleLabel: mapRoleLabel(legacyCert.user.role),
+			profileHref: `/u/${legacyCert.user.mr5Uid}`,
 		},
-		watermarkHash: cert.watermarkHash || null,
+		watermarkHash: legacyCert.watermarkHash || null,
 	};
 }
 
