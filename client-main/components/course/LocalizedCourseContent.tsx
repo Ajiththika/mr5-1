@@ -8,9 +8,12 @@ interface LocalizedCourseContentProps {
   bundle?: CourseContentBundle;
   fallbackTitle?: string;
   fallbackDescription?: string;
+  titleTag?: "h1" | "h2" | "h3" | "p";
+  titleClassName?: string;
+  descriptionClassName?: string;
 }
 
-export function LocalizedCourseContent({ bundle, fallbackTitle, fallbackDescription }: LocalizedCourseContentProps) {
+export function LocalizedCourseContent({ bundle, fallbackTitle, fallbackDescription, titleTag = "h2", titleClassName, descriptionClassName }: LocalizedCourseContentProps) {
   const { locale } = useLanguage();
 
   const localized = useMemo(() => ({
@@ -18,10 +21,12 @@ export function LocalizedCourseContent({ bundle, fallbackTitle, fallbackDescript
     description: localizeCourseContent(bundle?.description, locale, fallbackDescription),
   }), [bundle, fallbackDescription, fallbackTitle, locale]);
 
+  const TitleTag = titleTag;
+
   return (
     <div className="space-y-2">
-      {localized.title ? <h2 className="text-xl font-semibold">{localized.title}</h2> : null}
-      {localized.description ? <p className="text-sm text-muted-foreground">{localized.description}</p> : null}
+      {localized.title ? <TitleTag className={titleClassName ?? "text-xl font-semibold"}>{localized.title}</TitleTag> : null}
+      {localized.description ? <p className={descriptionClassName ?? "text-sm text-muted-foreground"}>{localized.description}</p> : null}
     </div>
   );
 }

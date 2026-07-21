@@ -4,26 +4,19 @@ function normalizeApiOrigin(url: string): string {
 }
 
 /** 
- * Browser API base URL — intelligently detects if we are running behind a virtual host 
- * proxy and uses relative paths to route through Next.js rewrite rules instead of 
- * exposing the backend port to the client browser.
+ * Browser API base URL — always uses relative paths so requests route through 
+ * Next.js rewrite rules (next.config rewrites /api/* -> backend:5001/api/*).
+ * This eliminates CORS issues entirely since all requests stay same-origin.
  */
 export function getApiBaseUrl(): string {
   if (typeof window !== "undefined") {
-    // If the browser is on a real domain/IP but the hardcoded NEXT_PUBLIC_API_URL 
-    // points to localhost, we MUST use a relative path so Next.js proxies it to the backend.
-    const isBrowserLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-    
-    if (!isBrowserLocalhost) {
-      // Use relative path (empty string) so axios hits `/api/...` on the same domain
-      return "";
-    }
-    
-    // Otherwise, it's safe to use the same hostname with port 5001 for local dev
-    return `${window.location.protocol}//${window.location.hostname}:5001`;
+    // Always use relative path so axios hits `/api/...` on the same origin.
+    // Next.js rewrites proxy these to the backend (localhost:5001).
+    // This avoids cross-origin (CORS) issues in development.
+    return "";
   }
 
-  // Server-side rendering (SSR) logic
+  // Server-side rendering (SSR) — connect directly to the backend
   const configured = process.env.NEXT_PUBLIC_API_URL;
   if (configured) return normalizeApiOrigin(configured);
   

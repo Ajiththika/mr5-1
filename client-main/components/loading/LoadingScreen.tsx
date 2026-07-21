@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { MR5_LOGO_PATH } from "@/lib/brand/logo";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function LoadingScreen({
 	onComplete,
 }: {
 	onComplete?: () => void;
 }) {
+	const { t } = useTranslation();
 	const [progress, setProgress] = useState(0);
 
 	useEffect(() => {
@@ -55,7 +57,7 @@ export default function LoadingScreen({
 					<motion.div
 						animate={{ scale: [1, 1.02, 1] }}
 						transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-						className="relative aspect-[612/408] w-full"
+						className="relative aspect-[626/842] w-full"
 					>
 						<Image
 							src={MR5_LOGO_PATH}
@@ -74,7 +76,7 @@ export default function LoadingScreen({
 					transition={{ delay: 0.15 }}
 					className="mb-10 text-lg font-medium italic tracking-wide text-muted-foreground sm:text-xl"
 				>
-					The Smart Way to Grow
+					{t("nav.tagline")}
 				</motion.p>
 
 				{/* Progress */}

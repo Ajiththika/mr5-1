@@ -92,6 +92,6 @@ export const PRODUCT_TOUR_STEPS: ProductTourStep[] = [
     body:
       "You now know the home screen, AI teacher, search, course library, and how to get started. Explore at your own pace.",
     action: "Click Finish to close the tour and start learning.",
-    tip: "Press Esc anytime to skip remaining steps.",
+    tip: "Use the Skip tour button below if you want to exit early.",
   },
 ];

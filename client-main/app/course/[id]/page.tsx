@@ -28,6 +28,7 @@ import dynamic from "next/dynamic";
 import type { SchoolCampusSceneProps } from "@/components/3d/school-campus-scene";
 import { CAMPUS_ROOMS } from "@/lib/campus-rooms";
 import { LocalizedCourseContent } from "@/components/course/LocalizedCourseContent";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const ClassroomMiniPreview = dynamic(
     () =>
@@ -49,6 +50,7 @@ export default function CoursePage() {
     const router = useRouter();
     const params = useParams();
     const courseId = params.id as string;
+    const { t } = useTranslation();
 
     const [hasAccess, setHasAccess] = useState(false);
     const [verifying, setVerifying] = useState(true);
@@ -184,21 +186,24 @@ export default function CoursePage() {
                                 }}
                                 fallbackTitle={courseData?.title}
                                 fallbackDescription={courseData?.description}
+                                titleTag="h1"
+                                titleClassName="text-5xl md:text-7xl font-black tracking-tighter leading-tight italic text-foreground text-glow"
+                                descriptionClassName="text-xl text-muted-foreground leading-relaxed font-light max-w-xl"
                             />
                         </div>
 
                         {/* Interactive Stats */}
                         <div className="grid grid-cols-3 gap-6 py-8 border-y border-border">
                             <div className="space-y-1">
-                                <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Duration</p>
+                                <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">{t("course.duration")}</p>
                                 <p className="text-lg font-bold text-foreground uppercase italic">{courseData?.duration || "Lifetime"}</p>
                             </div>
                             <div className="space-y-1">
-                                <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Students</p>
+                                <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">{t("course.students")}</p>
                                 <p className="text-lg font-bold text-foreground uppercase italic">1.2K+</p>
                             </div>
                             <div className="space-y-1">
-                                <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Rating</p>
+                                <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">{t("course.rating")}</p>
                                 <div className="flex items-center gap-1">
                                     <Star className="w-4 h-4 text-yellow-500 fill-current" />
                                     <p className="text-lg font-bold text-foreground">4.9</p>
@@ -208,13 +213,13 @@ export default function CoursePage() {
 
                         {/* Feature Badges */}
                         <div className="space-y-4">
-                            <h4 className="text-xs font-bold text-primary uppercase tracking-[0.2em] mb-4">Elite Syllabus Benefits</h4>
+                            <h4 className="text-xs font-bold text-primary uppercase tracking-[0.2em] mb-4">{t("course.benefits.title")}</h4>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {[
-                                    { icon: Sparkles, text: "AI-Driven Feedback" },
-                                    { icon: Globe, text: "Virtual 3D Campus" },
-                                    { icon: Zap, text: "Hands-on Projects" },
-                                    { icon: ShieldCheck, text: "Industry Certification" }
+                                    { icon: Sparkles, text: t("course.features.aiFeedback") },
+                                    { icon: Globe, text: t("course.features.virtualCampus") },
+                                    { icon: Zap, text: t("course.features.projects") },
+                                    { icon: ShieldCheck, text: t("course.features.certification") }
                                 ].map((feature, i) => (
                                     <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-border group hover:bg-muted transition-colors">
                                         <feature.icon className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />

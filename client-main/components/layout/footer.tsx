@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { Mail, MapPin, Phone } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
-import { LanguageSelector } from "@/components/i18n/LanguageSelector";
 import { ModelCreditNotice } from "@/components/3d/ModelCreditNotice";
 import {
   MR5_CONTACT,
@@ -74,13 +73,6 @@ export function Footer({ year = 2025 }: { year?: number }) {
             >
               {t("footer.demo")}
             </Link>
-          </div>
-
-          <div className="flex flex-col items-center justify-between gap-4 border-t border-border pt-4 md:flex-row">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-              {t("footer.language")}
-            </p>
-            <LanguageSelector />
           </div>
 
           <div className="flex flex-col gap-3 border-t border-border pt-4 text-xs text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-6">

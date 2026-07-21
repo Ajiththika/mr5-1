@@ -49,11 +49,6 @@ export function useProductTour(enabled: boolean) {
   useEffect(() => {
     if (!active) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        skip();
-        return;
-      }
       if (event.key === "ArrowRight" || event.key === "Enter") {
         event.preventDefault();
         next();
@@ -65,7 +60,7 @@ export function useProductTour(enabled: boolean) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [active, next, previous, skip]);
+  }, [active, next, previous]);
 
   return {
     active,

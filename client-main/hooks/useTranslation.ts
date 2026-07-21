@@ -2,15 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { loadTranslations } from "@/lib/i18n/loader";
-import { translations } from "@/lib/translations";
+import { loadTranslations, mergeTranslationLayers } from "@/lib/i18n/loader";
+import type { LocaleCode } from "@/lib/i18n/config";
 
 export function useTranslation() {
   const { locale, setLocale } = useLanguage();
-  const [messages, setMessages] = useState<Record<string, string>>(() => ({
-    ...(translations.en ?? {}),
-    ...(translations[locale] ?? {}),
-  }));
+  const [messages, setMessages] = useState<Record<string, string>>(() =>
+    mergeTranslationLayers(locale),
+  );
 
   useEffect(() => {
     let active = true;
@@ -23,10 +22,7 @@ export function useTranslation() {
       })
       .catch(() => {
         if (active) {
-          setMessages({
-            ...(translations.en ?? {}),
-            ...(translations[locale] ?? {}),
-          });
+          setMessages(mergeTranslationLayers(locale));
         }
       });
 
@@ -35,7 +31,17 @@ export function useTranslation() {
     };
   }, [locale]);
 
-  const t = (key: string) => messages[key] ?? translations[locale]?.[key] ?? translations.en?.[key] ?? key;
+  const t = (key: string, vars?: Record<string, string>) => {
+    const template =
+      messages[key] ??
+      mergeTranslationLayers(locale as LocaleCode)[key] ??
+      key;
+    if (!vars) return template;
+    return Object.entries(vars).reduce(
+      (result, [name, value]) => result.replaceAll(`{${name}}`, value),
+      template,
+    );
+  };
 
   return { t, locale, setLocale };
 }

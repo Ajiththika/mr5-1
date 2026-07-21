@@ -11,9 +11,10 @@ const buildConnectionOptions = () => ({
 	maxPoolSize: 10,
 	minPoolSize: 1,
 
-	// Timeout settings optimized for serverless
-	serverSelectionTimeoutMS: 30000,
-	socketTimeoutMS: 45000,
+	// Fast timeout: if Atlas is unreachable (IP whitelist), fail in 5s and fall back to in-memory
+	serverSelectionTimeoutMS: process.env.NODE_ENV === "development" ? 5000 : 30000,
+	socketTimeoutMS: process.env.NODE_ENV === "development" ? 10000 : 45000,
+	connectTimeoutMS: process.env.NODE_ENV === "development" ? 5000 : 30000,
 
 	// Fail fast instead of buffering commands
 	bufferCommands: false,
@@ -260,28 +261,37 @@ const connectDBInternal = async () => {
 		const isRecoverableConnectionError =
 			error.name === "MongoServerSelectionError" ||
 			error.name === "MongoNetworkError" ||
+			error.name === "MongooseServerSelectionError" ||
 			error.message.includes("ECONNREFUSED") ||
 			error.message.includes("ENOTFOUND") ||
 			error.message.includes("querySrv") ||
 			error.message.includes("getaddrinfo") ||
 			error.message.includes("failed to connect") ||
 			error.message.includes("Server selection timed out") ||
+			error.message.includes("Could not connect") ||
+			error.message.includes("whitelist") ||
 			!process.env.MONGO_URI;
 
 		if ((process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test") &&
 			isRecoverableConnectionError) {
 			console.warn("Falling back to in-memory MongoDB for development/test.");
-			const memoryServer = await createMemoryServer();
-			const uri = memoryServer.getUri();
-			await mongoose.connect(uri, options);
-			cachedConnection = mongoose.connection;
-			console.log("MongoDB Connected Successfully using in-memory MongoDB");
+			try {
+				// Disconnect cleanly before retrying with in-memory server
+				await mongoose.disconnect().catch(() => {});
+				const memoryServer = await createMemoryServer();
+				const uri = memoryServer.getUri();
+				await mongoose.connect(uri, options);
+				cachedConnection = mongoose.connection;
+				console.log("MongoDB Connected Successfully using in-memory MongoDB");
 
-			const { seedLegalDocumentsIfEmpty } = await import("../services/legalConsentService.js");
-			await seedLegalDocumentsIfEmpty();
+				const { seedLegalDocumentsIfEmpty } = await import("../services/legalConsentService.js");
+				await seedLegalDocumentsIfEmpty();
 
-			await seedDevelopmentData();
-			return mongoose.connection;
+				await seedDevelopmentData();
+				return mongoose.connection;
+			} catch (fallbackError) {
+				console.error("In-memory MongoDB fallback also failed:", fallbackError?.message || fallbackError);
+			}
 		}
 
 		console.error("⚠️  ERROR: Failed to connect to database!");
@@ -291,7 +301,7 @@ const connectDBInternal = async () => {
 			throw error;
 		}
 
-		console.warn("The server will continue running, but database operations will fail.");
+		console.warn("⚠️  Running without database connection. API requests will retry connect on demand.");
 		return null;
 	}
 };

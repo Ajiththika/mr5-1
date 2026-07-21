@@ -145,15 +145,21 @@ export function ProductTour({ enabled }: { enabled: boolean }) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[200]"
+      className="fixed inset-0 z-[200] select-none"
       role="dialog"
       aria-modal="true"
       aria-label={`Product tour step ${stepIndex + 1} of ${totalSteps}`}
     >
       <div
-        className="absolute inset-0 bg-black/55 backdrop-blur-[2px] transition-opacity"
-        onClick={skip}
+        className="pointer-events-auto absolute inset-0 bg-black/55 backdrop-blur-[2px] transition-opacity"
         aria-hidden
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onTouchStart={(e) => {
+          e.stopPropagation();
+        }}
       />
 
       {highlight && (
@@ -171,6 +177,7 @@ export function ProductTour({ enabled }: { enabled: boolean }) {
       <div
         className="pointer-events-auto absolute w-[min(100vw-2rem,360px)] rounded-2xl border border-white/10 bg-zinc-900/95 p-5 text-white shadow-2xl transition-all duration-300"
         style={{ top: tooltip.top, left: tooltip.left }}
+        onClick={(e) => e.stopPropagation()}
       >
         {tooltip.arrow && (
           <div
@@ -213,7 +220,11 @@ export function ProductTour({ enabled }: { enabled: boolean }) {
             {!isFirst && (
               <button
                 type="button"
-                onClick={previous}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  previous();
+                }}
                 className="rounded-lg px-3 py-1.5 text-sm text-zinc-300 transition hover:bg-white/10"
               >
                 Previous
@@ -221,7 +232,11 @@ export function ProductTour({ enabled }: { enabled: boolean }) {
             )}
             <button
               type="button"
-              onClick={next}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                next();
+              }}
               className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-1.5 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-100"
             >
               {isLast ? "Finish" : "Next"}
@@ -232,8 +247,12 @@ export function ProductTour({ enabled }: { enabled: boolean }) {
 
         <button
           type="button"
-          onClick={skip}
-          className="mt-3 w-full text-center text-xs text-zinc-500 transition hover:text-zinc-300"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            skip();
+          }}
+          className="mt-3 w-full text-center text-xs font-semibold text-zinc-400 hover:text-white transition-colors cursor-pointer py-1 rounded-md hover:bg-white/10"
         >
           Skip tour
         </button>

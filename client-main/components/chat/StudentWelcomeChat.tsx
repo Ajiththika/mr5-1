@@ -37,14 +37,25 @@ interface StudentWelcomeChatProps {
 }
 
 function speak(text: string, onEnd?: () => void) {
-  if (typeof window === "undefined" || !window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.rate = 0.92;
-  utterance.pitch = 1.05;
-  utterance.volume = 0.95;
-  if (onEnd) utterance.onend = onEnd;
-  window.speechSynthesis.speak(utterance);
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+    onEnd?.();
+    return;
+  }
+  try {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.92;
+    utterance.pitch = 1.05;
+    utterance.volume = 0.95;
+    if (onEnd) {
+      utterance.onend = onEnd;
+      utterance.onerror = () => onEnd();
+    }
+    window.speechSynthesis.speak(utterance);
+  } catch (err) {
+    console.warn("Speech synthesis unavailable:", err);
+    onEnd?.();
+  }
 }
 
 export function StudentWelcomeChat({

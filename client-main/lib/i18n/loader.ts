@@ -1,6 +1,27 @@
 import type { LocaleCode } from "./config";
+import { messages as coreMessages } from "./messages";
+import { translations as legacyTranslations } from "@/lib/translations";
 
-export async function loadTranslations(locale: LocaleCode): Promise<Record<string, string>> {
+/** Merge canonical UI strings, legacy page copy, and locale-specific overrides. */
+export function mergeTranslationLayers(locale: LocaleCode): Record<string, string> {
+  const enBase = {
+    ...(legacyTranslations.en ?? {}),
+    ...(coreMessages.en ?? {}),
+  };
+
+  if (locale === "en") {
+    return enBase;
+  }
+
+  const coreLocale = coreMessages[locale as keyof typeof coreMessages];
+  return {
+    ...enBase,
+    ...(legacyTranslations[locale] ?? {}),
+    ...(coreLocale ?? {}),
+  };
+}
+
+async function importLocaleMessages(locale: LocaleCode): Promise<Record<string, string>> {
   switch (locale) {
     case "en":
       return (await import("./locales/en")).messages;
@@ -77,4 +98,12 @@ export async function loadTranslations(locale: LocaleCode): Promise<Record<strin
     default:
       return (await import("./locales/en")).messages;
   }
+}
+
+export async function loadTranslations(locale: LocaleCode): Promise<Record<string, string>> {
+  const localeMessages = await importLocaleMessages(locale);
+  return {
+    ...mergeTranslationLayers(locale),
+    ...localeMessages,
+  };
 }

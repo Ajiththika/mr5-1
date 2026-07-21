@@ -39,6 +39,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { CourseDiscoveryPanel } from "@/components/courses/CourseDiscoveryPanel";
 import { GenerationProgressCard } from "@/components/courses/GenerationProgressCard";
 import { LocalizedCourseContent } from "@/components/course/LocalizedCourseContent";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const COURSE_FALLBACK_THUMB = "/assets/dashboard/course-icon-1.png";
 
@@ -94,6 +95,7 @@ function CoursesPageContent() {
   const { user } = useEnhancedUser();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useTranslation();
 
   const urlSearch = searchParams?.get("search")?.trim() ?? "";
 
@@ -406,12 +408,10 @@ function CoursesPageContent() {
             className="max-w-2xl"
           >
             <h1 className="text-4xl md:text-6xl font-bold mb-6 text-foreground text-glow">
-              Explore The Library
+              {t("courses.hero.title")}
             </h1>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Master new skills with our AI-enhanced curriculum.{" "}
-              <br className="hidden md:block" />
-              Designed for the next generation of creators.
+              {t("courses.hero.subtitle")}
             </p>
           </motion.div>
         </div>
@@ -430,8 +430,8 @@ function CoursesPageContent() {
               <Input
                 value={searchInput}
                 onChange={(event) => setSearchInput(event.target.value)}
-                placeholder="Search any topic — JavaScript, AI agents, UI design…"
-                aria-label="Search courses"
+                placeholder={t("courses.search.placeholder")}
+                aria-label={t("courses.search.aria")}
                 className="h-11 rounded-xl border-border bg-muted/50 pl-10 pr-10"
               />
               {searchInput && (
@@ -469,7 +469,7 @@ function CoursesPageContent() {
                 <SelectContent>
                   {categories.filter((cat): cat is string => Boolean(cat)).map((cat) => (
                     <SelectItem key={cat} value={cat}>
-                      {cat === "all" ? "All Categories" : cat}
+                      {cat === "all" ? t("courses.filters.allCategories") : cat}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -482,7 +482,7 @@ function CoursesPageContent() {
                 <SelectContent>
                   {levels.map((lvl) => (
                     <SelectItem key={lvl} value={lvl}>
-                      {lvl === "all" ? "All Levels" : lvl}
+                      {lvl === "all" ? t("courses.filters.allLevels") : lvl}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -493,9 +493,9 @@ function CoursesPageContent() {
                   <SelectValue placeholder="Sort By" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="popular">Newest First</SelectItem>
-                  <SelectItem value="price-low">Price: Low to High</SelectItem>
-                  <SelectItem value="price-high">Price: High to Low</SelectItem>
+                  <SelectItem value="popular">{t("courses.filters.newestFirst")}</SelectItem>
+                  <SelectItem value="price-low">{t("courses.filters.priceLow")}</SelectItem>
+                  <SelectItem value="price-high">{t("courses.filters.priceHigh")}</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -505,7 +505,7 @@ function CoursesPageContent() {
                   onClick={clearFilters}
                   className="h-11 px-4 text-muted-foreground hover:text-foreground"
                 >
-                  Clear
+                  {t("courses.filters.clear")}
                 </Button>
               )}
             </div>
@@ -528,7 +528,7 @@ function CoursesPageContent() {
             {discoveryLoading ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground px-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Analyzing your search intent…
+                {t("courses.analyzing")}
               </div>
             ) : (
               <CourseDiscoveryPanel
@@ -543,12 +543,12 @@ function CoursesPageContent() {
 
         <div className="mb-6 flex items-center justify-between px-2">
           <p className="text-sm text-muted-foreground font-mono uppercase tracking-wider">
-            Library Index <span className="text-primary mx-2">{"//"}</span>{" "}
-            {loading ? "…" : total} Items Found
+            {t("courses.index.title")} <span className="text-primary mx-2">{"//"}</span>{" "}
+            {loading ? "…" : total} {t("courses.index.itemsFound")}
             {urlSearch ? (
               <span className="normal-case tracking-normal text-muted-foreground">
                 {" "}
-                for &ldquo;{urlSearch}&rdquo;
+                {t("courses.index.for")} &ldquo;{urlSearch}&rdquo;
               </span>
             ) : null}
           </p>
@@ -559,7 +559,7 @@ function CoursesPageContent() {
             <div key="loading" className="flex items-center justify-center py-32">
               <div className="flex flex-col items-center gap-4">
                 <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground animate-pulse">Searching courses…</p>
+                <p className="text-sm text-muted-foreground animate-pulse">{t("courses.loading")}</p>
               </div>
             </div>
           ) : error ? (
@@ -572,10 +572,10 @@ function CoursesPageContent() {
               <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-6 border border-red-500/20">
                 <AlertCircle className="h-10 w-10 text-red-400" />
               </div>
-              <h3 className="text-2xl font-bold mb-3">Could not load courses</h3>
+              <h3 className="text-2xl font-bold mb-3">{t("courses.error.title")}</h3>
               <p className="text-muted-foreground mb-8 max-w-md mx-auto">{error}</p>
               <Button onClick={() => window.location.reload()} variant="outline">
-                Retry
+                {t("courses.error.retry")}
               </Button>
             </motion.div>
           ) : sortedCourses.length > 0 ? (
@@ -624,7 +624,7 @@ function CoursesPageContent() {
                             Price
                           </span>
                           <span className="text-lg font-bold text-foreground">
-                            {course.price === 0 ? "Free" : `$${course.price}`}
+                            {course.price === 0 ? t("courses.free") : `$${course.price}`}
                           </span>
                         </div>
                         <Button
@@ -642,7 +642,7 @@ function CoursesPageContent() {
                           ) : (
                             <ShoppingCart className="h-4 w-4 mr-2" />
                           )}
-                          Enroll
+                          {t("courses.enroll")}
                         </Button>
                       </div>
                     </div>
@@ -664,11 +664,11 @@ function CoursesPageContent() {
               <div className="w-20 h-20 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-6 border border-border">
                 <BookOpen className="h-10 w-10 text-muted-foreground" />
               </div>
-              <h3 className="text-2xl font-bold mb-3">No matching courses</h3>
+              <h3 className="text-2xl font-bold mb-3">{t("courses.empty.title")}</h3>
               <p className="text-muted-foreground mb-8 max-w-md mx-auto">
                 {urlSearch
-                  ? `We couldn't find an exact course for "${urlSearch}". You can create a complete course automatically.`
-                  : "We couldn't find any courses matching your filters. Try adjusting category or level."}
+                  ? t("courses.empty.searchMessage").replace("{query}", urlSearch)
+                  : t("courses.empty.message")}
               </p>
               {urlSearch && (
                 <Button
@@ -677,7 +677,7 @@ function CoursesPageContent() {
                   className="mb-4"
                 >
                   <Sparkles className="h-4 w-4 mr-2" />
-                  Create Course for &ldquo;{urlSearch}&rdquo;
+                  {t("courses.createCourse")} &ldquo;{urlSearch}&rdquo;
                 </Button>
               )}
               <Button
