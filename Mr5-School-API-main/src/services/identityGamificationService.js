@@ -26,7 +26,7 @@ function invalidateProfileCache(mr5Uid) {
 	cache.deleteByPrefix(`identity:profile:${mr5Uid}:`);
 }
 
-async function getStats(userId) {
+export async function getStats(userId) {
 	let stats = await UserLearningStats.findOne({ user: userId });
 	if (!stats) {
 		const completedCourses = await Enrollment.countDocuments({
@@ -35,6 +35,54 @@ async function getStats(userId) {
 		});
 		stats = await UserLearningStats.create({ user: userId, completedCourses });
 	}
+	return stats;
+}
+
+export async function syncPlaytimeStats(userId, { xp, badge }) {
+	const stats = await getStats(userId);
+	const user = await User.findById(userId).select("name mr5Uid").lean();
+
+	const today = new Date();
+	today.setHours(0, 0, 0, 0);
+	const lastActive = stats.lastActiveAt ? new Date(stats.lastActiveAt) : null;
+	let streak = stats.studyStreak || 0;
+
+	if (!lastActive) {
+		streak = 1;
+	} else {
+		const lastDay = new Date(lastActive);
+		lastDay.setHours(0, 0, 0, 0);
+		const diffDays = Math.round((today - lastDay) / (24 * 60 * 60 * 1000));
+		if (diffDays === 1) streak += 1;
+		else if (diffDays > 1) streak = 1;
+	}
+
+	const addedXp = Math.max(0, Number(xp) || 0);
+	const previousLevel = stats.level;
+	stats.xp = (stats.xp || 0) + addedXp;
+	stats.level = levelFromXp(stats.xp);
+	stats.studyStreak = streak;
+	stats.consistencyScore = Math.min(100, streak * 2);
+	stats.lastActiveAt = new Date();
+	await stats.save();
+
+	if (stats.level > previousLevel) {
+		await createIdentityNotification({
+			userId,
+			type: "level_up",
+			scope: "personal",
+			title: "Level up",
+			message: `You reached Level ${stats.level}.`,
+			href: user?.mr5Uid ? `/u/${user.mr5Uid}` : null,
+			metadata: { level: stats.level },
+		});
+	}
+
+	if (badge) {
+		await awardBadge(userId, badge, user);
+	}
+
+	invalidateProfileCache(user?.mr5Uid);
 	return stats;
 }
 

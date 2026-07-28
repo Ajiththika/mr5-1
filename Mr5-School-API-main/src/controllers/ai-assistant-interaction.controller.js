@@ -4,6 +4,7 @@ import User from "../models/User.js";
 import { asyncHandler } from "../middleware/errorHandler.js";
 import { paginate } from "../utils/pagination.js";
 import aiService from "../services/ai.service.js";
+import aiTeacherService from "../services/AITeacherService.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -185,6 +186,82 @@ ${memoryLines ? `\nRECENT CHAT MEMORY:\n${memoryLines}` : ""}`;
 	}
 });
 
+// @desc    Adaptive Interaction with AI Teacher
+// @route   POST /api/ai-assistant-interactions/adaptive
+// @access  Private
+const adaptiveTutorInteraction = asyncHandler(async (req, res) => {
+	const { messages, course, lesson, skill, locale } = req.body;
+	const userId = req.user ? req.user._id : req.body.user;
+
+	if (!messages || messages.length === 0) {
+		return res.status(400).json({ success: false, error: "Messages are required" });
+	}
+
+	try {
+		const student = userId
+			? await User.findById(userId).select("name age educationLevel language")
+			: null;
+
+		const result = await aiTeacherService.adaptiveAsk({
+			user: student,
+			messages,
+			courseId: course,
+			lessonId: lesson,
+			skill: skill || "general",
+			locale: locale || student?.language || "en"
+		});
+
+		const aiResponse = result.response;
+		
+		// Save interaction and memory
+		const newInteraction = new AiAssistantInteraction({
+			user: userId,
+			course,
+			question: messages[messages.length - 1].content,
+			response: aiResponse.message, // Use the extracted message
+			mode: "text",
+		});
+
+		const savedInteraction = await newInteraction.save();
+
+		if (userId) {
+			await ChatMemory.insertMany([
+				{
+					user: userId,
+					role: "user",
+					content: messages[messages.length - 1].content,
+					source: "lesson",
+					mode: "text",
+					course,
+				},
+				{
+					user: userId,
+					role: "assistant",
+					content: aiResponse.message,
+					source: "lesson",
+					mode: "text",
+					course,
+				},
+			]);
+		}
+
+		res.status(201).json({
+			success: true,
+			data: {
+				interaction: savedInteraction,
+				aiResponse: aiResponse,
+				learningState: result.learningState
+			},
+		});
+	} catch (error) {
+		console.error("Adaptive AI Teacher Error:", error);
+		res.status(500).json({
+			success: false,
+			error: "Failed to generate adaptive AI response."
+		});
+	}
+});
+
 // @desc    Update AI assistant interaction
 // @route   PUT /api/ai-assistant-interactions/:id
 // @access  Private
@@ -234,6 +311,7 @@ export {
 	getAllAiAssistantInteractions,
 	getAiAssistantInteractionById,
 	createAiAssistantInteraction,
+	adaptiveTutorInteraction,
 	updateAiAssistantInteraction,
 	deleteAiAssistantInteraction,
 };

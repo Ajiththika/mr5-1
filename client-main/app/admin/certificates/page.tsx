@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { EmptyState } from "@/components/power-admin/EmptyState";
 import { StatusBadge } from "@/components/power-admin/StatusBadge";
@@ -27,7 +27,7 @@ export default function AdminCertificatesPage() {
   const [status, setStatus] = useState("pending_admin");
   const [loading, setLoading] = useState(true);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [res, statsRes] = await Promise.all([
@@ -41,11 +41,11 @@ export default function AdminCertificatesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [status]);
 
   useEffect(() => {
     loadData();
-  }, [status]);
+  }, [loadData]);
 
   const approve = async (id: string) => {
     try {

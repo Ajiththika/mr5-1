@@ -11,6 +11,7 @@ import {
 import type { FanSpeedLevel } from "../environment/environment.types";
 import { touchDailyStreak, xpToLevel } from "@/lib/learning/progression";
 import type { PlaytimePhase } from "@/lib/classroom/playtime-phase";
+import { studentLearningService } from "@/services/studentLearning.service";
 
 export interface ClassroomControls {
   fanEnabled: boolean;
@@ -198,6 +199,9 @@ export function ClassroomStoreProvider({ children }: { children: ReactNode }) {
 
   const addReward = useCallback((xp: number, stars: number, badge?: string) => {
     dispatch({ type: "ADD_REWARD", xp, stars, badge });
+    studentLearningService.syncXpReward({ xp, stars, badge }).catch(() => {
+      // Background sync fallback — local state maintained in localStorage
+    });
   }, []);
 
   const value = useMemo(

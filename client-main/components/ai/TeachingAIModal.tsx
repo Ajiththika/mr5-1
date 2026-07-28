@@ -28,7 +28,7 @@ import { MR5_LOGO_PATH } from '@/lib/brand/logo';
 import { toast } from 'sonner';
 import { useEnhancedUser } from '@/contexts/EnhancedUserContext';
 import { studentLearningService } from '@/services/studentLearning.service';
-import { buildStudentAiSystemPrompt, type ClassroomAiContext } from '@/lib/build-student-ai-prompt';
+import { type ClassroomAiContext } from '@/lib/build-student-ai-prompt';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -58,7 +58,7 @@ interface TeachingAIModalProps {
     };
 }
 
-export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTitle, lessonTitle, classroomContext, voiceInteraction }: TeachingAIModalProps) {
+export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTitle: _courseTitle, lessonTitle: _lessonTitle, classroomContext: _classroomContext, voiceInteraction }: TeachingAIModalProps) {
     const { user } = useEnhancedUser();
     const { locale } = useLanguage();
     const [messages, setMessages] = useState<Message[]>([]);
@@ -225,33 +225,7 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
         };
     }, []);
 
-    // Send message to Gemini API
-    const persistChatExchange = async (
-        userContent: string,
-        aiContent: string,
-        mode: 'text' | 'voice' = 'text',
-    ) => {
-        if (user?.role !== 'student') return;
-
-        try {
-            await studentLearningService.appendChatMemory({
-                role: 'user',
-                content: userContent,
-                source: lessonId ? 'lesson' : 'homepage',
-                mode,
-                course: courseId,
-            });
-            await studentLearningService.appendChatMemory({
-                role: 'assistant',
-                content: aiContent,
-                source: lessonId ? 'lesson' : 'homepage',
-                mode,
-                course: courseId,
-            });
-        } catch (error) {
-            console.error('Failed to persist chat memory', error);
-        }
-    };
+            // Backend handles ChatMemory now, so persistent logic happens on endpoint response
 
     const sendToGeminiAPI = async (messageContent: string, imageData?: string) => {
         try {
@@ -264,57 +238,33 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
             abortControllerRef.current = new AbortController();
 
             // Prepare the message content
-            let content: string | { text: string; images?: string[] } = messageContent;
-            if (imageData) {
-                content = {
-                    text: messageContent,
-                    images: [imageData]
-                };
-            }
-
-            // Prepare messages array for the API
-            const contextParts = buildStudentAiSystemPrompt({
-                user,
-                recentMessages: messages.map((msg) => ({
-                    role: msg.role === 'user' ? 'user' : 'assistant',
-                    content: msg.content,
-                })),
-                courseTitle,
-                lessonTitle,
-                courseId,
-                lessonId,
-                classroom: classroomContext,
-                locale,
-            });
+            const apiMessageContent = imageData
+                ? messageContent + "\n[Attached Image]"
+                : messageContent;
 
             const apiMessages = [
-                {
-                    role: "system",
-                    content: contextParts,
-                },
                 ...messages.map(msg => ({
                     role: msg.role === 'user' ? 'user' : 'assistant',
                     content: msg.content
                 })),
                 {
                     role: "user",
-                    content
+                    content: apiMessageContent
                 }
             ];
 
-            // Call Gemini API through backend
-            const response = await fetch("/api/ai/gemini", {
+            // Call Adaptive API through backend
+            const response = await fetch("/api/ai-assistant-interactions/adaptive", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
                     messages: apiMessages,
-                    multimodal: !!imageData,
-                    options: {
-                        temperature: 0.7,
-                        max_tokens: 1000
-                    }
+                    course: courseId,
+                    lesson: lessonId,
+                    skill: "General",
+                    locale: locale
                 }),
                 signal: abortControllerRef.current.signal
             });
@@ -325,10 +275,13 @@ export function TeachingAIModal({ isOpen, onClose, courseId, lessonId, courseTit
             }
 
             const data = await response.json();
+            const aiMessage = data.data.aiResponse.message;
 
             // Add AI response to messages
-            setMessages(prev => [...prev, { role: 'ai', content: data.response }]);
-            await persistChatExchange(messageContent, data.response, imageData ? 'text' : 'text');
+            setMessages(prev => [...prev, { role: 'ai', content: aiMessage }]);
+            
+            // Backend handles ChatMemory now, so we don't need to call persistChatExchange here
+            // Note: If we wanted to keep the legacy behavior for images, we could.
 
             // Simulate emotional analysis (in a real implementation, this would call the analyzeEmotions API)
             const emotions = ['High', 'Medium', 'Strong'];

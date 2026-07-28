@@ -60,4 +60,23 @@ export const studentLearningService = {
     const response = await apiClient.get("/api/students/me/ai-context");
     return response.data;
   },
+
+  async getLearningStats(): Promise<{
+    success: boolean;
+    data: {
+      xp: number;
+      level: number;
+      studyStreak: number;
+      consistencyScore: number;
+      completedCourses: number;
+    };
+  }> {
+    const response = await apiClient.get("/api/students/me/stats");
+    return response.data;
+  },
+
+  async syncXpReward(data: { xp: number; stars?: number; badge?: string }) {
+    const response = await apiClient.post("/api/students/me/xp", data);
+    return response.data;
+  },
 };

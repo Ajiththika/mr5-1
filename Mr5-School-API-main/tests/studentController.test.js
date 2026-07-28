@@ -8,5 +8,7 @@ describe("studentController compatibility shim", () => {
 		expect(typeof studentController.getChatMemory).toBe("function");
 		expect(typeof studentController.appendChatMemory).toBe("function");
 		expect(typeof studentController.getAiContext).toBe("function");
+		expect(typeof studentController.getLearningStats).toBe("function");
+		expect(typeof studentController.syncXpReward).toBe("function");
 	});
 });

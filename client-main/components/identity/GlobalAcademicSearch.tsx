@@ -278,6 +278,7 @@ export function GlobalAcademicSearch({
 				spellCheck={false}
 				placeholder={placeholder}
 				aria-label="Global academic search"
+				role="combobox"
 				aria-expanded={showPanel}
 				aria-controls={listboxId}
 				aria-autocomplete="list"

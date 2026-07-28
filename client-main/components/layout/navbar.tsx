@@ -21,7 +21,6 @@ import { ThemeCustomizer } from "@/components/theme-customizer";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
-import { LanguageSelector } from "@/components/i18n/LanguageSelector";
 import { GlobalSearchTrigger } from "@/components/identity/GlobalSearchTrigger";
 import { GlobalAcademicSearch } from "@/components/identity/GlobalAcademicSearch";
 import { MR5_LOGO_PATH } from "@/lib/brand/logo";
@@ -95,9 +94,6 @@ export function Navbar() {
 
 					<div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2 lg:gap-3">
 						<GlobalSearchTrigger className="flex shrink-0 sm:hidden" />
-						<div className="watch-hide hidden sm:block" data-tour-id="tour-language">
-							<LanguageSelector compact />
-						</div>
 						<ThemeCustomizer />
 						<RealTimeNotifications />
 						{user ? (
@@ -183,9 +179,6 @@ export function Navbar() {
 										onNavigate={() => {}}
 										placeholder="Search courses, names, MR5 UIDs…"
 									/>
-									<div className="sm:hidden px-2">
-										<LanguageSelector />
-									</div>
 									<div className="flex flex-col gap-2">
 										<h3 className="text-sm font-medium text-muted-foreground mb-2 px-2 uppercase tracking-wider">{t("nav.menu")}</h3>
 										<Link

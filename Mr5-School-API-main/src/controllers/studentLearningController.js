@@ -2,6 +2,7 @@ import User from "../models/User.js";
 import ChatMemory from "../models/ChatMemory.js";
 import { asyncHandler } from "../middleware/errorHandler.js";
 import { updateUserDetails } from "../services/authService.js";
+import { getStats, syncPlaytimeStats } from "../services/identityGamificationService.js";
 
 const EDUCATION_LEVELS = [
 	"High School",
@@ -127,3 +128,19 @@ export const getAiContext = asyncHandler(async (req, res) => {
 		},
 	});
 });
+
+// @route GET /api/students/me/stats
+export const getLearningStats = asyncHandler(async (req, res) => {
+	const userId = req.user._id || req.user.id;
+	const stats = await getStats(userId);
+	res.json({ success: true, data: stats });
+});
+
+// @route POST /api/students/me/xp
+export const syncXpReward = asyncHandler(async (req, res) => {
+	const userId = req.user._id || req.user.id;
+	const { xp, badge } = req.body;
+	const updatedStats = await syncPlaytimeStats(userId, { xp, badge });
+	res.json({ success: true, data: updatedStats });
+});
+

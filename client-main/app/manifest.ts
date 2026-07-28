@@ -13,9 +13,35 @@ export default function manifest(): MetadataRoute.Manifest {
 		display_override: ["window-controls-overlay"],
 		icons: [
 			{
-				src: "/icon.png",
-				sizes: "any",
+				src: "/favicon-16x16.png",
+				sizes: "16x16",
 				type: "image/png",
+			},
+			{
+				src: "/favicon-32x32.png",
+				sizes: "32x32",
+				type: "image/png",
+			},
+			{
+				src: "/favicon-96x96.png",
+				sizes: "96x96",
+				type: "image/png",
+			},
+			{
+				src: "/android-chrome-192x192.png",
+				sizes: "192x192",
+				type: "image/png",
+			},
+			{
+				src: "/android-chrome-512x512.png",
+				sizes: "512x512",
+				type: "image/png",
+			},
+			{
+				src: "/android-chrome-512x512.png",
+				sizes: "512x512",
+				type: "image/png",
+				purpose: "maskable",
 			},
 		],
 		categories: ["education", "learning", "courses"],
@@ -37,7 +63,7 @@ export default function manifest(): MetadataRoute.Manifest {
 				url: "/dashboard",
 				icons: [
 					{
-						src: "/icon.png",
+						src: "/favicon-96x96.png",
 						sizes: "96x96",
 						type: "image/png"
 					}
@@ -48,7 +74,7 @@ export default function manifest(): MetadataRoute.Manifest {
 				url: "/courses",
 				icons: [
 					{
-						src: "/icon.png",
+						src: "/favicon-96x96.png",
 						sizes: "96x96",
 						type: "image/png"
 					}
@@ -57,4 +83,5 @@ export default function manifest(): MetadataRoute.Manifest {
 		]
 	};
 }
+
 

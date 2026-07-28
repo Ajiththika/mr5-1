@@ -4,6 +4,8 @@ import {
 	getChatMemory,
 	appendChatMemory,
 	getAiContext,
+	getLearningStats,
+	syncXpReward,
 } from "./studentLearningController.js";
 
 export {
@@ -12,6 +14,8 @@ export {
 	getChatMemory,
 	appendChatMemory,
 	getAiContext,
+	getLearningStats,
+	syncXpReward,
 };
 
 export default {
@@ -20,4 +24,6 @@ export default {
 	getChatMemory,
 	appendChatMemory,
 	getAiContext,
+	getLearningStats,
+	syncXpReward,
 };

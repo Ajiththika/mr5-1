@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { EmptyState } from "@/components/power-admin/EmptyState";
@@ -27,7 +27,7 @@ export default function TeachersPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       setLoading(true);
       const res = await powerAdminService.getTeachers({ search: search || undefined });
@@ -37,11 +37,11 @@ export default function TeachersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [search]);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   const handleClone = async (id: string) => {
     try {

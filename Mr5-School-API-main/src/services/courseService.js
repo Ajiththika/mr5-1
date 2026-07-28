@@ -75,6 +75,12 @@ export const getAllCourses = async (queryParams) => {
  * @returns {Promise<Object>} Course document
  */
 export const getCourseById = async (id) => {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        const error = new Error("Course not found");
+        error.statusCode = 404;
+        throw error;
+    }
+
     // Try to get from cache first
     const cacheKey = `course:${id}`;
     const cachedCourse = cache.get(cacheKey);
@@ -87,7 +93,9 @@ export const getCourseById = async (id) => {
         "name email profileImage"
     );
     if (!course) {
-        throw new Error("Course not found");
+        const error = new Error("Course not found");
+        error.statusCode = 404;
+        throw error;
     }
 
     // Cache the course for 10 minutes

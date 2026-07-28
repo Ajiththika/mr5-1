@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { StatusBadge } from "@/components/power-admin/StatusBadge";
@@ -23,18 +23,18 @@ export default function ContentLibraryPage() {
   const [items, setItems] = useState<any[]>([]);
   const [status, setStatus] = useState<string | undefined>();
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       const res = await powerAdminService.getContentLibrary({ status, limit: 50 });
       setItems(res.data);
     } catch {
       toast.error("Failed to load content library");
     }
-  };
+  }, [status]);
 
   useEffect(() => {
     load();
-  }, [status]);
+  }, [load]);
 
   return (
     <div>

@@ -3,6 +3,7 @@ import {
 	getAllAiAssistantInteractions,
 	getAiAssistantInteractionById,
 	createAiAssistantInteraction,
+	adaptiveTutorInteraction,
 	updateAiAssistantInteraction,
 	deleteAiAssistantInteraction,
 } from "../controllers/ai-assistant-interaction.controller.js";
@@ -13,6 +14,8 @@ const router = express.Router();
 
 router.use(verifyToken);
 router.use(requireLegalConsent);
+
+router.post("/adaptive", adaptiveTutorInteraction);
 
 router.get("/", getAllAiAssistantInteractions);
 router.get("/:id", getAiAssistantInteractionById);

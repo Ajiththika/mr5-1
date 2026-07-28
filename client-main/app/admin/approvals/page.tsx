@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { EmptyState } from "@/components/power-admin/EmptyState";
 import { StatusBadge } from "@/components/power-admin/StatusBadge";
@@ -24,18 +24,18 @@ export default function ApprovalsPage() {
   const [items, setItems] = useState<ContentApprovalItem[]>([]);
   const [status, setStatus] = useState("pending_review");
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       const res = await powerAdminService.getApprovals({ status });
       setItems(res.data);
     } catch {
       toast.error("Failed to load approvals");
     }
-  };
+  }, [status]);
 
   useEffect(() => {
     load();
-  }, [status]);
+  }, [load]);
 
   const approve = async (id: string) => {
     try {

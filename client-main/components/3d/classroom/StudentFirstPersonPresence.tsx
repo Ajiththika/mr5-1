@@ -113,6 +113,7 @@ export function StudentFirstPersonPresence({ enabled = true }: { enabled?: boole
             <circleGeometry args={[0.042, 32]} />
             <meshStandardMaterial color="#ffffff" roughness={0.35} metalness={0.1} />
           </mesh>
+          {/* eslint-disable-next-line jsx-a11y/alt-text */}
           <Image url={MR5_LOGO_PATH} scale={0.056} transparent toneMapped={false} renderOrder={21} />
         </group>
       </group>
